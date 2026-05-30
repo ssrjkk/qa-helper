@@ -22,10 +22,10 @@ export function StructuredMemory({ entries, onAddEntry, onDeleteEntry, onUpdateE
   const summary = getMemorySummary(memory);
 
   const handleAddEntry = () => {
-    if (!selectedCategory || !newValue.trim()) return;
+    if (!selectedCategory || !newValue.trim() || entries.length === 0) return;
     
     onAddEntry({
-      project_id: entries[0]?.project_id || 0,
+      project_id: entries[0].project_id,
       category: selectedCategory,
       key: newKey.trim() || 'entry',
       value: newValue.trim(),
