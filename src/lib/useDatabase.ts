@@ -56,13 +56,11 @@ export function useDatabase() {
         const service = new DatabaseService(database, async () => {
           if (saveTimeout) clearTimeout(saveTimeout);
           saveTimeout = setTimeout(async () => {
-            if (db) {
-              try {
-                const exported = db.export();
-                await storage.save(exported);
-              } catch (err) {
-                console.error('Failed to save database:', err);
-              }
+            try {
+              const exported = database.export();
+              await storage.save(exported);
+            } catch (err) {
+              console.error('Failed to save database:', err);
             }
           }, 500);
         });
