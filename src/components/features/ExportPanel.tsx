@@ -1,0 +1,114 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GlassCard, RippleButton } from '../ui';
+
+interface ExportPanelProps {
+  output: string;
+  context?: string;
+  taskType?: string;
+  projectName?: string;
+  onClose?: () => void;
+}
+
+type ExportFormat = 'markdown' | 'pdf' | 'json';
+
+export function ExportPanel({ output, context, taskType, projectName, onClose }: ExportPanelProps) {
+  const [exporting, setExporting] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleExport = async (format: ExportFormat) => {
+    setExporting(true);
+    try {
+      const { exportUtils } = await import('../../lib/export');
+      const options = { output, context, taskType, projectName };
+      
+      let blob: Blob;
+      let filename: string;
+      
+      switch (format) {
+        case 'markdown':
+          blob = await exportUtils.toMarkdown(options);
+          filename = exportUtils.generateFilename('md', taskType);
+          break;
+        case 'pdf':
+          blob = await exportUtils.toPdf(options);
+          filename = exportUtils.generateFilename('pdf', taskType);
+          break;
+        case 'json':
+          blob = await exportUtils.toJson(options);
+          filename = exportUtils.generateFilename('json', taskType);
+          break;
+      }
+      
+      await exportUtils.downloadFile(blob, filename);
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      console.error('Copy failed');
+    }
+  };
+
+  const formats = [
+    { id: 'markdown' as ExportFormat, label: 'Markdown', icon: '📝', desc: 'For docs' },
+    { id: 'pdf' as ExportFormat, label: 'PDF', icon: '📄', desc: 'Printable' },
+    { id: 'json' as ExportFormat, label: 'JSON', icon: '📋', desc: 'Raw data' }
+  ];
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        className="overflow-hidden"
+      >
+        <GlassCard className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-sm font-medium text-gray-300">Export Options</h4>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                Close
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {formats.map(format => (
+              <button
+                key={format.id}
+                onClick={() => handleExport(format.id)}
+                disabled={exporting}
+                className="flex flex-col items-center gap-2 p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all disabled:opacity-50"
+              >
+                <span className="text-2xl">{format.icon}</span>
+                <span className="text-xs font-medium text-white">{format.label}</span>
+                <span className="text-[10px] text-gray-500">{format.desc}</span>
+              </button>
+            ))}
+          </div>
+
+          <RippleButton
+            onClick={handleCopy}
+            variant="secondary"
+            className="w-full !py-2 text-sm"
+          >
+            {copied ? '✅ Copied!' : '📋 Copy to Clipboard'}
+          </RippleButton>
+        </GlassCard>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
