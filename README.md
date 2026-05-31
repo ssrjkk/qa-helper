@@ -66,23 +66,23 @@ npm run preview
 ## Тестирование
 
 ```bash
-npm run test       # Запуск тестов (54 теста)
-npm run test:watch # Watch mode
+npm run test               # Запуск тестов (54 теста)
+npm run test:watch         # Watch mode
 ```
 
 ## Архитектура проекта
 
 ```
 src/
-├── App.tsx                  # Главный компонент
-├── main.tsx                 # Entry point
-├── config/                  # Конфигурация
+├── App.tsx                 # Главный компонент
+├── main.tsx                # Entry point
+├── config/                 # Конфигурация
 │   ├── api.ts              # Claude API настройки
-│   ├── security.ts          # Лимиты и валидация
+│   ├── security.ts         # Лимиты и валидация
 │   ├── tasks.ts            # Типы задач и промпты
 │   ├── prompts.ts          # System prompts
 │   └── presets.ts          # Пресеты контекста
-├── lib/                     # Утилиты и сервисы
+├── lib/                    # Утилиты и сервисы
 │   ├── database.ts         # SQLite DatabaseService
 │   ├── useDatabase.ts      # Hook для работы с БД
 │   ├── rateLimiter.ts      # Rate limiting
@@ -97,7 +97,7 @@ src/
 │   ├── ui/                 # Базовые UI компоненты
 │   ├── features/           # Feature компоненты
 │   └── layout/             # Layout компоненты
-├── domain/                  # Domain layer
+├── domain/                 # Domain layer
 │   ├── entities/           # Сущности (Project, Task, Memory)
 │   └── usecases/           # Business logic
 ├── data/                   # Data layer
@@ -233,9 +233,7 @@ CREATE TABLE memory_entries (
 - Questions: Telegram @ssrjkk
 - Email: ray013lefe@gmail.com
 
-## Лицензия
 
-MIT License — свободное использование для любых целей.
 
 ---
 
