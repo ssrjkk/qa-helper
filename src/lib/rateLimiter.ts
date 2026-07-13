@@ -12,12 +12,19 @@ interface RateLimitState {
   config: RateLimitConfig;
 }
 
-let config: RateLimitConfig = {
+const config: RateLimitConfig = {
   windowMs: DEFAULT_WINDOW_MS,
   maxRequests: DEFAULT_MAX_REQUESTS
 };
 
+function getOldestRequest(requests: number[]): number {
+  return requests.reduce((min, t) => Math.min(min, t), Infinity);
+}
+
 function loadState(): RateLimitState {
+  if (typeof localStorage === 'undefined') {
+    return { requests: [], config };
+  }
   try {
     const saved = localStorage.getItem(RATE_LIMIT_KEY);
     if (saved) {
@@ -26,14 +33,15 @@ function loadState(): RateLimitState {
       parsed.requests = parsed.requests.filter(t => now - t < config.windowMs);
       return parsed;
     }
-  } catch { /* ignore */ }
+  } catch { /* failed to parse saved rate limit state, use default */ }
   return { requests: [], config };
 }
 
 function saveState(state: RateLimitState): void {
+  if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(state));
-  } catch { /* ignore */ }
+  } catch { /* localStorage may be full or unavailable */ }
 }
 
 let state = loadState();
@@ -56,7 +64,7 @@ export const RateLimiter = {
     return { ...config };
   },
 
-  isAllowed(): boolean {
+  consumeSlot(): boolean {
     cleanOldRequests();
     if (state.requests.length >= config.maxRequests) return false;
     state.requests.push(Date.now());
@@ -67,7 +75,7 @@ export const RateLimiter = {
   getResetTime(): number {
     cleanOldRequests();
     if (state.requests.length === 0) return 0;
-    const oldest = Math.min(...state.requests);
+    const oldest = getOldestRequest(state.requests);
     return Math.ceil((oldest + config.windowMs - Date.now()) / 1000);
   },
 
@@ -95,7 +103,7 @@ export const RateLimiter = {
   getTimeUntilNextSlot(): number {
     cleanOldRequests();
     if (state.requests.length < config.maxRequests) return 0;
-    const oldest = Math.min(...state.requests);
+    const oldest = getOldestRequest(state.requests);
     return Math.max(0, Math.ceil((oldest + config.windowMs - Date.now()) / 1000));
   }
 };

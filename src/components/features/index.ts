@@ -5,3 +5,5 @@ export { ChatArea } from './ChatArea';
 export { ScreenshotUploader } from './ScreenshotUploader';
 export { ExportPanel } from './ExportPanel';
 export { MetricsDashboard } from './MetricsDashboard';
+export { ApiKeyModal } from './ApiKeyModal';
+export { AppContent } from './AppContent';

@@ -47,14 +47,14 @@ export class CloudSyncService {
       if (saved) {
         this.status = JSON.parse(saved);
       }
-    } catch { }
+    } catch { /* failed to parse saved sync status, use default */ }
   }
 
   private saveStatus(): void {
     try {
       localStorage.setItem(SYNC_KEY + '-status', JSON.stringify(this.status));
       this.notifyListeners();
-    } catch { }
+    } catch { /* localStorage may be full or unavailable */ }
   }
 
   private loadConfig(): void {
@@ -63,7 +63,7 @@ export class CloudSyncService {
       if (saved) {
         this.config = JSON.parse(saved);
       }
-    } catch { }
+    } catch { /* failed to parse saved config, use default */ }
   }
 
   private notifyListeners(): void {
@@ -84,7 +84,7 @@ export class CloudSyncService {
     this.config = config;
     try {
       localStorage.setItem(SYNC_KEY + '-config', JSON.stringify(config));
-    } catch { }
+    } catch { /* localStorage may be full or unavailable */ }
   }
 
   getConfig(): CloudConfig {
@@ -103,13 +103,13 @@ export class CloudSyncService {
 
   async importData(jsonString: string): Promise<{ projects: Project[]; memoryEntries: MemoryEntry[] } | null> {
     try {
-      const data = JSON.parse(jsonString) as SyncData;
-      if (!data.version || !data.projects) {
-        throw new Error('Invalid format');
+      const data = JSON.parse(jsonString) as Partial<SyncData>;
+      if (!data.version || !Array.isArray(data.projects)) {
+        return null;
       }
       return {
-        projects: data.projects,
-        memoryEntries: data.memoryEntries || [],
+        projects: data.projects as Project[],
+        memoryEntries: Array.isArray(data.memoryEntries) ? (data.memoryEntries as MemoryEntry[]) : [],
       };
     } catch {
       return null;
@@ -128,7 +128,7 @@ export class CloudSyncService {
         }
       }
     }
-    throw lastError;
+    throw lastError ?? new Error('Max retry attempts exceeded');
   }
 
   async syncToCloud(projects: Project[], memoryEntries: MemoryEntry[]): Promise<boolean> {
@@ -155,7 +155,7 @@ export class CloudSyncService {
       this.status = {
         ...this.status,
         status: 'error',
-        error: (err as Error).message,
+        error: err instanceof Error ? err.message : 'Unknown sync error',
       };
       this.saveStatus();
       return false;
@@ -179,8 +179,11 @@ export class CloudSyncService {
       throw new Error('Firebase config missing');
     }
     
-    const response = await fetch(`${this.config.url}/sync.json?auth=${this.config.apiKey}`, {
+    const response = await fetch(`${this.config.url}/sync.json`, {
       method: 'PUT',
+      headers: new Headers({
+        'Authorization': `Bearer ${this.config.apiKey}`,
+      }),
       body: JSON.stringify(await this.exportData(projects, memoryEntries)),
     });
 
@@ -236,7 +239,11 @@ export class CloudSyncService {
         case 'firebase': {
           if (!this.config.apiKey || !this.config.url) return null;
           const response = await this.withRetry(() => 
-            fetch(`${this.config.url}/sync.json?auth=${this.config.apiKey}`)
+            fetch(`${this.config.url}/sync.json`, {
+              headers: new Headers({
+                'Authorization': `Bearer ${this.config.apiKey}`,
+              }),
+            })
           );
           if (!response.ok) return null;
           const json = await response.json();
@@ -246,10 +253,10 @@ export class CloudSyncService {
         case 'supabase': {
           if (!this.config.url || !this.config.apiKey) return null;
           const response = await this.withRetry(() => fetch(`${this.config.url}/sync`, {
-            headers: {
-              'apikey': this.config.apiKey,
+            headers: new Headers({
+              'apikey': this.config.apiKey || '',
               'Authorization': `Bearer ${this.config.apiKey}`,
-            } as Record<string, string>
+            }),
           }));
           if (!response.ok) return null;
           const { data: jsonData } = await response.json();

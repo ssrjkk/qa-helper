@@ -9,7 +9,6 @@ describe('SECURITY_CONFIG', () => {
     expect(SECURITY_CONFIG).toHaveProperty('maxScreenshotSize');
     expect(SECURITY_CONFIG).toHaveProperty('rateLimitWindow');
     expect(SECURITY_CONFIG).toHaveProperty('maxRequestsPerWindow');
-    expect(SECURITY_CONFIG).toHaveProperty('requireApiKeyPrefix');
   });
 
   it('should have reasonable values', () => {
@@ -19,7 +18,6 @@ describe('SECURITY_CONFIG', () => {
     expect(SECURITY_CONFIG.maxScreenshotSize).toBe(5 * 1024 * 1024);
     expect(SECURITY_CONFIG.rateLimitWindow).toBe(60000);
     expect(SECURITY_CONFIG.maxRequestsPerWindow).toBe(10);
-    expect(SECURITY_CONFIG.requireApiKeyPrefix).toBe('sk-ant-');
   });
 
   it('should have screenshot size as 5MB', () => {

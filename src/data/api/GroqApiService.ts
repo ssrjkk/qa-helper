@@ -158,7 +158,7 @@ export class GroqApiService {
                 inputTokens = parsed.usage.prompt_tokens;
                 outputTokens = parsed.usage.completion_tokens;
               }
-            } catch { }
+            } catch { /* malformed SSE chunk, skip */ }
           }
         }
       }
@@ -173,7 +173,7 @@ export class GroqApiService {
       };
 
     } catch (err) {
-      const error = err as Error & { status?: number };
+      const error = err instanceof Error ? err : new Error(String(err));
       const responseTime = Date.now() - startTime;
 
       if (error.name === 'AbortError') {

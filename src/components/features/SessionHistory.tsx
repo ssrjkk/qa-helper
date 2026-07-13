@@ -6,7 +6,7 @@ import { TASK_TYPES } from '../../config';
 import type { TaskType } from '../../config';
 
 interface Session {
-  taskType: string;
+  task_type: string;
   context: string;
   output: string;
   created_at: string;
@@ -53,7 +53,7 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
     return (
       session.context.toLowerCase().includes(query) ||
       session.output.toLowerCase().includes(query) ||
-      session.taskType.toLowerCase().includes(query)
+      session.task_type.toLowerCase().includes(query)
     );
   }), [sessions, searchQuery]);
 
@@ -124,7 +124,7 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
           >
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const session = filteredSessions[virtualRow.index];
-              const taskInfo = getTaskInfo(session.taskType);
+              const taskInfo = getTaskInfo(session.task_type);
               const isExpanded = expandedId === virtualRow.index;
               
               return (
@@ -156,7 +156,7 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
                             </span>
                           )}
                           <span className="text-sm font-medium text-gray-200">
-                            {taskInfo?.label || session.taskType}
+                            {taskInfo?.label || session.task_type}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -201,7 +201,7 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
                               <motion.button
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
-                                onClick={(e) => {
+                                onClick={(e: React.MouseEvent) => {
                                   e.stopPropagation();
                                   onLoadSession(session);
                                 }}

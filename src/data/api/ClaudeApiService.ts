@@ -74,7 +74,7 @@ export class ClaudeApiService {
       return { success: false, error: 'No internet connection' };
     }
 
-    if (!RateLimiter.isAllowed()) {
+    if (!RateLimiter.consumeSlot()) {
       const resetIn = RateLimiter.getResetTime();
       return { success: false, error: `Rate limit exceeded. Please wait ${resetIn} seconds.` };
     }
@@ -86,7 +86,7 @@ export class ClaudeApiService {
     let outputTokens = 0;
 
     try {
-      let messages: { role: 'user' | 'assistant'; content: string | ClaudeContentBlock[] }[] = [
+      const messages: { role: 'user' | 'assistant'; content: string | ClaudeContentBlock[] }[] = [
         { role: 'user', content: userMessage }
       ];
 
@@ -150,7 +150,7 @@ export class ClaudeApiService {
               if (parsed.type === 'message_delta' && parsed.usage?.output_tokens) {
                 outputTokens = parsed.usage.output_tokens;
               }
-            } catch { }
+            } catch { /* malformed SSE chunk, skip */ }
           }
         }
       }
@@ -165,7 +165,7 @@ export class ClaudeApiService {
       };
 
     } catch (err) {
-      const error = err as Error & { status?: number };
+      const error = err instanceof Error ? err : new Error(String(err));
       const responseTime = Date.now() - startTime;
       
       if (error.name === 'AbortError') {

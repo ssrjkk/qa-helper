@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { MemoryEntry } from '../types/memory';
 
 interface Session {
-  taskType: string;
+  task_type: string;
   context: string;
   output: string;
   created_at: string;

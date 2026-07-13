@@ -1,6 +1,10 @@
 node_modules/
 dist/
 .env
+.env.local
+.env.*.local
 *.log
+*.tsbuildinfo
 desktop.ini
 .DS_Store
+coverage/

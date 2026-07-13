@@ -7,7 +7,7 @@ import { SessionHistory } from './SessionHistory';
 import type { TabType } from '../../types';
 
 interface Session {
-  taskType: string;
+  task_type: string;
   context: string;
   output: string;
   created_at: string;

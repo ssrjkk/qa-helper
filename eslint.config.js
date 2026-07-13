@@ -1,11 +1,17 @@
 import js from '@eslint/js'
+import tseslint from 'typescript-eslint'
 import reactPlugin from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 
-export default [
+export default tseslint.config(
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: ['**/*.{ts,tsx}'],
+    plugins: {
+      react: reactPlugin,
+      'react-hooks': reactHooks,
+    },
     languageOptions: {
       globals: {
         window: 'readonly',
@@ -21,20 +27,14 @@ export default [
         btoa: 'readonly',
         TextDecoder: 'readonly',
       },
-      parserOptions: {
-        ecmaFeatures: { jsx: true },
-      },
-    },
-    plugins: {
-      react: reactPlugin,
-      'react-hooks': reactHooks,
     },
     rules: {
       'react/jsx-uses-react': 'error',
       'react/jsx-uses-vars': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      'no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
       'no-empty': 'warn',
     },
     settings: {
@@ -43,4 +43,7 @@ export default [
       },
     },
   },
-]
+  {
+    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.ts'],
+  },
+)

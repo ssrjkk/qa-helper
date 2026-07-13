@@ -26,6 +26,8 @@ export function useDatabase() {
   }, [db]);
 
   useEffect(() => {
+    let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+
     const initDb = async () => {
       try {
         const SQL = await initSqlJs({ locateFile: () => '/sql-wasm.wasm' });
@@ -37,7 +39,7 @@ export function useDatabase() {
         if (savedData) {
           try {
             database = new SQL.Database(savedData);
-            try { database.run("ALTER TABLE projects ADD COLUMN memory TEXT DEFAULT ''"); } catch { }
+            try { database.run("ALTER TABLE projects ADD COLUMN memory TEXT DEFAULT ''"); } catch { /* column may already exist */ }
           } catch {
             database = new SQL.Database();
           }
@@ -52,7 +54,6 @@ export function useDatabase() {
           createSQL.forEach(sql => database.run(sql));
         }
         
-        let saveTimeout: ReturnType<typeof setTimeout> | null = null;
         const service = new DatabaseService(database, async () => {
           if (saveTimeout) clearTimeout(saveTimeout);
           saveTimeout = setTimeout(async () => {
@@ -78,6 +79,10 @@ export function useDatabase() {
     };
     
     initDb();
+
+    return () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+    };
   }, []);
 
   useEffect(() => {

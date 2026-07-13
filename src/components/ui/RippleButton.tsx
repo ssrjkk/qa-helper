@@ -21,14 +21,14 @@ export function RippleButton({
 }: RippleButtonProps) {
   const [ripples, setRipples] = useState<Array<{ x: number; y: number; id: number }>>([]);
   
-  const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (e: React.MouseEvent<Element>) => {
     if (disabled) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     setRipples([...ripples, { x, y, id: Date.now() }]);
     setTimeout(() => setRipples(prev => prev.slice(1)), 600);
-    onClick?.(e);
+    onClick?.(e as React.MouseEvent<HTMLButtonElement>);
   };
 
   const variants = {

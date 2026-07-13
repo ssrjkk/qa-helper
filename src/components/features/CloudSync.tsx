@@ -2,15 +2,19 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cloudSync, type SyncStatus, type CloudConfig } from '../../lib/cloudSync';
 import { GlassCard } from '../ui';
+import type { Project } from '../../types';
+import type { MemoryEntry } from '../../types/memory';
 
 interface CloudSyncProps {
   onSync: () => Promise<void>;
-  onImport: (data: { projects: any[]; memoryEntries: any[] }) => void;
+  onImport: (data: { projects: Project[]; memoryEntries: MemoryEntry[] }) => void;
   projectsCount: number;
   canSync: boolean;
+  projects: Project[];
+  memoryEntries: MemoryEntry[];
 }
 
-export function CloudSync({ onSync, onImport, projectsCount, canSync }: CloudSyncProps) {
+export function CloudSync({ onSync, onImport, projectsCount, canSync, projects, memoryEntries }: CloudSyncProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [status, setStatus] = useState<SyncStatus>(cloudSync.getStatus());
   const [config, setConfig] = useState<CloudConfig>(cloudSync.getConfig());
@@ -34,7 +38,7 @@ export function CloudSync({ onSync, onImport, projectsCount, canSync }: CloudSyn
   };
 
   const handleGenerateLink = async () => {
-    const link = cloudSync.generateShareLink([], []);
+    const link = cloudSync.generateShareLink(projects, memoryEntries);
     setShareLink(link);
   };
 

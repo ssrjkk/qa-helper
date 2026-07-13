@@ -1,15 +1,15 @@
 export interface Session {
-  taskType: string;
+  task_type: string;
   context: string;
   output: string;
-  createdAt: Date;
+  created_at: string;
 }
 
 export function mapRowToSession(row: Record<string, unknown>): Session {
   return {
-    taskType: row.task_type as string,
-    context: row.context as string || '',
-    output: row.output as string || '',
-    createdAt: new Date(row.created_at as string),
+    task_type: row.task_type as string,
+    context: (row.context as string) || '',
+    output: (row.output as string) || '',
+    created_at: row.created_at as string,
   };
 }

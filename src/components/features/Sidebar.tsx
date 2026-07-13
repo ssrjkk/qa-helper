@@ -150,6 +150,8 @@ export function Sidebar({
         onImport={onImportSync}
         projectsCount={projects.length}
         canSync={isOnline && apiKeyValid}
+        projects={projects}
+        memoryEntries={memoryEntries}
       />
 
       <TeamFeatures

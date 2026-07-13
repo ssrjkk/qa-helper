@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, RefObject } from 'react';
+import { useState, useEffect, useRef, useMemo, RefObject } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard, RippleButton, AutoResizeTextarea } from '../ui';
 import { ExportPanel } from './ExportPanel';
@@ -24,19 +24,19 @@ interface ChatAreaProps {
 }
 
 function LoadingIndicator() {
-  const dots = ['.', '..', '...'];
+  const dotCount = 3;
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex(i => (i + 1) % dots.length);
+      setIndex(i => (i + 1) % dotCount);
     }, 400);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <span className="inline-block min-w-12">
-      {dots[index]}
+      {'.'.repeat(index + 1)}
     </span>
   );
 }
@@ -68,7 +68,7 @@ export function ChatArea({
   outputRef: externalRef,
 }: ChatAreaProps) {
   const internalRef = useRef<HTMLDivElement>(null);
-  const outputRef = externalRef || internalRef;
+  const outputRef = useMemo(() => externalRef || internalRef, [externalRef]);
   const [showExportPanel, setShowExportPanel] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
 
@@ -78,7 +78,7 @@ export function ChatArea({
     if (context !== historyState.present) {
       setHistoryState(context);
     }
-  }, []);
+  }, [context, historyState.present, setHistoryState]);
 
   const handleContextChange = (value: string) => {
     setHistoryState(value);
@@ -98,9 +98,9 @@ export function ChatArea({
     (context.trim() || selectedTask === 'screenshot_analysis') && 
     apiKeyValid;
 
-  const wordCount = context.trim().split(/\s+/).filter(Boolean).length;
+  const wordCount = useMemo(() => context.trim().split(/\s+/).filter(Boolean).length, [context]);
   const charCount = context.length;
-  const outputWordCount = output.trim().split(/\s+/).filter(Boolean).length;
+  const outputWordCount = useMemo(() => output.trim().split(/\s+/).filter(Boolean).length, [output]);
 
   useEffect(() => {
     if (outputRef.current) {

@@ -131,7 +131,8 @@ export class DatabaseService {
       fields.push('updated_at = datetime("now")');
       values.push(id);
       this.safeRun(`UPDATE projects SET ${fields.join(', ')} WHERE id = ?`, values);
-      return this.saveDb() ? true : Boolean(!this.lastError);
+      this.saveDb();
+      return !this.lastError;
     }
     return false;
   }
@@ -218,7 +219,7 @@ export class DatabaseService {
     this.saveDb();
   }
 
-  getRecentSessions(projectId: number, limit: number = 10): Array<{ taskType: string; context: string; output: string; created_at: string }> {
+  getRecentSessions(projectId: number, limit: number = 10): Array<{ task_type: string; context: string; output: string; created_at: string }> {
     return this.queryAll(
       "SELECT DISTINCT task_type, context, output, created_at FROM tasks WHERE project_id = ? ORDER BY created_at DESC LIMIT ?",
       [projectId, limit]
@@ -274,7 +275,8 @@ export class DatabaseService {
       fields.push('updated_at = datetime("now")');
       values.push(id);
       this.safeRun(`UPDATE memory_entries SET ${fields.join(', ')} WHERE id = ?`, values);
-      return this.saveDb() ? true : Boolean(!this.lastError);
+      this.saveDb();
+      return !this.lastError;
     }
     return false;
   }

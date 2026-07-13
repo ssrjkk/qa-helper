@@ -85,7 +85,7 @@ export class IndexedDBStorage implements StorageProvider {
         request.onerror = () => reject(new Error('Failed to clear IndexedDB'));
         request.onsuccess = () => resolve();
       });
-    } catch { }
+    } catch { /* IndexedDB clear failed, log and continue */ }
   }
 
   async getSize(): Promise<number> {
@@ -170,10 +170,8 @@ export async function createStorageProvider(): Promise<StorageProvider> {
 export function estimateStorageUsage(): { used: number; available: string } {
   let used = 0;
   
-  for (const key in localStorage) {
-    if (localStorage.hasOwnProperty(key)) {
-      used += localStorage.getItem(key)?.length || 0;
-    }
+  for (const key of Object.keys(localStorage)) {
+    used += localStorage.getItem(key)?.length || 0;
   }
 
   const usedMB = (used / (1024 * 1024)).toFixed(2);

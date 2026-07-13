@@ -1,23 +1,35 @@
-import { SECURITY_CONFIG } from '../config';
+import { type AiProvider, PROVIDER_KEY_PATTERNS } from '../config/security';
 
 export interface ValidationResult {
   valid: boolean;
   error?: string;
 }
 
-export function validateApiKey(key: string): ValidationResult {
-  if (!key || typeof key !== "string") {
-    return { valid: false, error: "API key required" };
+export function validateApiKey(key: string, provider?: AiProvider): ValidationResult {
+  if (!key || typeof key !== 'string') {
+    return { valid: false, error: 'API key required' };
   }
   const trimmed = key.trim();
-  if (trimmed.length < 20) {
-    return { valid: false, error: "Too short" };
+
+  if (provider) {
+    const pattern = PROVIDER_KEY_PATTERNS[provider];
+    if (pattern.prefix && pattern.prefix.length > 0) {
+      const matchesPrefix = pattern.prefix.some(p => trimmed.startsWith(p));
+      if (!matchesPrefix) {
+        return { valid: false, error: `Key must start with ${pattern.prefix[0]}` };
+      }
+    }
+    if (trimmed.length < pattern.minLength) {
+      return { valid: false, error: `Key too short (min ${pattern.minLength} chars)` };
+    }
+  } else {
+    if (trimmed.length < 20) {
+      return { valid: false, error: 'Too short' };
+    }
   }
-  if (!trimmed.startsWith(SECURITY_CONFIG.requireApiKeyPrefix)) {
-    return { valid: false, error: "Must start with sk-ant-" };
-  }
-  if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
-    return { valid: false, error: "Invalid characters" };
+
+  if (!/^[a-zA-Z0-9_\-./]+$/.test(trimmed)) {
+    return { valid: false, error: 'Invalid characters in API key' };
   }
   return { valid: true };
 }
@@ -86,22 +98,22 @@ export function retry<T>(
   fn: () => Promise<T>,
   options: { maxAttempts: number; delay: number; backoff?: boolean } = { maxAttempts: 3, delay: 1000 }
 ): Promise<T> {
-  return new Promise(async (resolve, reject) => {
-    let lastError: Error | null = null;
-    for (let attempt = 1; attempt <= options.maxAttempts; attempt++) {
+  return new Promise((resolve, reject) => {
+    const attempt = async (n: number): Promise<void> => {
       try {
         const result = await fn();
         resolve(result);
-        return;
       } catch (err) {
-        lastError = err as Error;
-        if (attempt < options.maxAttempts) {
-          const delay = options.backoff ? options.delay * Math.pow(2, attempt - 1) : options.delay;
-          await new Promise(r => setTimeout(r, delay));
+        const lastError = err as Error;
+        if (n < options.maxAttempts) {
+          const waitMs = options.backoff ? options.delay * n : options.delay;
+          await new Promise(r => setTimeout(r, waitMs));
+          return attempt(n + 1);
         }
+        reject(lastError);
       }
-    }
-    reject(lastError);
+    };
+    attempt(1);
   });
 }
 
@@ -124,7 +136,7 @@ export function groupBy<T>(array: T[], keyFn: (item: T) => string): Record<strin
 
 export function unique<T>(array: T[], keyFn?: (item: T) => unknown): T[] {
   if (!keyFn) return [...new Set(array)];
-  const seen = new Set();
+  const seen = new Set<unknown>();
   return array.filter(item => {
     const key = keyFn(item);
     if (seen.has(key)) return false;
@@ -283,7 +295,7 @@ async function deriveKey(salt: Uint8Array): Promise<CryptoKey> {
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt.buffer as ArrayBuffer,
+      salt: salt.buffer.slice(0) as ArrayBuffer,
       iterations: PBKDF2_ITERATIONS,
       hash: 'SHA-256'
     },
@@ -324,9 +336,9 @@ export async function decryptApiKey(encryptedData: string): Promise<string | nul
     const key = await deriveKey(salt);
     
     const decrypted = await crypto.subtle.decrypt(
-      { name: ENCRYPTION_ALGORITHM, iv: iv.buffer as ArrayBuffer },
+    { name: ENCRYPTION_ALGORITHM, iv: iv.buffer.slice(0) as ArrayBuffer },
       key,
-      data.buffer as ArrayBuffer
+      data.buffer.slice(0) as ArrayBuffer
     );
     
     return new TextDecoder().decode(decrypted);
