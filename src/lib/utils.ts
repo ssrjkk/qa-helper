@@ -362,7 +362,3 @@ export function clearApiKey(): void {
   localStorage.removeItem(STORAGE_KEY_API_KEY);
   localStorage.removeItem(STORAGE_KEY_SALT);
 }
-
-export function hasStoredApiKey(): boolean {
-  return localStorage.getItem(STORAGE_KEY_API_KEY) !== null;
-}

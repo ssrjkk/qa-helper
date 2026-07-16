@@ -166,17 +166,3 @@ export async function createStorageProvider(): Promise<StorageProvider> {
     return new LocalStorageFallback();
   }
 }
-
-export function estimateStorageUsage(): { used: number; available: string } {
-  let used = 0;
-  
-  for (const key of Object.keys(localStorage)) {
-    used += localStorage.getItem(key)?.length || 0;
-  }
-
-  const usedMB = (used / (1024 * 1024)).toFixed(2);
-  return {
-    used: used,
-    available: `~${usedMB}MB / 5MB (localStorage)`
-  };
-}

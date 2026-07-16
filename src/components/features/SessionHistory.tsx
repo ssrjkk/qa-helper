@@ -4,13 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { GlassCard } from '../ui';
 import { TASK_TYPES } from '../../config';
 import type { TaskType } from '../../config';
-
-interface Session {
-  task_type: string;
-  context: string;
-  output: string;
-  created_at: string;
-}
+import type { Session } from '../../domain/entities/Session';
 
 interface SessionHistoryProps {
   sessions: Session[];

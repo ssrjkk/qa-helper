@@ -3,7 +3,7 @@ import { Sidebar } from './Sidebar';
 import { MainContent } from './MainContent';
 import { MainLayout } from '../layout/MainLayout';
 import { useTheme, useKeyboardShortcuts } from '../../hooks';
-import { useDatabase } from '../../lib/useDatabase';
+import { useDatabase } from '../../hooks/useDatabase';
 import { validateApiKey, sanitizeInput } from '../../lib';
 import { cloudSync } from '../../lib/cloudSync';
 import { QA_SYSTEM_PROMPT, SCREENSHOT_SYSTEM_PROMPT, buildPrompt, SECURITY_CONFIG } from '../../config';
@@ -297,8 +297,7 @@ export function AppContent({ db }: AppContentProps) {
 
   const handleImportProject = useCallback(async (data: string) => {
     try {
-      const parsed = JSON.parse(data);
-      console.log('Importing project:', parsed);
+      JSON.parse(data);
       return true;
     } catch {
       return false;
@@ -352,11 +351,7 @@ export function AppContent({ db }: AppContentProps) {
       onDeleteMemoryEntry={handleDeleteMemoryEntry}
       onUpdateMemoryEntry={handleUpdateMemoryEntry}
       onSync={handleSync}
-      onImportSync={(data) => {
-        if (data?.projects) {
-          console.log('Importing synced projects:', data.projects.length);
-        }
-      }}
+      onImportSync={() => {}}
       onExportProject={handleExportProject}
       onImportProject={handleImportProject}
       onShareProject={async () => {}}

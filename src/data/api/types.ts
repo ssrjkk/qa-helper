@@ -1,4 +1,5 @@
-export type AiProvider = 'claude' | 'groq' | 'openai' | 'gemini' | 'openrouter' | 'deepseek' | 'together' | 'novita' | 'lepton';
+import type { AiProvider } from '../../config/security';
+export type { AiProvider };
 
 export interface ApiConfig {
   baseUrl: string;
@@ -6,16 +7,6 @@ export interface ApiConfig {
   maxTokens: number;
   anthropicVersion?: string;
   provider: AiProvider;
-}
-
-export interface SecurityConfig {
-  maxInputLength: number;
-  maxContextLength: number;
-  maxMemoryLength: number;
-  maxScreenshotSize: number;
-  rateLimitWindow: number;
-  maxRequestsPerWindow: number;
-  requireApiKeyPrefix: string;
 }
 
 export interface ApiRequest {

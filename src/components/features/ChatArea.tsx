@@ -5,7 +5,7 @@ import { ExportPanel } from './ExportPanel';
 import { MetricsDashboard } from './MetricsDashboard';
 import { ContextPresets } from './ContextPresets';
 import { AgentTimeline } from './AgentTimeline';
-import { useHistory } from '../../lib/useHistory';
+import { useHistory } from '../../hooks/useHistory';
 import type { AgentStep } from '../../data/agent/types';
 
 interface ChatAreaProps {

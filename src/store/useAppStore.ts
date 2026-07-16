@@ -2,13 +2,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { MemoryEntry } from '../types/memory';
 import type { AgentStep } from '../data/agent/types';
-
-interface Session {
-  task_type: string;
-  context: string;
-  output: string;
-  created_at: string;
-}
+import type { Session } from '../domain/entities/Session';
 
 interface AppState {
   selectedTask: string | null;

@@ -6,13 +6,7 @@ import { LazyChatArea, LazyCodebasePanel, LazySessionHistory, LazySuspense } fro
 import type { TabType } from '../../types';
 import type { AgentStep } from '../../data/agent/types';
 import type { CodebaseProvider } from '../../data/codebase/CodebaseProvider';
-
-interface Session {
-  task_type: string;
-  context: string;
-  output: string;
-  created_at: string;
-}
+import type { Session } from '../../domain/entities/Session';
 
 interface MainContentProps {
   selectedTask: string | null;

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import initSqlJs from 'sql.js';
 import type { Database } from 'sql.js';
-import { DatabaseService } from './database';
-import { createStorageProvider } from './storage';
+import { DatabaseService } from '../lib/database';
+import { createStorageProvider } from '../lib/storage';
 import type { Project } from '../types';
 import type { MemoryEntry } from '../types/memory';
 

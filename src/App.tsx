@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ApiKeyModal } from './components/features/ApiKeyModal';
 import { AppContent } from './components/features/AppContent';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { useDatabase } from './lib/useDatabase';
+import { useDatabase } from './hooks/useDatabase';
 import { loadApiKey } from './lib';
 import { UseCasesProvider } from './presentation';
 import { useAppStore } from './store/useAppStore';
