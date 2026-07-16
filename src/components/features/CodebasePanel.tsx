@@ -92,9 +92,12 @@ export function CodebasePanel({ provider, onConnect, onDisconnect }: CodebasePan
 
     try {
       const buffer = await file.arrayBuffer();
+      const { zipParser } = await import('../../lib/workers/zipParser');
+      const result = await zipParser.parse(buffer, file.name);
+
       const { LocalProvider } = await import('../../data/codebase/LocalProvider');
       const lp = new LocalProvider(file.name.replace(/\.zip$/, ''));
-      await lp.loadFromZip(buffer);
+      await lp.loadFromFiles(result.files);
 
       if (lp.isReady) {
         onConnect(lp);

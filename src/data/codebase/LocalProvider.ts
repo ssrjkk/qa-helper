@@ -1,4 +1,5 @@
 import type { CodebaseFile, CodebaseProvider, CodebaseSearchResult } from './CodebaseProvider';
+import type { ZipFileEntry } from '../../workers/zipParser.worker';
 
 const IGNORED_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', '.next', '.nuxt',
@@ -47,31 +48,23 @@ export class LocalProvider implements CodebaseProvider {
     this._isReady = true;
   }
 
-  async loadFromZip(arrayBuffer: ArrayBuffer): Promise<void> {
-    const JSZip = (await import('jszip')).default;
-    const zip = await JSZip.loadAsync(arrayBuffer);
-
+  async loadFromFiles(files: ZipFileEntry[]): Promise<void> {
     this.files.clear();
 
-    for (const [path, zipEntry] of Object.entries(zip.files)) {
-      if (zipEntry.dir) continue;
-
-      const parts = path.split('/');
+    for (const entry of files) {
+      const parts = entry.path.split('/');
       const name = parts[parts.length - 1];
-
       if (this.isIgnored(name)) continue;
 
       const ext = '.' + name.split('.').pop()?.toLowerCase();
       if (!CODE_EXTENSIONS.has(ext)) continue;
 
-      const content = await zipEntry.async('string');
-
-      this.files.set(path, {
-        path,
+      this.files.set(entry.path, {
+        path: entry.path,
         name,
         type: 'file',
-        size: content.length,
-        content,
+        size: entry.size,
+        content: entry.content,
       });
 
       let currentPath = '';

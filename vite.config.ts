@@ -18,6 +18,14 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  worker: {
+    format: 'es',
+    rollupOptions: {
+      output: {
+        entryFileNames: 'workers/[name]-[hash].js',
+      },
+    },
+  },
   build: {
     target: 'esnext',
     minify: 'terser',
@@ -33,7 +41,7 @@ export default defineConfig({
         manualChunks: {
           'ui-vendor': ['react', 'react-dom', 'framer-motion'],
           'db-vendor': ['sql.js'],
-          'utils-vendor': ['jszip', 'jspdf'],
+          'utils-vendor': ['jspdf'],
         },
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
