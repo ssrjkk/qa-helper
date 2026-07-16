@@ -2,6 +2,7 @@ import type { UnifiedAiService } from '../api/UnifiedAiService';
 import type { CodebaseProvider } from '../codebase/CodebaseProvider';
 import type { AgentStep, AgentResult } from './types';
 import { executeTool } from './toolRegistry';
+import { parseToolCall } from '../../lib/toolParser';
 
 const AGENT_SYSTEM_PROMPT = `You are a world-class Senior QA Engineer and Test Architect acting as an autonomous AI agent. You have access to the user's codebase through tools.
 
@@ -50,21 +51,6 @@ function buildToolDescriptions(): string {
     '- read_file: Read file contents. Args: {"path": "src/file.ts"}',
     '- search_code: Search codebase by regex. Args: {"pattern": "regex", "file_extension": ".ts" (optional)}',
   ].join('\n');
-}
-
-function parseToolCall(response: string): { name: string; input: Record<string, unknown> } | null {
-  const match = response.match(/```tool\s*\n([\s\S]*?)\n```/);
-  if (!match) return null;
-
-  try {
-    const parsed = JSON.parse(match[1]);
-    if (parsed.name && typeof parsed.name === 'string' && parsed.input) {
-      return { name: parsed.name, input: parsed.input as Record<string, unknown> };
-    }
-  } catch {
-    return null;
-  }
-  return null;
 }
 
 export class QaAgent {
