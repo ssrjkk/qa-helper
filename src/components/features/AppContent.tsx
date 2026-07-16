@@ -7,7 +7,7 @@ import { useDatabase } from '../../lib/useDatabase';
 import { validateApiKey, sanitizeInput } from '../../lib';
 import { cloudSync } from '../../lib/cloudSync';
 import { QA_SYSTEM_PROMPT, SCREENSHOT_SYSTEM_PROMPT, buildPrompt, SECURITY_CONFIG } from '../../config';
-import { useClaudeApi } from '../../presentation';
+import { useClaudeApi, useUseCases } from '../../presentation';
 import { useAppStore } from '../../store/useAppStore';
 import { QaAgent } from '../../data/agent';
 import type { CodebaseProvider } from '../../data/codebase/CodebaseProvider';
@@ -46,6 +46,7 @@ export function AppContent({ db }: AppContentProps) {
   } = db;
 
   const { execute: executeApi, abort: abortApi, rateLimitInfo } = useClaudeApi();
+  const { aiService } = useUseCases();
 
   const handleExecuteRef = useRef<(() => Promise<void>) | null>(null);
 
@@ -186,7 +187,7 @@ export function AppContent({ db }: AppContentProps) {
       store.setOutput('');
       store.setAgentSteps([]);
 
-      const agent = new QaAgent(codebaseProvider, store.apiKey);
+      const agent = new QaAgent(codebaseProvider, aiService);
       agentRef.current = agent;
 
       try {
@@ -270,7 +271,7 @@ export function AppContent({ db }: AppContentProps) {
     } finally {
       store.setIsLoading(false);
     }
-  }, [store, selectedProject, executeApi, getProject, createTask, codebaseProvider]);
+  }, [store, selectedProject, executeApi, getProject, createTask, codebaseProvider, aiService]);
 
   useEffect(() => {
     handleExecuteRef.current = handleExecute;

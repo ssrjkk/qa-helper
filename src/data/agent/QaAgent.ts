@@ -1,19 +1,12 @@
+import type { UnifiedAiService } from '../api/UnifiedAiService';
 import type { CodebaseProvider } from '../codebase/CodebaseProvider';
-import type {
-  AgentStep,
-  AgentResult,
-  LlmMessage,
-  LlmContentBlock,
-  LlmResponse,
-  ToolCall,
-} from './types';
-import { QA_TOOLS } from './toolDefinitions';
+import type { AgentStep, AgentResult } from './types';
 import { executeTool } from './toolRegistry';
 
 const AGENT_SYSTEM_PROMPT = `You are a world-class Senior QA Engineer and Test Architect acting as an autonomous AI agent. You have access to the user's codebase through tools.
 
 Your capabilities:
-- Read directory structures to understand project architecture
+- List directory structures to understand project architecture
 - Read source files to understand implementation details
 - Search code for patterns, functions, classes, and references
 
@@ -34,26 +27,59 @@ Critical rules:
 
 When you have gathered enough information, produce your final comprehensive output.`;
 
+const TOOL_CALL_FORMAT = `To use a tool, respond with EXACTLY this format (no other text around it):
+
+\`\`\`tool
+{"name": "tool_name", "input": {"param": "value"}}
+\`\`\`
+
+Available tools:
+{tools}
+
+If you do NOT need a tool, simply respond with your analysis as plain text. Do NOT use tool format unless you actually need a tool.`;
+
 let stepCounter = 0;
 
 function createStepId(): string {
   return `step_${++stepCounter}_${Date.now()}`;
 }
 
+function buildToolDescriptions(): string {
+  return [
+    '- list_directory: List files and subdirectories. Args: {"path": "relative/path"} (use "" for root)',
+    '- read_file: Read file contents. Args: {"path": "src/file.ts"}',
+    '- search_code: Search codebase by regex. Args: {"pattern": "regex", "file_extension": ".ts" (optional)}',
+  ].join('\n');
+}
+
+function parseToolCall(response: string): { name: string; input: Record<string, unknown> } | null {
+  const match = response.match(/```tool\s*\n([\s\S]*?)\n```/);
+  if (!match) return null;
+
+  try {
+    const parsed = JSON.parse(match[1]);
+    if (parsed.name && typeof parsed.name === 'string' && parsed.input) {
+      return { name: parsed.name, input: parsed.input as Record<string, unknown> };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export class QaAgent {
   private codebase: CodebaseProvider;
-  private apiKey: string;
-  private abortController: AbortController | null = null;
+  private aiService: UnifiedAiService;
   private isAborted = false;
 
-  constructor(codebase: CodebaseProvider, apiKey: string) {
+  constructor(codebase: CodebaseProvider, aiService: UnifiedAiService) {
     this.codebase = codebase;
-    this.apiKey = apiKey;
+    this.aiService = aiService;
   }
 
   abort(): void {
     this.isAborted = true;
-    this.abortController?.abort();
+    this.aiService.abort();
   }
 
   async run(
@@ -66,24 +92,22 @@ export class QaAgent {
     } = {}
   ): Promise<AgentResult> {
     this.isAborted = false;
-    this.abortController = new AbortController();
-
-    const combinedSignal = options.signal
-      ? AbortSignal.any([options.signal, this.abortController.signal])
-      : this.abortController.signal;
 
     const maxIterations = options.maxIterations ?? 12;
     const steps: AgentStep[] = [];
-    const messages: LlmMessage[] = [];
-    let totalInputTokens = 0;
-    let totalOutputTokens = 0;
+    let iterations = 0;
 
     const emitStep = (step: AgentStep) => {
       steps.push(step);
       options.onStep?.(step);
     };
 
-    const structureSummary = await this.codebase.getStructureSummary();
+    let structureSummary: string;
+    try {
+      structureSummary = await this.codebase.getStructureSummary();
+    } catch {
+      structureSummary = '(unable to retrieve project structure)';
+    }
 
     const systemPrompt = `${AGENT_SYSTEM_PROMPT}
 
@@ -92,14 +116,13 @@ Connected codebase: ${this.codebase.name}
 Project structure:
 ${structureSummary}
 
-Remember: Use the tools above to explore the codebase. Start by listing directories and reading relevant files.`;
+${TOOL_CALL_FORMAT.replace('{tools}', buildToolDescriptions())}
 
-    messages.push({
-      role: 'user',
-      content: task,
-    });
+Remember: Start by listing directories and reading relevant files. Only produce final output after exploring the codebase.`;
 
-    let iterations = 0;
+    const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
+      { role: 'user', content: task },
+    ];
 
     while (iterations < maxIterations && !this.isAborted) {
       iterations++;
@@ -111,175 +134,107 @@ Remember: Use the tools above to explore the codebase. Start by listing director
         timestamp: Date.now(),
       });
 
-      const response = await this.callLlm(systemPrompt, messages, combinedSignal);
+      const conversationHistory = messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
+      const userMessage = `Previous conversation:\n${conversationHistory}\n\nContinue your analysis. If you need more information, use a tool. If you have enough information, provide your final comprehensive output.`;
 
-      if (!response) {
+      let result: { success: boolean; output?: string; error?: string };
+      try {
+        result = await this.aiService.executeWithRetry({
+          systemPrompt,
+          userMessage,
+          onChunk: options.onChunk,
+        });
+      } catch (err) {
+        if (this.isAborted) break;
         emitStep({
           id: createStepId(),
           type: 'error',
-          content: 'Failed to get response from AI model',
+          content: `API error: ${err instanceof Error ? err.message : 'Unknown error'}`,
           timestamp: Date.now(),
         });
         break;
       }
 
-      totalInputTokens += response.usage?.inputTokens || 0;
-      totalOutputTokens += response.usage?.outputTokens || 0;
-
-      if (response.text) {
+      if (!result.success || !result.output) {
         emitStep({
           id: createStepId(),
-          type: 'text',
-          content: response.text,
+          type: 'error',
+          content: result.error || 'Failed to get response from AI model',
+          timestamp: Date.now(),
+        });
+        break;
+      }
+
+      const responseText = result.output;
+
+      emitStep({
+        id: createStepId(),
+        type: 'text',
+        content: responseText,
+        timestamp: Date.now(),
+      });
+
+      const toolCall = parseToolCall(responseText);
+
+      if (toolCall) {
+        messages.push({ role: 'assistant', content: responseText });
+
+        emitStep({
+          id: createStepId(),
+          type: 'tool_call',
+          content: `Using ${toolCall.name}...`,
+          toolName: toolCall.name,
+          toolInput: toolCall.input,
           timestamp: Date.now(),
         });
 
-        options.onChunk?.(response.text);
-      }
-
-      if (response.stop_reason === 'end_turn' || response.stop_reason === 'max_tokens') {
-        return {
-          output: response.text,
-          steps,
-          totalTokens: totalInputTokens + totalOutputTokens,
-          iterations,
-        };
-      }
-
-      if (response.stop_reason === 'tool_use' && response.toolCalls.length > 0) {
-        const assistantContent: LlmContentBlock[] = [];
-
-        if (response.text) {
-          assistantContent.push({ type: 'text', text: response.text });
+        let toolResult: Awaited<ReturnType<typeof executeTool>>;
+        try {
+          toolResult = await executeTool(
+            { id: `tc_${iterations}`, name: toolCall.name, input: toolCall.input },
+            this.codebase
+          );
+        } catch (err) {
+          toolResult = {
+            tool_use_id: `tc_${iterations}`,
+            content: `Tool error: ${err instanceof Error ? err.message : String(err)}`,
+            is_error: true,
+          };
         }
 
-        for (const toolCall of response.toolCalls) {
-          assistantContent.push({
-            type: 'tool_use',
-            id: toolCall.id,
-            name: toolCall.name,
-            input: toolCall.input,
-          });
-        }
+        const truncatedContent = toolResult.content.length > 15000
+          ? toolResult.content.slice(0, 15000) + '\n... (truncated)'
+          : toolResult.content;
 
-        messages.push({ role: 'assistant', content: assistantContent });
+        emitStep({
+          id: createStepId(),
+          type: 'tool_result',
+          content: truncatedContent.slice(0, 200) + (truncatedContent.length > 200 ? '...' : ''),
+          toolName: toolCall.name,
+          toolOutput: truncatedContent,
+          timestamp: Date.now(),
+        });
 
-        const toolResults: LlmContentBlock[] = [];
+        messages.push({
+          role: 'user',
+          content: `TOOL RESULT (${toolCall.name}):\n${truncatedContent}`,
+        });
 
-        for (const toolCall of response.toolCalls) {
-          if (this.isAborted) break;
-
-          emitStep({
-            id: createStepId(),
-            type: 'tool_call',
-            content: `Using ${toolCall.name}...`,
-            toolName: toolCall.name,
-            toolInput: toolCall.input,
-            timestamp: Date.now(),
-          });
-
-          const result = await executeTool(toolCall, this.codebase);
-
-          const truncatedContent = result.content.length > 15000
-            ? result.content.slice(0, 15000) + '\n... (truncated)'
-            : result.content;
-
-          emitStep({
-            id: createStepId(),
-            type: 'tool_result',
-            content: truncatedContent.slice(0, 200) + (truncatedContent.length > 200 ? '...' : ''),
-            toolName: toolCall.name,
-            toolOutput: truncatedContent,
-            timestamp: Date.now(),
-          });
-
-          toolResults.push({
-            type: 'tool_result',
-            tool_use_id: result.tool_use_id,
-            content: truncatedContent,
-            is_error: result.is_error,
-          });
-        }
-
-        messages.push({ role: 'user', content: toolResults });
+        continue;
       }
+
+      return {
+        output: responseText,
+        steps,
+        iterations,
+      };
     }
 
     const lastTextStep = [...steps].reverse().find(s => s.type === 'text');
     return {
       output: lastTextStep?.content || 'Agent completed without generating output.',
       steps,
-      totalTokens: totalInputTokens + totalOutputTokens,
       iterations,
     };
-  }
-
-  private async callLlm(
-    systemPrompt: string,
-    messages: LlmMessage[],
-    signal: AbortSignal
-  ): Promise<LlmResponse | null> {
-    const claudeApiUrl = 'https://api.anthropic.com/v1/messages';
-
-    const body = {
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 8192,
-      system: systemPrompt,
-      messages: messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      })),
-      tools: QA_TOOLS,
-    };
-
-    try {
-      const response = await fetch(claudeApiUrl, {
-        method: 'POST',
-        headers: {
-          'x-api-key': this.apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(body),
-        signal,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('LLM API error:', response.status, errorData);
-        return null;
-      }
-
-      const data = await response.json();
-
-      const textParts: string[] = [];
-      const toolCalls: ToolCall[] = [];
-
-      for (const block of data.content || []) {
-        if (block.type === 'text') {
-          textParts.push(block.text);
-        } else if (block.type === 'tool_use') {
-          toolCalls.push({
-            id: block.id,
-            name: block.name,
-            input: block.input,
-          });
-        }
-      }
-
-      return {
-        content: data.content || [],
-        stop_reason: data.stop_reason,
-        text: textParts.join(''),
-        toolCalls,
-        usage: data.usage
-          ? { inputTokens: data.usage.input_tokens, outputTokens: data.usage.output_tokens }
-          : undefined,
-      };
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return null;
-      console.error('LLM call failed:', err);
-      return null;
-    }
   }
 }

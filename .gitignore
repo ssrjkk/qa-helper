@@ -8,3 +8,7 @@ dist/
 desktop.ini
 .DS_Store
 coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/

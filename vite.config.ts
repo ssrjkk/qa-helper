@@ -9,4 +9,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'ui-vendor': ['react', 'react-dom', 'framer-motion'],
+          'db-vendor': ['sql.js'],
+          'utils-vendor': ['jszip', 'jspdf'],
+        },
+      },
+    },
+  },
 })
