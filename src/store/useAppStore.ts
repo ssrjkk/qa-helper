@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
 import type { MemoryEntry } from '../types/memory';
 import type { AgentStep } from '../data/agent/types';
 
@@ -66,81 +67,79 @@ interface AppState {
   resetTask: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  selectedTask: null,
-  setSelectedTask: (task) => set({ selectedTask: task }),
+export const useAppStore = create<AppState>()(
+  immer((set) => ({
+    selectedTask: null,
+    setSelectedTask: (task) => set((state) => { state.selectedTask = task; }),
 
-  context: '',
-  setContext: (context) => set({ context }),
-
-  output: '',
-  setOutput: (output) => set((state) => ({
-    output: typeof output === 'function' ? output(state.output) : output,
-  })),
-
-  screenshotBase64: null,
-  setScreenshotBase64: (screenshot) => set({ screenshotBase64: screenshot }),
-
-  selectedProject: null,
-  setSelectedProject: (id) => set({ selectedProject: id }),
-
-  currentMemory: '',
-  setCurrentMemory: (memory) => set({ currentMemory: memory }),
-
-  memoryEntries: [],
-  setMemoryEntries: (entries) => set({ memoryEntries: entries }),
-  addMemoryEntry: (entry) => set((state) => ({
-    memoryEntries: [...state.memoryEntries, entry]
-  })),
-  removeMemoryEntry: (id) => set((state) => ({
-    memoryEntries: state.memoryEntries.filter((e) => e.id !== id)
-  })),
-  updateMemoryEntry: (id, updates) => set((state) => ({
-    memoryEntries: state.memoryEntries.map((e) =>
-      e.id === id ? { ...e, ...updates } : e
-    )
-  })),
-
-  sessions: [],
-  setSessions: (sessions) => set({ sessions }),
-  addSession: (session) => set((state) => ({
-    sessions: [session, ...state.sessions].slice(0, 50)
-  })),
-
-  showApiKeyInput: false,
-  setShowApiKeyInput: (show) => set({ showApiKeyInput: show }),
-
-  isLoading: false,
-  setIsLoading: (loading) => set({ isLoading: loading }),
-
-  error: null,
-  setError: (error) => set({ error }),
-
-  apiKey: '',
-  setApiKey: (key) => set({ apiKey: key }),
-
-  apiKeyValid: false,
-  setApiKeyValid: (valid) => set({ apiKeyValid: valid }),
-
-  agentSteps: [],
-  setAgentSteps: (steps) => set((state) => ({
-    agentSteps: typeof steps === 'function' ? steps(state.agentSteps) : steps,
-  })),
-  addAgentStep: (step) => set((state) => ({
-    agentSteps: [...state.agentSteps, step],
-  })),
-
-  mode: 'prompt',
-  setMode: (mode) => set({ mode }),
-
-  codebaseLoaded: false,
-  setCodebaseLoaded: (loaded) => set({ codebaseLoaded: loaded }),
-
-  resetTask: () => set({
     context: '',
+    setContext: (context) => set((state) => { state.context = context; }),
+
     output: '',
+    setOutput: (output) => set((state) => {
+      state.output = typeof output === 'function' ? output(state.output) : output;
+    }),
+
     screenshotBase64: null,
+    setScreenshotBase64: (screenshot) => set((state) => { state.screenshotBase64 = screenshot; }),
+
+    selectedProject: null,
+    setSelectedProject: (id) => set((state) => { state.selectedProject = id; }),
+
+    currentMemory: '',
+    setCurrentMemory: (memory) => set((state) => { state.currentMemory = memory; }),
+
+    memoryEntries: [],
+    setMemoryEntries: (entries) => set((state) => { state.memoryEntries = entries; }),
+    addMemoryEntry: (entry) => set((state) => { state.memoryEntries.push(entry); }),
+    removeMemoryEntry: (id) => set((state) => {
+      state.memoryEntries = state.memoryEntries.filter((e) => e.id !== id);
+    }),
+    updateMemoryEntry: (id, updates) => set((state) => {
+      const entry = state.memoryEntries.find((e) => e.id === id);
+      if (entry) Object.assign(entry, updates);
+    }),
+
+    sessions: [],
+    setSessions: (sessions) => set((state) => { state.sessions = sessions; }),
+    addSession: (session) => set((state) => {
+      state.sessions.unshift(session);
+      if (state.sessions.length > 50) state.sessions.length = 50;
+    }),
+
+    showApiKeyInput: false,
+    setShowApiKeyInput: (show) => set((state) => { state.showApiKeyInput = show; }),
+
+    isLoading: false,
+    setIsLoading: (loading) => set((state) => { state.isLoading = loading; }),
+
     error: null,
+    setError: (error) => set((state) => { state.error = error; }),
+
+    apiKey: '',
+    setApiKey: (key) => set((state) => { state.apiKey = key; }),
+
+    apiKeyValid: false,
+    setApiKeyValid: (valid) => set((state) => { state.apiKeyValid = valid; }),
+
     agentSteps: [],
-  }),
-}));
+    setAgentSteps: (steps) => set((state) => {
+      state.agentSteps = typeof steps === 'function' ? steps(state.agentSteps) : steps;
+    }),
+    addAgentStep: (step) => set((state) => { state.agentSteps.push(step); }),
+
+    mode: 'prompt',
+    setMode: (mode) => set((state) => { state.mode = mode; }),
+
+    codebaseLoaded: false,
+    setCodebaseLoaded: (loaded) => set((state) => { state.codebaseLoaded = loaded; }),
+
+    resetTask: () => set((state) => {
+      state.context = '';
+      state.output = '';
+      state.screenshotBase64 = null;
+      state.error = null;
+      state.agentSteps = [];
+    }),
+  }))
+);

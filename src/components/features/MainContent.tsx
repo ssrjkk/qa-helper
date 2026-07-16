@@ -1,10 +1,8 @@
 import { useState, RefObject } from 'react';
 import { motion } from 'framer-motion';
 import { TaskSelector } from './TaskSelector';
-import { ChatArea } from './ChatArea';
 import { ScreenshotUploader } from './ScreenshotUploader';
-import { SessionHistory } from './SessionHistory';
-import { CodebasePanel } from './CodebasePanel';
+import { LazyChatArea, LazyCodebasePanel, LazySessionHistory, LazySuspense } from './LazyComponents';
 import type { TabType } from '../../types';
 import type { AgentStep } from '../../data/agent/types';
 import type { CodebaseProvider } from '../../data/codebase/CodebaseProvider';
@@ -85,25 +83,27 @@ export function MainContent({
           onScreenshotChange={() => {}}
         />
         
-        <ChatArea
-          context={context}
-          onContextChange={onContextChange}
-          output={output}
-          loading={loading}
-          error={error}
-          maxContextLength={maxContextLength}
-          selectedTask={selectedTask}
-          apiKeyValid={apiKeyValid}
-          onExecute={onExecute}
-          onReset={onReset}
-          onCopy={onCopy}
-          contextError={contextError}
-          onContextError={onContextError}
-          outputRef={outputRef}
-          agentSteps={agentSteps}
-          agentMode={agentMode}
-          codebaseConnected={codebaseConnected}
-        />
+        <LazySuspense>
+          <LazyChatArea
+            context={context}
+            onContextChange={onContextChange}
+            output={output}
+            loading={loading}
+            error={error}
+            maxContextLength={maxContextLength}
+            selectedTask={selectedTask}
+            apiKeyValid={apiKeyValid}
+            onExecute={onExecute}
+            onReset={onReset}
+            onCopy={onCopy}
+            contextError={contextError}
+            onContextError={onContextError}
+            outputRef={outputRef}
+            agentSteps={agentSteps}
+            agentMode={agentMode}
+            codebaseConnected={codebaseConnected}
+          />
+        </LazySuspense>
       </div>
     );
   }
@@ -141,20 +141,24 @@ export function MainContent({
       </div>
 
       {activeTab === 'history' ? (
-        <SessionHistory
-          sessions={sessions}
-          onLoadSession={onLoadSession}
-          onClearHistory={onClearHistory}
-        />
+        <LazySuspense>
+          <LazySessionHistory
+            sessions={sessions}
+            onLoadSession={onLoadSession}
+            onClearHistory={onClearHistory}
+          />
+        </LazySuspense>
       ) : (
         <>
           <TaskSelector selectedTask={selectedTask} onSelect={onSelectTask} />
 
-          <CodebasePanel
-            provider={codebaseProvider ?? null}
-            onConnect={onCodebaseConnect ?? (() => {})}
-            onDisconnect={onCodebaseDisconnect ?? (() => {})}
-          />
+          <LazySuspense>
+            <LazyCodebasePanel
+              provider={codebaseProvider ?? null}
+              onConnect={onCodebaseConnect ?? (() => {})}
+              onDisconnect={onCodebaseDisconnect ?? (() => {})}
+            />
+          </LazySuspense>
 
           {codebaseConnected && onModeChange && (
             <div className="flex items-center gap-2 p-1 bg-white/5 rounded-lg">
@@ -184,25 +188,27 @@ export function MainContent({
           )}
           
           {selectedTask && (
-            <ChatArea
-              context={context}
-              onContextChange={onContextChange}
-              output={output}
-              loading={loading}
-              error={error}
-              maxContextLength={maxContextLength}
-              selectedTask={selectedTask}
-              apiKeyValid={apiKeyValid}
-              onExecute={onExecute}
-              onReset={onReset}
-              onCopy={onCopy}
-              contextError={contextError}
-              onContextError={onContextError}
-              outputRef={outputRef}
-              agentSteps={agentSteps}
-              agentMode={agentMode}
-              codebaseConnected={codebaseConnected}
-            />
+            <LazySuspense>
+              <LazyChatArea
+                context={context}
+                onContextChange={onContextChange}
+                output={output}
+                loading={loading}
+                error={error}
+                maxContextLength={maxContextLength}
+                selectedTask={selectedTask}
+                apiKeyValid={apiKeyValid}
+                onExecute={onExecute}
+                onReset={onReset}
+                onCopy={onCopy}
+                contextError={contextError}
+                onContextError={onContextError}
+                outputRef={outputRef}
+                agentSteps={agentSteps}
+                agentMode={agentMode}
+                codebaseConnected={codebaseConnected}
+              />
+            </LazySuspense>
           )}
         </>
       )}
