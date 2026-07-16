@@ -4,7 +4,9 @@ import { GlassCard, RippleButton, AutoResizeTextarea } from '../ui';
 import { ExportPanel } from './ExportPanel';
 import { MetricsDashboard } from './MetricsDashboard';
 import { ContextPresets } from './ContextPresets';
+import { AgentTimeline } from './AgentTimeline';
 import { useHistory } from '../../lib/useHistory';
+import type { AgentStep } from '../../data/agent/types';
 
 interface ChatAreaProps {
   context: string;
@@ -21,6 +23,9 @@ interface ChatAreaProps {
   contextError: string | null;
   onContextError: (error: string | null) => void;
   outputRef?: RefObject<HTMLDivElement | null>;
+  agentSteps?: AgentStep[];
+  agentMode?: boolean;
+  codebaseConnected?: boolean;
 }
 
 function LoadingIndicator() {
@@ -66,6 +71,9 @@ export function ChatArea({
   contextError,
   onContextError,
   outputRef: externalRef,
+  agentSteps,
+  agentMode: _agentMode,
+  codebaseConnected: _codebaseConnected,
 }: ChatAreaProps) {
   const internalRef = useRef<HTMLDivElement>(null);
   const outputRef = useMemo(() => externalRef || internalRef, [externalRef]);
@@ -296,6 +304,12 @@ export function ChatArea({
                   </div>
                 )}
               </div>
+
+              {agentSteps && agentSteps.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <AgentTimeline steps={agentSteps} isRunning={loading} />
+                </div>
+              )}
 
               {loading && output.length > 100 && (
                 <div className="mt-3 pt-3 border-t border-white/5">

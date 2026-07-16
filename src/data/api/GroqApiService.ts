@@ -82,8 +82,9 @@ export class GroqApiService {
     userMessage: string;
     signal?: AbortSignal;
     taskType?: string;
+    onChunk?: (text: string) => void;
   }): Promise<ApiResult> {
-    const { systemPrompt, userMessage, signal, taskType } = options;
+    const { systemPrompt, userMessage, signal, taskType, onChunk } = options;
     const startTime = Date.now();
 
     if (!this.apiKey) {
@@ -153,6 +154,7 @@ export class GroqApiService {
               const parsed: GroqStreamChunk = JSON.parse(data);
               if (parsed.choices?.[0]?.delta?.content) {
                 fullResponse += parsed.choices[0].delta.content;
+                onChunk?.(parsed.choices[0].delta.content);
               }
               if (parsed.usage) {
                 inputTokens = parsed.usage.prompt_tokens;
@@ -192,6 +194,7 @@ export class GroqApiService {
     taskType?: string;
     maxRetries?: number;
     onRetryAttempt?: (attempt: number, delay: number, error: string) => void;
+    onChunk?: (text: string) => void;
   }): Promise<ApiResult> {
     const maxRetries = options.maxRetries ?? 3;
     let lastError = '';

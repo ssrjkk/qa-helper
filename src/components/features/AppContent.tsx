@@ -9,6 +9,8 @@ import { cloudSync } from '../../lib/cloudSync';
 import { QA_SYSTEM_PROMPT, SCREENSHOT_SYSTEM_PROMPT, buildPrompt, SECURITY_CONFIG } from '../../config';
 import { useClaudeApi } from '../../presentation';
 import { useAppStore } from '../../store/useAppStore';
+import { QaAgent } from '../../data/agent';
+import type { CodebaseProvider } from '../../data/codebase/CodebaseProvider';
 import type { Project } from '../../types';
 import type { MemoryEntry } from '../../types/memory';
 
@@ -24,6 +26,8 @@ export function AppContent({ db }: AppContentProps) {
   const { toggleTheme } = useTheme();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [contextError, setContextError] = useState<string | null>(null);
+  const [codebaseProvider, setCodebaseProvider] = useState<CodebaseProvider | null>(null);
+  const agentRef = useRef<QaAgent | null>(null);
 
   const {
     projects,
@@ -162,10 +166,64 @@ export function AppContent({ db }: AppContentProps) {
     [createProject, store],
   );
 
+  const handleCodebaseConnect = useCallback((provider: CodebaseProvider) => {
+    setCodebaseProvider(provider);
+    store.setCodebaseLoaded(true);
+  }, [store]);
+
+  const handleCodebaseDisconnect = useCallback(() => {
+    setCodebaseProvider(null);
+    store.setCodebaseLoaded(false);
+    agentRef.current = null;
+  }, [store]);
+
   const handleExecute = useCallback(async () => {
     if (!store.selectedTask || !store.apiKey) return;
-    store.setIsLoading(true);
-    store.setError(null);
+
+    if (store.mode === 'agent' && codebaseProvider) {
+      store.setIsLoading(true);
+      store.setError(null);
+      store.setOutput('');
+      store.setAgentSteps([]);
+
+      const agent = new QaAgent(codebaseProvider, store.apiKey);
+      agentRef.current = agent;
+
+      try {
+        const result = await agent.run(store.context, {
+          onChunk: (chunk) => {
+            store.setOutput((prev) => prev + chunk);
+          },
+          onStep: (step) => {
+            store.addAgentStep(step);
+          },
+        });
+
+        if (result.output) {
+          store.setOutput(result.output);
+          if (selectedProject && store.selectedTask) {
+            createTask({
+              projectId: selectedProject,
+              taskType: store.selectedTask,
+              context: store.context,
+              output: result.output,
+            });
+            store.addSession({
+              task_type: store.selectedTask,
+              context: store.context,
+              output: result.output,
+              created_at: new Date().toISOString(),
+            });
+          }
+        }
+      } catch (err) {
+        store.setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        store.setIsLoading(false);
+        agentRef.current = null;
+      }
+      return;
+    }
 
     let systemPrompt = QA_SYSTEM_PROMPT;
     let userPrompt = store.context;
@@ -185,6 +243,9 @@ export function AppContent({ db }: AppContentProps) {
         systemPrompt,
         userMessage: userPrompt,
         screenshotBase64: store.screenshotBase64,
+        onChunk: (chunk) => {
+          store.setOutput((prev) => prev + chunk);
+        },
       });
 
       if (result.success && result.output) {
@@ -209,13 +270,14 @@ export function AppContent({ db }: AppContentProps) {
     } finally {
       store.setIsLoading(false);
     }
-  }, [store, selectedProject, executeApi, getProject, createTask]);
+  }, [store, selectedProject, executeApi, getProject, createTask, codebaseProvider]);
 
   useEffect(() => {
     handleExecuteRef.current = handleExecute;
   }, [handleExecute]);
 
   const handleReset = useCallback(() => {
+    agentRef.current?.abort();
     abortApi();
     store.resetTask();
     setContextError(null);
@@ -320,6 +382,13 @@ export function AppContent({ db }: AppContentProps) {
       sessions={store.sessions}
       onLoadSession={handleLoadSession}
       onClearHistory={() => selectedProject && clearConversationHistory(selectedProject)}
+      agentSteps={store.agentSteps}
+      agentMode={store.mode === 'agent'}
+      codebaseConnected={!!codebaseProvider}
+      onModeChange={store.setMode}
+      codebaseProvider={codebaseProvider}
+      onCodebaseConnect={handleCodebaseConnect}
+      onCodebaseDisconnect={handleCodebaseDisconnect}
     />
   );
 

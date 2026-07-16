@@ -19,6 +19,7 @@
     "@tanstack/react-virtual": "^3.13.23",
     "framer-motion": "^11.3.0",
     "jspdf": "^4.2.1",
+    "jszip": "^3.10.1",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "sql.js": "^1.10.0",

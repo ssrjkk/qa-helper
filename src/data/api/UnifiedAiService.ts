@@ -13,6 +13,7 @@ export interface UnifiedAiService {
     screenshotBase64?: string | null;
     signal?: AbortSignal;
     taskType?: string;
+    onChunk?: (text: string) => void;
   }): Promise<ApiResult>;
 
   executeWithRetry(options: {
@@ -23,6 +24,7 @@ export interface UnifiedAiService {
     taskType?: string;
     maxRetries?: number;
     onRetryAttempt?: (attempt: number, delay: number, error: string) => void;
+    onChunk?: (text: string) => void;
   }): Promise<ApiResult>;
 
   abort(): void;
@@ -183,6 +185,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     screenshotBase64?: string | null;
     signal?: AbortSignal;
     taskType?: string;
+    onChunk?: (text: string) => void;
   }): Promise<ApiResult> {
     switch (this.currentProvider) {
       case 'claude':
@@ -234,6 +237,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     taskType?: string;
     maxRetries?: number;
     onRetryAttempt?: (attempt: number, delay: number, error: string) => void;
+    onChunk?: (text: string) => void;
   }): Promise<ApiResult> {
     switch (this.currentProvider) {
       case 'claude':

@@ -39,6 +39,15 @@ export interface ApiResult {
   usage?: { outputTokens?: number; inputTokens?: number };
 }
 
+export interface ExecuteOptions {
+  systemPrompt: string;
+  userMessage: string;
+  screenshotBase64?: string | null;
+  signal?: AbortSignal;
+  taskType?: string;
+  onChunk?: (text: string) => void;
+}
+
 export interface RateLimitInfo {
   remaining: number;
   resetIn: number;

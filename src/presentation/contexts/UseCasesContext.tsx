@@ -197,7 +197,8 @@ export function useClaudeApi() {
       signal: controller.signal,
       onRetryAttempt: (attempt, delay, err) => {
         setRetryInfo({ attempt, delay, error: err, isRetrying: true });
-      }
+      },
+      onChunk: options.onChunk,
     });
 
     setIsLoading(false);

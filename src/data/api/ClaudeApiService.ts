@@ -62,8 +62,9 @@ export class ClaudeApiService {
     screenshotBase64?: string | null;
     signal?: AbortSignal;
     taskType?: string;
+    onChunk?: (text: string) => void;
   }): Promise<ApiResult> {
-    const { apiKey, systemPrompt, userMessage, screenshotBase64, signal, taskType } = options;
+    const { apiKey, systemPrompt, userMessage, screenshotBase64, signal, taskType, onChunk } = options;
     const startTime = Date.now();
 
     if (!apiKey) {
@@ -146,6 +147,7 @@ export class ClaudeApiService {
               const parsed = JSON.parse(data);
               if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
                 fullResponse += parsed.delta.text;
+                onChunk?.(parsed.delta.text);
               }
               if (parsed.type === 'message_delta' && parsed.usage?.output_tokens) {
                 outputTokens = parsed.usage.output_tokens;
@@ -188,6 +190,7 @@ export class ClaudeApiService {
       maxRetries?: number;
       signal?: AbortSignal;
       onRetryAttempt?: (attempt: number, delay: number, error: string) => void;
+      onChunk?: (text: string) => void;
     }
   ): Promise<ApiResult> {
     const maxRetries = options.maxRetries ?? 3;

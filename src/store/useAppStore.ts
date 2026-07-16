@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { MemoryEntry } from '../types/memory';
+import type { AgentStep } from '../data/agent/types';
 
 interface Session {
   task_type: string;
@@ -16,7 +17,7 @@ interface AppState {
   setContext: (context: string) => void;
 
   output: string;
-  setOutput: (output: string) => void;
+  setOutput: (output: string | ((prev: string) => string)) => void;
 
   screenshotBase64: string | null;
   setScreenshotBase64: (screenshot: string | null) => void;
@@ -52,6 +53,16 @@ interface AppState {
   apiKeyValid: boolean;
   setApiKeyValid: (valid: boolean) => void;
 
+  agentSteps: AgentStep[];
+  setAgentSteps: (steps: AgentStep[] | ((prev: AgentStep[]) => AgentStep[])) => void;
+  addAgentStep: (step: AgentStep) => void;
+
+  mode: 'prompt' | 'agent';
+  setMode: (mode: 'prompt' | 'agent') => void;
+
+  codebaseLoaded: boolean;
+  setCodebaseLoaded: (loaded: boolean) => void;
+
   resetTask: () => void;
 }
 
@@ -63,7 +74,9 @@ export const useAppStore = create<AppState>((set) => ({
   setContext: (context) => set({ context }),
 
   output: '',
-  setOutput: (output) => set({ output }),
+  setOutput: (output) => set((state) => ({
+    output: typeof output === 'function' ? output(state.output) : output,
+  })),
 
   screenshotBase64: null,
   setScreenshotBase64: (screenshot) => set({ screenshotBase64: screenshot }),
@@ -76,22 +89,22 @@ export const useAppStore = create<AppState>((set) => ({
 
   memoryEntries: [],
   setMemoryEntries: (entries) => set({ memoryEntries: entries }),
-  addMemoryEntry: (entry) => set((state) => ({ 
-    memoryEntries: [...state.memoryEntries, entry] 
+  addMemoryEntry: (entry) => set((state) => ({
+    memoryEntries: [...state.memoryEntries, entry]
   })),
-  removeMemoryEntry: (id) => set((state) => ({ 
-    memoryEntries: state.memoryEntries.filter((e) => e.id !== id) 
+  removeMemoryEntry: (id) => set((state) => ({
+    memoryEntries: state.memoryEntries.filter((e) => e.id !== id)
   })),
   updateMemoryEntry: (id, updates) => set((state) => ({
-    memoryEntries: state.memoryEntries.map((e) => 
+    memoryEntries: state.memoryEntries.map((e) =>
       e.id === id ? { ...e, ...updates } : e
     )
   })),
 
   sessions: [],
   setSessions: (sessions) => set({ sessions }),
-  addSession: (session) => set((state) => ({ 
-    sessions: [session, ...state.sessions].slice(0, 50) 
+  addSession: (session) => set((state) => ({
+    sessions: [session, ...state.sessions].slice(0, 50)
   })),
 
   showApiKeyInput: false,
@@ -109,10 +122,25 @@ export const useAppStore = create<AppState>((set) => ({
   apiKeyValid: false,
   setApiKeyValid: (valid) => set({ apiKeyValid: valid }),
 
-  resetTask: () => set({ 
-    context: '', 
-    output: '', 
+  agentSteps: [],
+  setAgentSteps: (steps) => set((state) => ({
+    agentSteps: typeof steps === 'function' ? steps(state.agentSteps) : steps,
+  })),
+  addAgentStep: (step) => set((state) => ({
+    agentSteps: [...state.agentSteps, step],
+  })),
+
+  mode: 'prompt',
+  setMode: (mode) => set({ mode }),
+
+  codebaseLoaded: false,
+  setCodebaseLoaded: (loaded) => set({ codebaseLoaded: loaded }),
+
+  resetTask: () => set({
+    context: '',
+    output: '',
     screenshotBase64: null,
-    error: null 
+    error: null,
+    agentSteps: [],
   }),
 }));
