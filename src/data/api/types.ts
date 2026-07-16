@@ -61,7 +61,19 @@ export interface AiModel {
   maxTokens: number;
   supportsVision: boolean;
   free?: boolean;
+  default?: boolean;
   description?: string;
+}
+
+export function getDefaultModelForProvider(provider: AiProvider): AiModel {
+  const models = PROVIDER_MODELS[provider];
+  return models.find(m => m.default) ?? models[0];
+}
+
+export function getVisionProviders(): AiProvider[] {
+  return (Object.keys(PROVIDER_MODELS) as AiProvider[]).filter(p =>
+    PROVIDER_MODELS[p].some(m => m.supportsVision)
+  );
 }
 
 export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
@@ -73,6 +85,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       maxTokens: 8192,
       supportsVision: true,
       free: false,
+      default: true,
     },
     {
       id: 'claude-3-5-sonnet-20241022',
@@ -99,6 +112,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       maxTokens: 8192,
       supportsVision: false,
       free: true,
+      default: true,
       description: 'Best speed/quality balance',
     },
     {
@@ -144,6 +158,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       maxTokens: 16384,
       supportsVision: true,
       free: false,
+      default: true,
     },
     {
       id: 'gpt-4-turbo',
@@ -171,6 +186,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       maxTokens: 8192,
       supportsVision: true,
       free: true,
+      default: true,
     },
     {
       id: 'gemini-1.5-pro',
@@ -197,6 +213,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       maxTokens: 8192,
       supportsVision: false,
       free: true,
+      default: true,
       description: 'Best free model on OpenRouter',
     },
     {
@@ -248,6 +265,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       maxTokens: 8192,
       supportsVision: false,
       free: true,
+      default: true,
       description: 'Truly free, no credit card',
     },
     {
@@ -268,6 +286,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       maxTokens: 32768,
       supportsVision: false,
       free: true,
+      default: true,
     },
     {
       id: 'Qwen/Qwen2.5-72B-Instruct',
@@ -302,6 +321,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       maxTokens: 8192,
       supportsVision: false,
       free: true,
+      default: true,
     },
     {
       id: 'qwen/qwen2.5-72b-instruct',
@@ -336,6 +356,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       maxTokens: 32768,
       supportsVision: false,
       free: true,
+      default: true,
     },
     {
       id: 'qwen2.5-72b-instruct',

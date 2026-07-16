@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo, useRef, useState, useCallbac
 import type { Database } from '../../types';
 import { ProjectRepository, TaskRepository, MemoryRepository } from '../../data/repositories';
 import { ProjectUseCases, TaskUseCases, MemoryUseCases } from '../../domain/usecases';
-import { UnifiedAiService, createUnifiedAiService, type AiProvider } from '../../data/api';
+import { UnifiedAiService, createUnifiedAiService, type AiProvider, getDefaultModelForProvider } from '../../data/api';
 import { RateLimiter } from '../../lib/rateLimiter';
 import { SECURITY_CONFIG } from '../../config';
 
@@ -42,7 +42,7 @@ export function UseCasesProvider({ children, db, saveDb }: UseCasesProviderProps
     novita: '',
     lepton: '',
   });
-  const [currentModel, setCurrentModel] = useState<string>('claude-sonnet-4-20250514');
+  const [currentModel, setCurrentModel] = useState<string>(getDefaultModelForProvider('claude').id);
 
   const handleSetApiKey = useCallback((provider: AiProvider, key: string) => {
     setApiKeys(prev => ({ ...prev, [provider]: key }));
@@ -54,20 +54,7 @@ export function UseCasesProvider({ children, db, saveDb }: UseCasesProviderProps
   const handleSetCurrentProvider = useCallback((provider: AiProvider) => {
     setCurrentProvider(provider);
     aiService.setProvider(provider, apiKeys[provider]);
-    
-    const defaultModels: Record<AiProvider, string> = {
-      claude: 'claude-sonnet-4-20250514',
-      groq: 'llama-3.3-70b-versatile',
-      openai: 'gpt-4o-mini',
-      gemini: 'gemini-1.5-flash',
-      openrouter: 'deepseek/deepseek-chat',
-      deepseek: 'deepseek-chat',
-      together: 'meta-llama/Llama-3.3-70B-Instruct',
-      novita: 'deepseek/deepseek-chat',
-      lepton: 'llama-3.3-70b-instruct',
-    };
-    
-    setCurrentModel(defaultModels[provider]);
+    setCurrentModel(getDefaultModelForProvider(provider).id);
   }, [aiService, apiKeys]);
 
   const handleSetCurrentModel = useCallback((model: string) => {
