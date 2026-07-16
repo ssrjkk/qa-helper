@@ -5,6 +5,7 @@ import { OpenRouterApiService } from './OpenRouterApiService';
 import { DeepSeekApiService } from './DeepSeekApiService';
 import { TogetherApiService } from './TogetherApiService';
 import { NovitaApiService } from './NovitaApiService';
+import { CircuitBreaker } from '../../lib/circuitBreaker';
 
 export interface UnifiedAiService {
   execute(options: {
@@ -44,6 +45,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
   private novitaService: NovitaApiService;
   private currentProvider: AiProvider = 'claude';
   private currentApiKey = '';
+  private circuitBreakers: Map<AiProvider, CircuitBreaker> = new Map();
 
   constructor() {
     this.claudeService = new ClaudeApiService({
@@ -83,6 +85,20 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
       model: 'deepseek/deepseek-chat',
       maxTokens: 8192,
     });
+
+    const providers: AiProvider[] = ['claude', 'groq', 'openrouter', 'deepseek', 'together', 'novita'];
+    for (const p of providers) {
+      this.circuitBreakers.set(p, new CircuitBreaker({
+        failureThreshold: 3,
+        resetTimeout: 60000,
+        monitoringWindow: 30000,
+      }));
+    }
+  }
+
+  /** Get the circuit breaker for a specific provider. */
+  getCircuitBreaker(provider: AiProvider): CircuitBreaker | undefined {
+    return this.circuitBreakers.get(provider);
   }
 
   setProvider(provider: AiProvider, apiKey?: string, model?: string): void {
@@ -187,47 +203,83 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     taskType?: string;
     onChunk?: (text: string) => void;
   }): Promise<ApiResult> {
-    switch (this.currentProvider) {
-      case 'claude':
-        return this.claudeService.execute({
-          apiKey: this.currentApiKey,
-          ...options,
-        });
-      case 'groq':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'Groq API key is required. Get one free at https://console.groq.com' };
-        }
-        this.groqService.setApiKey(this.currentApiKey);
-        return this.groqService.execute({
-          ...options,
-        });
-      case 'openrouter':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'OpenRouter API key is required. Get one free at https://openrouter.ai/keys' };
-        }
-        this.openRouterService.setApiKey(this.currentApiKey);
-        return this.openRouterService.execute(options);
-      case 'deepseek':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'DeepSeek API key is required. Get one free at https://platform.deepseek.com' };
-        }
-        this.deepSeekService.setApiKey(this.currentApiKey);
-        return this.deepSeekService.execute(options);
-      case 'together':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'Together AI API key is required. Get one free at https://api.together.ai' };
-        }
-        this.togetherService.setApiKey(this.currentApiKey);
-        return this.togetherService.execute(options);
-      case 'novita':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'Novita AI API key is required. Get one free at https://novita.ai' };
-        }
-        this.novitaService.setApiKey(this.currentApiKey);
-        return this.novitaService.execute(options);
-      default:
-        return { success: false, error: `Provider ${this.currentProvider} not implemented` };
+    const cb = this.circuitBreakers.get(this.currentProvider);
+    if (cb && cb.getState() === 'open') {
+      const stats = cb.getStats();
+      const remainingMs = 60000 - (Date.now() - stats.lastStateChangeTime);
+      return {
+        success: false,
+        error: `Service temporarily unavailable (circuit breaker open). Retry in ${Math.ceil(remainingMs / 1000)}s.`,
+      };
     }
+
+    let result: ApiResult;
+    try {
+      switch (this.currentProvider) {
+        case 'claude':
+          result = await this.claudeService.execute({
+            apiKey: this.currentApiKey,
+            ...options,
+          });
+          break;
+        case 'groq':
+          if (!this.currentApiKey) {
+            result = { success: false, error: 'Groq API key is required. Get one free at https://console.groq.com' };
+            return result;
+          }
+          this.groqService.setApiKey(this.currentApiKey);
+          result = await this.groqService.execute({ ...options });
+          break;
+        case 'openrouter':
+          if (!this.currentApiKey) {
+            result = { success: false, error: 'OpenRouter API key is required. Get one free at https://openrouter.ai/keys' };
+            return result;
+          }
+          this.openRouterService.setApiKey(this.currentApiKey);
+          result = await this.openRouterService.execute(options);
+          break;
+        case 'deepseek':
+          if (!this.currentApiKey) {
+            result = { success: false, error: 'DeepSeek API key is required. Get one free at https://platform.deepseek.com' };
+            return result;
+          }
+          this.deepSeekService.setApiKey(this.currentApiKey);
+          result = await this.deepSeekService.execute(options);
+          break;
+        case 'together':
+          if (!this.currentApiKey) {
+            result = { success: false, error: 'Together AI API key is required. Get one free at https://api.together.ai' };
+            return result;
+          }
+          this.togetherService.setApiKey(this.currentApiKey);
+          result = await this.togetherService.execute(options);
+          break;
+        case 'novita':
+          if (!this.currentApiKey) {
+            result = { success: false, error: 'Novita AI API key is required. Get one free at https://novita.ai' };
+            return result;
+          }
+          this.novitaService.setApiKey(this.currentApiKey);
+          result = await this.novitaService.execute(options);
+          break;
+        default:
+          result = { success: false, error: `Provider ${this.currentProvider} not implemented` };
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      cb?.execute(() => Promise.reject(new Error(msg))).catch(() => {});
+      return { success: false, error: msg };
+    }
+
+    if (cb) {
+      if (result.success) {
+        cb.execute(() => Promise.resolve()).catch(() => {});
+      } else if (result.error && !result.error.includes('API key')) {
+        cb.execute(() => Promise.reject(new Error(result.error))).catch(() => {});
+      }
+    }
+
+    return result;
   }
 
   async executeWithRetry(options: {
@@ -239,45 +291,78 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     onRetryAttempt?: (attempt: number, delay: number, error: string) => void;
     onChunk?: (text: string) => void;
   }): Promise<ApiResult> {
-    switch (this.currentProvider) {
-      case 'claude':
-        return this.claudeService.executeWithRetry({
-          apiKey: this.currentApiKey,
-          ...options,
-        });
-      case 'groq':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'Groq API key is required. Get one free at https://console.groq.com' };
-        }
-        this.groqService.setApiKey(this.currentApiKey);
-        return this.groqService.executeWithRetry(options);
-      case 'openrouter':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'OpenRouter API key is required. Get one free at https://openrouter.ai/keys' };
-        }
-        this.openRouterService.setApiKey(this.currentApiKey);
-        return this.openRouterService.executeWithRetry(options);
-      case 'deepseek':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'DeepSeek API key is required. Get one free at https://platform.deepseek.com' };
-        }
-        this.deepSeekService.setApiKey(this.currentApiKey);
-        return this.deepSeekService.executeWithRetry(options);
-      case 'together':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'Together AI API key is required. Get one free at https://api.together.ai' };
-        }
-        this.togetherService.setApiKey(this.currentApiKey);
-        return this.togetherService.executeWithRetry(options);
-      case 'novita':
-        if (!this.currentApiKey) {
-          return { success: false, error: 'Novita AI API key is required. Get one free at https://novita.ai' };
-        }
-        this.novitaService.setApiKey(this.currentApiKey);
-        return this.novitaService.executeWithRetry(options);
-      default:
-        return { success: false, error: `Provider ${this.currentProvider} not implemented` };
+    const cb = this.circuitBreakers.get(this.currentProvider);
+    if (cb && cb.getState() === 'open') {
+      const stats = cb.getStats();
+      const remainingMs = 60000 - (Date.now() - stats.lastStateChangeTime);
+      return {
+        success: false,
+        error: `Service temporarily unavailable (circuit breaker open). Retry in ${Math.ceil(remainingMs / 1000)}s.`,
+      };
     }
+
+    let result: ApiResult;
+    try {
+      switch (this.currentProvider) {
+        case 'claude':
+          result = await this.claudeService.executeWithRetry({
+            apiKey: this.currentApiKey,
+            ...options,
+          });
+          break;
+        case 'groq':
+          if (!this.currentApiKey) {
+            return { success: false, error: 'Groq API key is required. Get one free at https://console.groq.com' };
+          }
+          this.groqService.setApiKey(this.currentApiKey);
+          result = await this.groqService.executeWithRetry(options);
+          break;
+        case 'openrouter':
+          if (!this.currentApiKey) {
+            return { success: false, error: 'OpenRouter API key is required. Get one free at https://openrouter.ai/keys' };
+          }
+          this.openRouterService.setApiKey(this.currentApiKey);
+          result = await this.openRouterService.executeWithRetry(options);
+          break;
+        case 'deepseek':
+          if (!this.currentApiKey) {
+            return { success: false, error: 'DeepSeek API key is required. Get one free at https://platform.deepseek.com' };
+          }
+          this.deepSeekService.setApiKey(this.currentApiKey);
+          result = await this.deepSeekService.executeWithRetry(options);
+          break;
+        case 'together':
+          if (!this.currentApiKey) {
+            return { success: false, error: 'Together AI API key is required. Get one free at https://api.together.ai' };
+          }
+          this.togetherService.setApiKey(this.currentApiKey);
+          result = await this.togetherService.executeWithRetry(options);
+          break;
+        case 'novita':
+          if (!this.currentApiKey) {
+            return { success: false, error: 'Novita AI API key is required. Get one free at https://novita.ai' };
+          }
+          this.novitaService.setApiKey(this.currentApiKey);
+          result = await this.novitaService.executeWithRetry(options);
+          break;
+        default:
+          result = { success: false, error: `Provider ${this.currentProvider} not implemented` };
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      cb?.execute(() => Promise.reject(new Error(msg))).catch(() => {});
+      return { success: false, error: msg };
+    }
+
+    if (cb) {
+      if (result.success) {
+        cb.execute(() => Promise.resolve()).catch(() => {});
+      } else if (result.error && !result.error.includes('API key') && !result.error.includes('circuit breaker')) {
+        cb.execute(() => Promise.reject(new Error(result.error))).catch(() => {});
+      }
+    }
+
+    return result;
   }
 
   abort(): void {
