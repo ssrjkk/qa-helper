@@ -144,8 +144,8 @@ export class DatabaseService {
 
   deleteProject(id: number): boolean {
     return this.execTransaction([
-      () => this.db.run("DELETE FROM tasks WHERE project_id = ?", [id]),
       () => this.db.run("DELETE FROM screenshots WHERE task_id IN (SELECT id FROM tasks WHERE project_id = ?)", [id]),
+      () => this.db.run("DELETE FROM tasks WHERE project_id = ?", [id]),
       () => this.db.run("DELETE FROM conversation_history WHERE project_id = ?", [id]),
       () => this.db.run("DELETE FROM memory_entries WHERE project_id = ?", [id]),
       () => this.db.run("DELETE FROM projects WHERE id = ?", [id]),
@@ -287,22 +287,26 @@ export class DatabaseService {
   }
 
   searchMemoryEntries(projectId: number, searchTerm: string): MemoryEntry[] {
-    const term = `%${searchTerm}%`;
+    const escaped = searchTerm.replace(/%/g, '\\%').replace(/_/g, '\\_');
+    const term = `%${escaped}%`;
     return this.queryAll<MemoryEntry>(
-      "SELECT * FROM memory_entries WHERE project_id = ? AND (key LIKE ? OR value LIKE ?) ORDER BY created_at DESC",
+      "SELECT * FROM memory_entries WHERE project_id = ? AND (key LIKE ? ESCAPE '\\' OR value LIKE ? ESCAPE '\\') ORDER BY created_at DESC",
       [projectId, term, term]
     );
   }
 
   getMemoryStats(projectId: number): { total: number; categories: Record<string, number> } {
-    const entries = this.getMemoryEntries(projectId);
+    const rows = this.queryAll<{ category: string; count: number }>(
+      "SELECT category, COUNT(*) as count FROM memory_entries WHERE project_id = ? GROUP BY category",
+      [projectId],
+    );
     const categories: Record<string, number> = {};
-    
-    entries.forEach(entry => {
-      categories[entry.category] = (categories[entry.category] || 0) + 1;
-    });
-    
-    return { total: entries.length, categories };
+    let total = 0;
+    for (const row of rows) {
+      categories[row.category] = row.count;
+      total += row.count;
+    }
+    return { total, categories };
   }
 
   initMemoryTable(): void {

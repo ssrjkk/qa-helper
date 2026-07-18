@@ -39,7 +39,9 @@ export function useDatabase() {
         if (savedData) {
           try {
             database = new SQL.Database(savedData);
-            try { database.run("ALTER TABLE projects ADD COLUMN memory TEXT DEFAULT ''"); } catch { /* column may already exist */ }
+            try { database.run("ALTER TABLE projects ADD COLUMN memory TEXT DEFAULT ''"); } catch (e: unknown) {
+              if (!(e instanceof Error) || !e.message?.includes('duplicate column')) throw e;
+            }
           } catch {
             database = new SQL.Database();
           }
@@ -100,14 +102,15 @@ export function useDatabase() {
   }, [dbService]);
 
   const deleteProject = useCallback((id: number) => {
-    if (!dbService) return;
+    if (!dbService || id <= 0) return;
     dbService.deleteProject(id);
     setProjects(dbService.getProjects());
   }, [dbService]);
 
   const updateProjectMemory = useCallback((id: number, memory: string) => {
-    if (!dbService) return;
+    if (!dbService || id <= 0) return;
     dbService.updateProjectMemory(id, memory);
+    setProjects(dbService.getProjects());
   }, [dbService]);
 
   const getProject = useCallback((id: number) => {

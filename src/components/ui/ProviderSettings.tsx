@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GlassCard, RippleButton } from './index';
+import { GlassCard, RippleButton, Input, Select } from './index';
 import type { AiProvider, AiModel } from '../../data/api/types';
 import { PROVIDER_INFO, PROVIDER_MODELS } from '../../data/api/types';
 
@@ -41,7 +41,7 @@ export function ProviderSettings({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all ${
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
           currentProvider === 'groq'
             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
             : currentProvider === 'gemini'
@@ -77,18 +77,21 @@ export function ProviderSettings({
                   <h4 className="text-sm font-medium text-gray-200">AI Provider</h4>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="text-gray-500 hover:text-gray-300"
+                    aria-label="Close provider settings"
+                    className="text-gray-500 hover:text-gray-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                   >
                     ×
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Select AI provider">
                   {(Object.entries(PROVIDER_INFO) as [AiProvider, typeof PROVIDER_INFO.claude][]).map(([key, info]) => (
                     <button
                       key={key}
+                      role="radio"
+                      aria-checked={currentProvider === key}
                       onClick={() => onProviderChange(key)}
-                      className={`p-3 rounded-lg text-left transition-all ${
+                      className={`p-3 rounded-lg text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
                         currentProvider === key
                           ? 'bg-indigo-500/30 border border-indigo-500/50'
                           : 'bg-white/5 border border-transparent hover:bg-white/10'
@@ -107,21 +110,18 @@ export function ProviderSettings({
                 </div>
 
                 {models.length > 0 && (
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-1.5">Model</label>
-                    <select
-                      value={currentModel}
-                      onChange={e => onModelChange(e.target.value)}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 outline-none focus:border-indigo-500/50"
-                    >
-                      {models.map((model: AiModel) => (
-                        <option key={model.id} value={model.id}>
-                          {model.name}
-                          {model.description && ` - ${model.description}`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <Select
+                    label="Model"
+                    value={currentModel}
+                    onChange={e => onModelChange(e.target.value)}
+                  >
+                    {models.map((model: AiModel) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name}
+                        {model.description && ` - ${model.description}`}
+                      </option>
+                    ))}
+                  </Select>
                 )}
 
                 <div>
@@ -129,12 +129,12 @@ export function ProviderSettings({
                     API Key for {PROVIDER_INFO[currentProvider].name}
                   </label>
                   <div className="flex gap-2">
-                    <input
+                    <Input
                       type="password"
                       value={tempApiKey}
                       onChange={e => setTempApiKey(e.target.value)}
                       placeholder={apiKeys[currentProvider] ? '•••••••••' : 'Enter API key...'}
-                      className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-indigo-500/50"
+                      className="flex-1"
                     />
                     <RippleButton
                       onClick={handleSaveApiKey}
@@ -154,7 +154,7 @@ export function ProviderSettings({
                       href={PROVIDER_INFO[currentProvider].docsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-1 text-xs text-indigo-400 hover:text-indigo-300 inline-block"
+                      className="mt-1 text-xs text-indigo-400 hover:text-indigo-300 inline-block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                     >
                       Get API key →
                     </a>

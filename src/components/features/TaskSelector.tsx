@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
+import type { KeyboardEvent } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '../ui';
 import { TASK_TYPES, TASK_CATEGORIES, type TaskCategory, type TaskType } from '../../config';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface TaskSelectorProps {
   selectedTask: string | null;
@@ -47,7 +49,7 @@ export function TaskSelector({ selectedTask, onSelect }: TaskSelectorProps) {
             placeholder="Search modules..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 pl-10 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all"
+            className="w-full px-4 py-2 pl-10 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50 focus:bg-white/10 transition-all"
           />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
           {searchQuery && (
@@ -107,12 +109,22 @@ interface TaskCardProps {
 }
 
 function TaskCard({ task, isSelected, onClick, index }: TaskCardProps) {
+  const reduced = useReducedMotion();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03, type: "spring", stiffness: 300 }}
+      initial={reduced ? undefined : { opacity: 0, y: 10 }}
+      animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
+      transition={reduced ? undefined : { delay: index * 0.03, type: "spring", stiffness: 300 }}
       onClick={onClick}
+      onKeyDown={(e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Select task ${task.label}`}
       whileHover={{ y: -2, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={`relative p-3 rounded-lg cursor-pointer transition-all ${

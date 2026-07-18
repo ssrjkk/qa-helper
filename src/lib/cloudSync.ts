@@ -1,5 +1,6 @@
 import type { Project } from '../types';
 import type { MemoryEntry } from '../types/memory';
+import { keyManager } from './keyManagement';
 
 export interface CloudConfig {
   provider: 'local' | 'firebase' | 'supabase';
@@ -61,7 +62,14 @@ export class CloudSyncService {
     try {
       const saved = localStorage.getItem(SYNC_KEY + '-config');
       if (saved) {
-        this.config = JSON.parse(saved);
+        const parsed = JSON.parse(saved) as CloudConfig;
+        if (parsed.apiKey && keyManager.isReady()) {
+          keyManager.decryptApiKey(parsed.apiKey).then(decrypted => {
+            if (decrypted) this.config = { ...parsed, apiKey: decrypted };
+          }).catch(() => { this.config = parsed; });
+        } else {
+          this.config = parsed;
+        }
       }
     } catch { /* failed to parse saved config, use default */ }
   }
@@ -83,7 +91,11 @@ export class CloudSyncService {
   async configure(config: CloudConfig): Promise<void> {
     this.config = config;
     try {
-      localStorage.setItem(SYNC_KEY + '-config', JSON.stringify(config));
+      const toStore = { ...config };
+      if (toStore.apiKey && keyManager.isReady()) {
+        toStore.apiKey = await keyManager.encryptApiKey(toStore.apiKey);
+      }
+      localStorage.setItem(SYNC_KEY + '-config', JSON.stringify(toStore));
     } catch { /* localStorage may be full or unavailable */ }
   }
 
@@ -103,10 +115,11 @@ export class CloudSyncService {
 
   async importData(jsonString: string): Promise<{ projects: Project[]; memoryEntries: MemoryEntry[] } | null> {
     try {
-      const data = JSON.parse(jsonString) as Partial<SyncData>;
-      if (!data.version || !Array.isArray(data.projects)) {
-        return null;
-      }
+      const data = JSON.parse(jsonString);
+      if (!data || typeof data !== 'object') return null;
+      if (!Array.isArray(data.projects)) return null;
+      if (data.projects.length > 0 && typeof data.projects[0] !== 'object') return null;
+      if (data.memoryEntries !== undefined && !Array.isArray(data.memoryEntries)) return null;
       return {
         projects: data.projects as Project[],
         memoryEntries: Array.isArray(data.memoryEntries) ? (data.memoryEntries as MemoryEntry[]) : [],

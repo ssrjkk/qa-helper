@@ -116,13 +116,13 @@ export class CircuitBreaker {
 
   private onFailure(): void {
     const now = Date.now();
-    this.lastFailureTime = now;
 
     // Reset counter if outside monitoring window
     if (now - this.lastFailureTime > this.config.monitoringWindow) {
       this.failureCount = 0;
     }
 
+    this.lastFailureTime = now;
     this.failureCount++;
 
     if (this.state === 'half_open') {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { ReactNode, MouseEvent } from 'react';
 
@@ -9,6 +9,8 @@ interface RippleButtonProps {
   disabled?: boolean;
   className?: string;
   type?: 'button' | 'submit' | 'reset';
+  'aria-expanded'?: boolean;
+  'aria-label'?: string;
 }
 
 export function RippleButton({
@@ -17,17 +19,33 @@ export function RippleButton({
   variant = "primary",
   disabled = false,
   className = "",
-  type = "button"
+  type = "button",
+  "aria-expanded": ariaExpanded,
+  "aria-label": ariaLabel,
 }: RippleButtonProps) {
   const [ripples, setRipples] = useState<Array<{ x: number; y: number; id: number }>>([]);
-  
+  const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
+    };
+  }, []);
+
   const handleClick = (e: React.MouseEvent<Element>) => {
     if (disabled) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    setRipples([...ripples, { x, y, id: Date.now() }]);
-    setTimeout(() => setRipples(prev => prev.slice(1)), 600);
+    const id = Date.now();
+    setRipples((prev) => [...prev, { x, y, id }]);
+    const timer = setTimeout(() => {
+      timersRef.current.delete(id);
+      setRipples((prev) => prev.filter((r) => r.id !== id));
+    }, 600);
+    timersRef.current.set(id, timer);
     onClick?.(e as React.MouseEvent<HTMLButtonElement>);
   };
 
@@ -42,6 +60,8 @@ export function RippleButton({
       type={type}
       onClick={handleClick}
       disabled={disabled}
+      aria-expanded={ariaExpanded}
+      aria-label={ariaLabel}
       whileHover={{ scale: disabled ? 1 : 1.02 }}
       whileTap={{ scale: disabled ? 1 : 0.98 }}
       className={`relative overflow-hidden rounded-xl px-6 py-3 font-semibold transition-shadow disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}

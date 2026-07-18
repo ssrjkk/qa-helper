@@ -31,6 +31,23 @@ export function useHistory<T>(initialPresent: T, options?: {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(t => clearTimeout(t));
+      timersRef.current = [];
+    };
+  }, []);
+
+  const fireOnChange = useCallback((newState: HistoryState<T>) => {
+    const id = setTimeout(() => {
+      timersRef.current = timersRef.current.filter(t => t !== id);
+      onChangeRef.current?.(newState);
+    }, 0);
+    timersRef.current.push(id);
+  }, []);
+
   const setState = useCallback((newPresent: T, skipHistory?: boolean) => {
     setStateInternal(prev => {
       if (skipHistory) {
@@ -47,10 +64,10 @@ export function useHistory<T>(initialPresent: T, options?: {
         future: [],
       };
       
-      setTimeout(() => onChangeRef.current?.(newState), 0);
+      fireOnChange(newState);
       return newState;
     });
-  }, [limit]);
+  }, [limit, fireOnChange]);
 
   const undo = useCallback(() => {
     setStateInternal(prev => {
@@ -65,10 +82,10 @@ export function useHistory<T>(initialPresent: T, options?: {
         future: [prev.present, ...prev.future],
       };
       
-      setTimeout(() => onChangeRef.current?.(newState), 0);
+      fireOnChange(newState);
       return newState;
     });
-  }, []);
+  }, [fireOnChange]);
 
   const redo = useCallback(() => {
     setStateInternal(prev => {
@@ -83,10 +100,10 @@ export function useHistory<T>(initialPresent: T, options?: {
         future: newFuture,
       };
       
-      setTimeout(() => onChangeRef.current?.(newState), 0);
+      fireOnChange(newState);
       return newState;
     });
-  }, []);
+  }, [fireOnChange]);
 
   const clear = useCallback(() => {
     setStateInternal(prev => ({

@@ -13,7 +13,7 @@ interface SessionHistoryProps {
 }
 
 export function SessionHistory({ sessions, onLoadSession, onClearHistory }: SessionHistoryProps) {
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -97,9 +97,10 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
           <input
             type="text"
             placeholder="Search history..."
+            aria-label="Search history"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 pl-10 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 transition-all"
+            className="w-full px-4 py-2 pl-10 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50 transition-all"
           />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
         </div>
@@ -119,7 +120,7 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const session = filteredSessions[virtualRow.index];
               const taskInfo = getTaskInfo(session.task_type);
-              const isExpanded = expandedId === virtualRow.index;
+              const isExpanded = expandedId === session.created_at;
               
               return (
                 <div
@@ -137,7 +138,7 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
                   >
                     <div
                       className="p-3 cursor-pointer"
-                      onClick={() => setExpandedId(isExpanded ? null : virtualRow.index)}
+                      onClick={() => setExpandedId(isExpanded ? null : session.created_at)}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">

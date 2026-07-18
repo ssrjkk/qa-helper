@@ -166,14 +166,14 @@ export function CodebasePanel({ provider, onConnect, onDisconnect }: CodebasePan
             value={githubUrl}
             onChange={e => setGithubUrl(e.target.value)}
             placeholder="owner/repo or github.com/owner/repo"
-            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-indigo-500/50"
+            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-300 placeholder-gray-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50"
           />
           <input
             type="text"
             value={githubBranch}
             onChange={e => setGithubBranch(e.target.value)}
             placeholder="Branch (default: main)"
-            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-indigo-500/50"
+            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-300 placeholder-gray-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50"
           />
           <div className="flex gap-2">
             <RippleButton

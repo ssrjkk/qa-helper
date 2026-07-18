@@ -1,10 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, unlockApp } from './setup';
 
 test.describe('QA Copilot', () => {
   test('loads the application', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('body')).toBeVisible({ timeout: 10000 });
+    await unlockApp(page);
+
     const title = await page.title();
     expect(title).toBeTruthy();
+
+    const hasContent = await page.locator('#root').isVisible({ timeout: 5000 }).catch(() => false);
+    expect(hasContent).toBeTruthy();
   });
 });

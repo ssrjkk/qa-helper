@@ -3,15 +3,15 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { visualizer } from 'rollup-plugin-visualizer'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
-    visualizer({
+    ...(mode === 'analyze' ? [visualizer({
       filename: 'dist/stats.html',
       open: false,
       gzipSize: true,
       brotliSize: true,
-    }),
+    })] : []),
   ],
   resolve: {
     alias: {
@@ -28,19 +28,17 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        pure_funcs: ['console.info', 'console.debug'],
-      },
+    minify: 'esbuild',
+    esbuild: {
+      drop: ['console', 'debugger'],
+      pure: ['console.info', 'console.debug'],
     },
     rollupOptions: {
       output: {
         manualChunks: {
           'ui-vendor': ['react', 'react-dom', 'framer-motion'],
           'db-vendor': ['sql.js'],
+          'state-vendor': ['zustand', 'immer'],
           'utils-vendor': ['jspdf'],
         },
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -50,4 +48,4 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 600,
   },
-})
+}))
