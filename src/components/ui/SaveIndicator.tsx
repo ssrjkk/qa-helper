@@ -11,6 +11,8 @@ export function SaveIndicator({ saving }: SaveIndicatorProps) {
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
+      role="status"
+      aria-live="polite"
       className={`flex items-center gap-2 text-sm ${saving ? 'text-indigo-400' : 'text-emerald-400'}`}
     >
       {saving ? (

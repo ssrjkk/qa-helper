@@ -39,7 +39,7 @@ export function AutoResizeTextarea({
         maxLength={maxLength}
         aria-label={ariaLabel}
         aria-describedby={maxLength ? `${generatedId}-count` : undefined}
-        className={`w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 placeholder-gray-500 resize-none outline-none transition-all focus:border-indigo-500/50 focus:bg-white/10 ${className}`}
+        className={`w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-gray-200 placeholder-gray-500 resize-none outline-none transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50 focus:bg-white/10 ${className}`}
         rows={3}
       />
       {maxLength && (

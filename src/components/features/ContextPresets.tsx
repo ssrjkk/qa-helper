@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
+import type { KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CONTEXT_PRESETS, type ContextPreset } from '../../config';
+import { Input } from '../ui';
 
 interface ContextPresetsProps {
   onSelect: (template: string) => void;
@@ -44,7 +46,7 @@ export function ContextPresets({ onSelect, currentContext }: ContextPresetsProps
     { id: 'unit', label: 'Unit', presets: filteredPresets.filter(p => p.tags.includes('unit')) },
     { id: 'api', label: 'API', presets: filteredPresets.filter(p => p.tags.includes('api')) },
     { id: 'mobile', label: 'Mobile', presets: filteredPresets.filter(p => p.tags.includes('mobile')) },
-    { id: 'other', label: 'Other', presets: filteredPresets.filter(p => 
+    { id: 'other', label: 'Other', presets: filteredPresets.filter(p =>
       !p.tags.includes('e2e') && !p.tags.includes('unit') && !p.tags.includes('api') && !p.tags.includes('mobile')
     ) },
   ];
@@ -53,9 +55,12 @@ export function ContextPresets({ onSelect, currentContext }: ContextPresetsProps
     <div className="relative" ref={dropdownRef}>
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Escape') setIsOpen(false); if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(!isOpen); } }}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300 hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
       >
         <span>⚡</span>
         <span>Presets</span>
@@ -68,15 +73,15 @@ export function ContextPresets({ onSelect, currentContext }: ContextPresetsProps
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Escape') setIsOpen(false); }}
+            role="listbox"
             className="absolute left-0 top-full mt-2 z-50 w-80 bg-slate-800 border border-white/10 rounded-xl shadow-xl overflow-hidden"
           >
             <div className="p-3 border-b border-white/10">
-              <input
-                type="text"
+              <Input
                 placeholder="Search presets..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
                 autoFocus
               />
             </div>
@@ -117,7 +122,7 @@ function PresetItem({ preset, onSelect }: { preset: ContextPreset; onSelect: () 
   return (
     <button
       onClick={onSelect}
-      className="w-full flex items-start gap-3 p-3 rounded-lg text-left hover:bg-white/10 transition-colors"
+      className="w-full flex items-start gap-3 p-3 rounded-lg text-left hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
     >
       <span className="text-xl">{preset.icon}</span>
       <div className="flex-1 min-w-0">

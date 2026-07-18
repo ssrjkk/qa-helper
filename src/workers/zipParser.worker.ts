@@ -40,9 +40,15 @@ interface WorkerResponse {
   error?: string;
 }
 
+const TIMEOUT_MS = 30_000;
+
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const startTime = performance.now();
   const { requestId, data } = event.data;
+
+  const timeoutId = setTimeout(() => {
+    self.postMessage({ requestId, success: false, error: 'Parse timed out' } satisfies WorkerResponse);
+  }, TIMEOUT_MS);
 
   try {
     const zip = await JSZip.loadAsync(data);
@@ -65,7 +71,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       if (!CODE_EXTENSIONS.has(ext)) return;
 
       const promise = zipEntry.async('string').then((content) => {
-        const fileSize = content.length;
+        const fileSize = new TextEncoder().encode(content).byteLength;
         totalSize += fileSize;
 
         files.push({
@@ -80,6 +86,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     });
 
     await Promise.all(filePromises);
+    clearTimeout(timeoutId);
 
     const parseTimeMs = performance.now() - startTime;
 
@@ -93,6 +100,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     const response: WorkerResponse = { requestId, success: true, result };
     self.postMessage(response);
   } catch (error) {
+    clearTimeout(timeoutId);
     const response: WorkerResponse = {
       requestId,
       success: false,

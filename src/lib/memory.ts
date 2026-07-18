@@ -292,6 +292,7 @@ export function filterMemoryByCategory(entries: MemoryEntry[], categories: strin
 }
 
 export function searchMemory(entries: MemoryEntry[], searchTerm: string): MemoryEntry[] {
+  if (!searchTerm) return [];
   const term = searchTerm.toLowerCase();
   return entries.filter(entry => 
     entry.key.toLowerCase().includes(term) || 

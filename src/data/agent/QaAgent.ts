@@ -39,10 +39,10 @@ Available tools:
 
 If you do NOT need a tool, simply respond with your analysis as plain text. Do NOT use tool format unless you actually need a tool.`;
 
-let stepCounter = 0;
+let globalStepCounter = 0;
 
 function createStepId(): string {
-  return `step_${++stepCounter}_${Date.now()}`;
+  return `step_${++globalStepCounter}_${Date.now()}`;
 }
 
 function buildToolDescriptions(): string {

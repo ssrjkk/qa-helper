@@ -15,7 +15,14 @@ export function RateLimitBar({ remaining }: RateLimitBarProps) {
         <span>Rate Limit</span>
         <span>{remaining}/{max}</span>
       </div>
-      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <div
+        role="progressbar"
+        aria-valuenow={remaining}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-label={`Rate limit: ${remaining} of ${max} remaining`}
+        className="h-1.5 bg-white/10 rounded-full overflow-hidden"
+      >
         <motion.div
           className="h-full rounded-full"
           style={{

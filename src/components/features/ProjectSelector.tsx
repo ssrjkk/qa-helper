@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import type { KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { GlassCard, RippleButton, AutoResizeTextarea } from '../ui';
@@ -31,6 +32,10 @@ export function ProjectSelector({
   const [localMemory, setLocalMemory] = useState(memory);
   const parentRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setLocalMemory(memory);
+  }, [memory]);
+
   const virtualizer = useVirtualizer({
     count: projects.length,
     getScrollElement: () => parentRef.current,
@@ -56,7 +61,7 @@ export function ProjectSelector({
       <GlassCard className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-sm text-gray-300">Projects</h2>
-          <RippleButton onClick={() => setShowNew(!showNew)} variant="secondary" className="!px-3 !py-1.5 !text-xs">
+          <RippleButton onClick={() => setShowNew(!showNew)} variant="secondary" className="!px-3 !py-1.5 !text-xs" aria-expanded={showNew} aria-label="Create new project">
             + New
           </RippleButton>
         </div>
@@ -75,7 +80,7 @@ export function ProjectSelector({
                 onChange={e => setProjectName(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleCreate()}
                 placeholder="Project name..."
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500/50"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50"
               />
               <RippleButton onClick={handleCreate} className="w-full !text-xs">
                 Create Project
@@ -116,6 +121,15 @@ export function ProjectSelector({
                   >
                     <motion.div
                       onClick={() => onSelect(p.id)}
+                      onKeyDown={(e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSelect(p.id);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Select project ${p.name}`}
                       whileHover={{ x: 4 }}
                       className={`h-full p-3 rounded-lg cursor-pointer transition-all ${
                         selectedProject === p.id
@@ -130,6 +144,7 @@ export function ProjectSelector({
                         </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); onDelete(p.id); }}
+                          aria-label={`Delete project ${p.name}`}
                           className="text-gray-500 hover:text-red-400 text-lg"
                         >
                           ×

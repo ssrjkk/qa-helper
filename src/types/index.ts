@@ -33,21 +33,6 @@ export interface ConversationMessage {
   created_at: string;
 }
 
-export interface QueryResult {
-  columns: string[];
-  values: (string | number | null)[][];
-}
-
-export interface ApiKeyValidation {
-  valid: boolean;
-  error?: string;
-}
-
-export interface RateLimitState {
-  remaining: number;
-  resetIn: number;
-}
-
 export type TabType = 'new' | 'history';
 
 export type { Database, Statement } from 'sql.js';

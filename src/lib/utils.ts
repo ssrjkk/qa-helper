@@ -1,4 +1,5 @@
 import { type AiProvider, PROVIDER_KEY_PATTERNS } from '../config/security';
+import { keyManager } from './keyManagement';
 
 export interface ValidationResult {
   valid: boolean;
@@ -52,6 +53,7 @@ export function sanitizeInput(str: string | null | undefined, maxLength?: number
 }
 
 export function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return '0 Bytes';
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
@@ -61,6 +63,7 @@ export function formatFileSize(bytes: number): string {
 
 export function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return 'Invalid date';
   return date.toLocaleDateString();
 }
 
@@ -118,6 +121,7 @@ export function retry<T>(
 }
 
 export function chunk<T>(array: T[], size: number): T[][] {
+  if (size <= 0) return [array];
   const chunks: T[][] = [];
   for (let i = 0; i < array.length; i += size) {
     chunks.push(array.slice(i, i + size));
@@ -229,6 +233,7 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 export function randomInt(min: number, max: number): number {
+  if (min > max) return min;
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
@@ -282,7 +287,7 @@ async function getOrCreateSalt(): Promise<Uint8Array> {
   return salt;
 }
 
-async function deriveKey(salt: Uint8Array): Promise<CryptoKey> {
+async function legacyDeriveKey(salt: Uint8Array): Promise<CryptoKey> {
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
@@ -306,9 +311,9 @@ async function deriveKey(salt: Uint8Array): Promise<CryptoKey> {
   );
 }
 
-export async function encryptApiKey(apiKey: string): Promise<string> {
+async function legacyEncrypt(apiKey: string): Promise<string> {
   const salt = await getOrCreateSalt();
-  const key = await deriveKey(salt);
+  const key = await legacyDeriveKey(salt);
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
   const encoder = new TextEncoder();
   
@@ -325,15 +330,13 @@ export async function encryptApiKey(apiKey: string): Promise<string> {
   return arrayBufferToBase64(combined.buffer);
 }
 
-export async function decryptApiKey(encryptedData: string): Promise<string | null> {
+async function legacyDecrypt(encryptedData: string): Promise<string | null> {
   try {
     const combined = new Uint8Array(base64ToArrayBuffer(encryptedData));
-    
     const iv = combined.slice(0, IV_LENGTH);
     const data = combined.slice(IV_LENGTH);
-    
     const salt = await getOrCreateSalt();
-    const key = await deriveKey(salt);
+    const key = await legacyDeriveKey(salt);
     
     const decrypted = await crypto.subtle.decrypt(
       { name: ENCRYPTION_ALGORITHM, iv: iv },
@@ -345,6 +348,24 @@ export async function decryptApiKey(encryptedData: string): Promise<string | nul
   } catch {
     return null;
   }
+}
+
+export async function encryptApiKey(apiKey: string): Promise<string> {
+  if (keyManager.isReady()) {
+    return keyManager.encryptApiKey(apiKey);
+  }
+  return legacyEncrypt(apiKey);
+}
+
+export async function decryptApiKey(encryptedData: string): Promise<string | null> {
+  if (keyManager.isReady()) {
+    try {
+      return await keyManager.decryptApiKey(encryptedData);
+    } catch {
+      return legacyDecrypt(encryptedData);
+    }
+  }
+  return legacyDecrypt(encryptedData);
 }
 
 export async function saveApiKey(apiKey: string): Promise<void> {

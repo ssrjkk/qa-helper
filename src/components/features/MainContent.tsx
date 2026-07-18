@@ -1,8 +1,8 @@
 import { useState, RefObject } from 'react';
-import { motion } from 'framer-motion';
 import { TaskSelector } from './TaskSelector';
 import { ScreenshotUploader } from './ScreenshotUploader';
 import { LazyChatArea, LazyCodebasePanel, LazySessionHistory, LazySuspense } from './LazyComponents';
+import { Tabs } from '../ui';
 import type { TabType } from '../../types';
 import type { AgentStep } from '../../data/agent/types';
 import type { CodebaseProvider } from '../../data/codebase/CodebaseProvider';
@@ -65,6 +65,16 @@ export function MainContent({
 }: MainContentProps) {
   const [activeTab, setActiveTab] = useState<TabType>('new');
 
+  const mainTabs = [
+    { id: 'new', label: 'New', icon: '✨' },
+    { id: 'history', label: 'History', icon: '📜', badge: sessions.length > 0 ? sessions.length : undefined },
+  ];
+
+  const modeTabs = [
+    { id: 'prompt', label: 'Prompt', accentColor: 'indigo' },
+    { id: 'agent', label: 'Agent', accentColor: 'emerald' },
+  ];
+
   if (selectedTask === 'screenshot_analysis') {
     return (
       <div className="space-y-6">
@@ -72,11 +82,11 @@ export function MainContent({
           context={context}
           onContextChange={onContextChange}
           maxContextLength={maxContextLength}
-          onError={(e) => onContextError(e)}
+          onError={onContextError}
           error={error}
           onScreenshotChange={() => {}}
         />
-        
+
         <LazySuspense>
           <LazyChatArea
             context={context}
@@ -104,35 +114,7 @@ export function MainContent({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 p-1 bg-white/5 rounded-lg">
-        <motion.button
-          onClick={() => setActiveTab('new')}
-          whileTap={{ scale: 0.98 }}
-          className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-            activeTab === 'new'
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-              : 'text-gray-400 hover:text-gray-200'
-          }`}
-        >
-          ✨ New
-        </motion.button>
-        <motion.button
-          onClick={() => setActiveTab('history')}
-          whileTap={{ scale: 0.98 }}
-          className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-            activeTab === 'history'
-              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-              : 'text-gray-400 hover:text-gray-200'
-          }`}
-        >
-          📜 History
-          {sessions.length > 0 && (
-            <span className="ml-2 px-1.5 py-0.5 text-xs bg-white/10 rounded-full">
-              {sessions.length}
-            </span>
-          )}
-        </motion.button>
-      </div>
+      <Tabs tabs={mainTabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as TabType)} />
 
       {activeTab === 'history' ? (
         <LazySuspense>
@@ -155,32 +137,13 @@ export function MainContent({
           </LazySuspense>
 
           {codebaseConnected && onModeChange && (
-            <div className="flex items-center gap-2 p-1 bg-white/5 rounded-lg">
-              <motion.button
-                onClick={() => onModeChange('prompt')}
-                whileTap={{ scale: 0.98 }}
-                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  !agentMode
-                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Prompt
-              </motion.button>
-              <motion.button
-                onClick={() => onModeChange('agent')}
-                whileTap={{ scale: 0.98 }}
-                className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  agentMode
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Agent
-              </motion.button>
-            </div>
+            <Tabs
+              tabs={modeTabs}
+              activeTab={agentMode ? 'agent' : 'prompt'}
+              onChange={(id) => onModeChange(id as 'prompt' | 'agent')}
+            />
           )}
-          
+
           {selectedTask && (
             <LazySuspense>
               <LazyChatArea

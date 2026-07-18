@@ -26,6 +26,21 @@ Object.defineProperty(globalThis, 'navigator', {
   configurable: true,
 });
 
+Object.defineProperty(globalThis, 'matchMedia', {
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  }),
+  writable: true,
+  configurable: true,
+});
+
 beforeEach(() => {
   storage.clear();
 });
