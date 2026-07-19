@@ -20,7 +20,7 @@ export interface SharedProject {
 interface TeamFeaturesProps {
   projects: Project[];
   currentProject: Project | null;
-  onShare: (projectId: number, emails: string[], role: 'editor' | 'viewer') => Promise<void>;
+  onShare?: (projectId: number, emails: string[], role: 'editor' | 'viewer') => Promise<void>;
   onExportForTeam: (project: Project) => string;
   onImportFromTeam: (data: string) => Promise<boolean>;
   teamMembers?: TeamMember[];
@@ -46,7 +46,7 @@ export function TeamFeatures({
   const { addToast } = useToast();
 
   const handleShare = async () => {
-    if (!currentProject || !emails.trim()) return;
+    if (!currentProject || !emails.trim() || !onShare) return;
     setIsLoading(true);
     try {
       const emailList = emails.split(',').map(e => e.trim()).filter(Boolean);

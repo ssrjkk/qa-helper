@@ -33,6 +33,10 @@ export async function executeTool(
           content = 'Error: file path is required.';
           break;
         }
+        if (path.includes('..') || path.startsWith('/')) {
+          content = 'Error: path traversal is not allowed.';
+          break;
+        }
         const fileContent = await codebase.readFile(path);
         const lineCount = fileContent.split('\n').length;
         content = `File: ${path} (${lineCount} lines)\n\n\`\`\`\n${fileContent}\n\`\`\``;

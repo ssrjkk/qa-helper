@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProjectSelector } from './ProjectSelector';
 import { StructuredMemory } from './StructuredMemory';
@@ -27,10 +27,8 @@ interface SidebarProps {
   onDeleteMemoryEntry: (id: number) => void;
   onUpdateMemoryEntry: (id: number, updates: Partial<MemoryEntry>) => void;
   onSync: () => Promise<void>;
-  onImportSync: (data: { projects: Project[]; memoryEntries: MemoryEntry[] }) => void;
   onExportProject: (project: Project) => string;
   onImportProject: (data: string) => Promise<boolean>;
-  onShareProject: (projectId: number, emails: string[], role: 'editor' | 'viewer') => Promise<void>;
 }
 
 export function Sidebar({
@@ -51,23 +49,30 @@ export function Sidebar({
   onDeleteMemoryEntry,
   onUpdateMemoryEntry,
   onSync,
-  onImportSync,
   onExportProject,
   onImportProject,
-  onShareProject,
 }: SidebarProps) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
+    };
+  }, []);
 
   const currentProj = projects.find(p => p.id === selectedProject);
 
   const handleDeleteProject = (id: number) => {
     if (deleteConfirmId === id) {
+      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
       onDeleteProject(id);
       if (selectedProject === id) onSelectProject(null);
       setDeleteConfirmId(null);
     } else {
       setDeleteConfirmId(id);
-      setTimeout(() => setDeleteConfirmId(null), 3000);
+      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
+      deleteTimerRef.current = setTimeout(() => setDeleteConfirmId(null), 3000);
     }
   };
 
@@ -147,7 +152,6 @@ export function Sidebar({
 
       <CloudSync
         onSync={onSync}
-        onImport={onImportSync}
         projectsCount={projects.length}
         canSync={isOnline && apiKeyValid}
         projects={projects}
@@ -157,7 +161,6 @@ export function Sidebar({
       <TeamFeatures
         projects={projects}
         currentProject={currentProj || null}
-        onShare={onShareProject}
         onExportForTeam={onExportProject}
         onImportFromTeam={onImportProject}
       />

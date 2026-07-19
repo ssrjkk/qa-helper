@@ -1,9 +1,12 @@
 import type { ApiResult } from './types';
 
+const DEFAULT_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
 interface OpenRouterConfig {
   apiKey: string;
   model: string;
   maxTokens: number;
+  apiUrl?: string;
 }
 
 export class OpenRouterApiService {
@@ -52,7 +55,7 @@ export class OpenRouterApiService {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        const response = await fetch(this.config.apiUrl || DEFAULT_API_URL, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${this.config.apiKey}`,

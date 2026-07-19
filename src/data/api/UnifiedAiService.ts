@@ -142,7 +142,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
   }
 
   private getApiKeyError(): string | null {
-    if (this.currentProvider === 'claude' || this.currentApiKey) return null;
+    if (this.currentApiKey) return null;
     return `${this.currentProvider} API key is required.`;
   }
 

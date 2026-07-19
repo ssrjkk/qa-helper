@@ -61,7 +61,8 @@ export function useMemoryEntries(selectedProject: number | null, db: UseDatabase
 
   const handleExportProject = useCallback(
     (project: Project) => {
-      return JSON.stringify({ project, memoryEntries }, null, 2);
+      const projectEntries = memoryEntries.filter((e) => e.project_id === project.id);
+      return JSON.stringify({ project, memoryEntries: projectEntries }, null, 2);
     },
     [memoryEntries],
   );

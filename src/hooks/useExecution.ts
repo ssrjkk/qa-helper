@@ -35,11 +35,12 @@ export function useExecution(
 
   const handleExecute = useCallback(async () => {
     if (isExecutingRef.current) return;
+    const s = useAppStore.getState();
+    if (!s.selectedTask || !s.apiKey) return;
+    if (s.mode === 'agent' && !codebaseProvider) return;
+
     isExecutingRef.current = true;
     try {
-      const s = useAppStore.getState();
-      if (!s.selectedTask || !s.apiKey) return;
-
       if (s.mode === 'agent' && codebaseProvider) {
         setIsLoading(true);
         setError(null);

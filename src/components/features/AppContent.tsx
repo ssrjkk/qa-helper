@@ -21,11 +21,26 @@ interface AppContentProps {
 }
 
 export function AppContent({ db }: AppContentProps) {
-  const store = useAppStore();
+  const output = useAppStore((s) => s.output);
   const setError = useAppStore((s) => s.setError);
   const setApiKeyValid = useAppStore((s) => s.setApiKeyValid);
   const apiKey = useAppStore((s) => s.apiKey);
   const showApiKeyInput = useAppStore((s) => s.showApiKeyInput);
+  const setShowApiKeyInput = useAppStore((s) => s.setShowApiKeyInput);
+  const setSelectedProject = useAppStore((s) => s.setSelectedProject);
+  const currentMemory = useAppStore((s) => s.currentMemory);
+  const apiKeyValid = useAppStore((s) => s.apiKeyValid);
+  const memoryEntries = useAppStore((s) => s.memoryEntries);
+  const selectedTask = useAppStore((s) => s.selectedTask);
+  const setSelectedTask = useAppStore((s) => s.setSelectedTask);
+  const context = useAppStore((s) => s.context);
+  const setContext = useAppStore((s) => s.setContext);
+  const isLoading = useAppStore((s) => s.isLoading);
+  const error = useAppStore((s) => s.error);
+  const sessions = useAppStore((s) => s.sessions);
+  const agentSteps = useAppStore((s) => s.agentSteps);
+  const mode = useAppStore((s) => s.mode);
+  const setMode = useAppStore((s) => s.setMode);
   const outputRef = useRef<HTMLDivElement>(null);
   const { toggleTheme } = useTheme();
   const isOnline = useOnlineStatus();
@@ -68,12 +83,12 @@ export function AppContent({ db }: AppContentProps) {
       {
         key: 'c',
         modifiers: ['meta', 'ctrl', 'shift'],
-        action: () => navigator.clipboard.writeText(store.output).catch(() => {}),
+        action: () => navigator.clipboard.writeText(output).catch(() => {}),
         description: 'Copy output',
       },
       {
         key: 'Escape',
-        action: () => store.setShowApiKeyInput(false),
+        action: () => setShowApiKeyInput(false),
         description: 'Close modal',
       },
       {
@@ -83,7 +98,7 @@ export function AppContent({ db }: AppContentProps) {
         description: 'Toggle theme',
       },
     ],
-    !store.isLoading,
+    !isLoading,
   );
 
   useEffect(() => {
@@ -108,52 +123,50 @@ export function AppContent({ db }: AppContentProps) {
     <Sidebar
       projects={projects}
       selectedProject={selectedProject}
-      onSelectProject={store.setSelectedProject}
+      onSelectProject={setSelectedProject}
       onCreateProject={handleCreateProject}
       onDeleteProject={db.deleteProject}
       onSaveMemory={handleSaveMemory}
-      currentMemory={store.currentMemory}
+      currentMemory={currentMemory}
       rateLimitInfo={rateLimitInfo}
-      apiKeyValid={store.apiKeyValid}
-      onSetApiKey={() => store.setShowApiKeyInput(true)}
+      apiKeyValid={apiKeyValid}
+      onSetApiKey={() => setShowApiKeyInput(true)}
       isOnline={isOnline}
       isDbReady={db.isDbReady}
-      memoryEntries={store.memoryEntries}
+      memoryEntries={memoryEntries}
       onAddMemoryEntry={handleAddEntry}
       onDeleteMemoryEntry={handleDeleteEntry}
       onUpdateMemoryEntry={handleUpdateEntry}
       onSync={handleSync}
-      onImportSync={() => {}}
       onExportProject={handleExportProject}
       onImportProject={handleImportProject}
-      onShareProject={async () => {}}
     />
   );
 
   const main = (
     <MainContent
-      selectedTask={store.selectedTask}
-      onSelectTask={store.setSelectedTask}
-      context={store.context}
-      onContextChange={store.setContext}
-      output={store.output}
-      loading={store.isLoading}
-      error={store.error || db.error}
+      selectedTask={selectedTask}
+      onSelectTask={setSelectedTask}
+      context={context}
+      onContextChange={setContext}
+      output={output}
+      loading={isLoading}
+      error={error || db.error}
       maxContextLength={SECURITY_CONFIG.maxContextLength}
-      apiKeyValid={store.apiKeyValid}
+      apiKeyValid={apiKeyValid}
       onExecute={handleExecute}
       onReset={handleReset}
-      onCopy={() => navigator.clipboard.writeText(store.output).catch(() => {})}
+      onCopy={() => navigator.clipboard.writeText(output).catch(() => {})}
       contextError={contextError}
       onContextError={setContextError}
       outputRef={outputRef}
-      sessions={store.sessions}
+      sessions={sessions}
       onLoadSession={handleLoadSession}
       onClearHistory={() => selectedProject && clearConversationHistory(selectedProject)}
-      agentSteps={store.agentSteps}
-      agentMode={store.mode === 'agent'}
+      agentSteps={agentSteps}
+      agentMode={mode === 'agent'}
       codebaseConnected={!!codebaseProvider}
-      onModeChange={store.setMode}
+      onModeChange={setMode}
       codebaseProvider={codebaseProvider}
       onCodebaseConnect={handleConnect}
       onCodebaseDisconnect={handleDisconnect}

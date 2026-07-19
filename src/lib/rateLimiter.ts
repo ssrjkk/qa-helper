@@ -45,6 +45,15 @@ function saveState(state: RateLimitState): void {
 }
 
 let state = loadState();
+let pendingWrite: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleSave(): void {
+  if (pendingWrite !== null) return;
+  pendingWrite = setTimeout(() => {
+    pendingWrite = null;
+    saveState(state);
+  }, 0);
+}
 
 function cleanOldRequests(): void {
   const now = Date.now();
@@ -68,7 +77,7 @@ export const RateLimiter = {
     cleanOldRequests();
     if (state.requests.length >= config.maxRequests) return false;
     state.requests.push(Date.now());
-    saveState(state);
+    scheduleSave();
     return true;
   },
 
@@ -97,7 +106,7 @@ export const RateLimiter = {
   recordRequest(): void {
     cleanOldRequests();
     state.requests.push(Date.now());
-    saveState(state);
+    scheduleSave();
   },
 
   getTimeUntilNextSlot(): number {

@@ -21,7 +21,7 @@ export function useDatabase() {
       const storage = await createStorageProvider();
       await storage.save(exported);
     } catch (err) {
-      console.error('Failed to save database:', err);
+      setError('Failed to save database: ' + (err instanceof Error ? err.message : String(err)));
     }
   }, [db]);
 
@@ -42,8 +42,9 @@ export function useDatabase() {
             try { database.run("ALTER TABLE projects ADD COLUMN memory TEXT DEFAULT ''"); } catch (e: unknown) {
               if (!(e instanceof Error) || !e.message?.includes('duplicate column')) throw e;
             }
-          } catch {
-            database = new SQL.Database();
+            } catch {
+              // Column already exists or DB corruption — recreate
+              database = new SQL.Database();
           }
         } else {
           database = new SQL.Database();
@@ -62,8 +63,8 @@ export function useDatabase() {
             try {
               const exported = database.export();
               await storage.save(exported);
-            } catch (err) {
-              console.error('Failed to save database:', err);
+            } catch {
+              // Save failed — non-critical, will retry on next change
             }
           }, 500);
         });
@@ -74,8 +75,7 @@ export function useDatabase() {
         setDbService(service);
         setProjects(service.getProjects());
         setIsDbReady(true);
-      } catch (err) {
-        console.error('Database init failed:', err);
+      } catch {
         setError('Failed to initialize database');
       }
     };

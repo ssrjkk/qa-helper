@@ -37,7 +37,6 @@ export class DatabaseService {
     } catch (err) {
       this.db.run("ROLLBACK");
       this.lastError = (err as Error).message;
-      console.error('Transaction error:', err);
       return false;
     }
   }
@@ -49,7 +48,6 @@ export class DatabaseService {
       return true;
     } catch (err) {
       this.lastError = (err as Error).message;
-      console.error('Database run error:', err);
       return false;
     }
   }
@@ -73,8 +71,7 @@ export class DatabaseService {
       }
       stmt.free();
       return results;
-    } catch (err) {
-      console.error('Query error:', err);
+    } catch {
       return [];
     }
   }
@@ -93,8 +90,7 @@ export class DatabaseService {
       const vals = stmt.get();
       stmt.free();
       return this.rowToObject(cols, vals) as T;
-    } catch (err) {
-      console.error('Query error:', err);
+    } catch {
       return undefined;
     }
   }

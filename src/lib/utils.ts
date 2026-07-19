@@ -287,11 +287,24 @@ async function getOrCreateSalt(): Promise<Uint8Array> {
   return salt;
 }
 
+const LEGACY_KEY_STORAGE = 'qa-helper-legacy-key';
+const LEGACY_KEY_LENGTH = 32;
+
+async function getOrCreateLegacyKey(): Promise<string> {
+  const stored = localStorage.getItem(LEGACY_KEY_STORAGE);
+  if (stored) return stored;
+  const randomBytes = crypto.getRandomValues(new Uint8Array(LEGACY_KEY_LENGTH));
+  const key = arrayBufferToBase64(randomBytes.buffer);
+  localStorage.setItem(LEGACY_KEY_STORAGE, key);
+  return key;
+}
+
 async function legacyDeriveKey(salt: Uint8Array): Promise<CryptoKey> {
   const encoder = new TextEncoder();
+  const passphrase = await getOrCreateLegacyKey();
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    encoder.encode(navigator.userAgent + window.location.origin),
+    encoder.encode(passphrase),
     'PBKDF2',
     false,
     ['deriveBits', 'deriveKey']

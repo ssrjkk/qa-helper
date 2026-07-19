@@ -119,10 +119,18 @@ export class CloudSyncService {
       if (!data || typeof data !== 'object') return null;
       if (!Array.isArray(data.projects)) return null;
       if (data.projects.length > 0 && typeof data.projects[0] !== 'object') return null;
+      if (data.projects.length > 0 && typeof data.projects[0].name !== 'string') return null;
       if (data.memoryEntries !== undefined && !Array.isArray(data.memoryEntries)) return null;
+
+      const validEntries = Array.isArray(data.memoryEntries)
+        ? (data.memoryEntries as MemoryEntry[]).filter(
+            (e) => e && typeof e === 'object' && typeof e.key === 'string' && typeof e.value === 'string',
+          )
+        : [];
+
       return {
         projects: data.projects as Project[],
-        memoryEntries: Array.isArray(data.memoryEntries) ? (data.memoryEntries as MemoryEntry[]) : [],
+        memoryEntries: validEntries,
       };
     } catch {
       return null;
@@ -305,7 +313,16 @@ export class CloudSyncService {
       const params = new URL(url).searchParams;
       const share = params.get('share');
       if (!share) return null;
-      return JSON.parse(decodeURIComponent(atob(share)));
+      const decoded = JSON.parse(decodeURIComponent(atob(share)));
+      if (!decoded || typeof decoded !== 'object') return null;
+      if (!Array.isArray(decoded.projects)) return null;
+      if (decoded.projects.length > 0 && typeof decoded.projects[0].name !== 'string') return null;
+      const validEntries = Array.isArray(decoded.memoryEntries)
+        ? (decoded.memoryEntries as MemoryEntry[]).filter(
+            (e) => e && typeof e === 'object' && typeof e.key === 'string' && typeof e.value === 'string',
+          )
+        : [];
+      return { projects: decoded.projects as Project[], memoryEntries: validEntries };
     } catch {
       return null;
     }

@@ -24,6 +24,8 @@ const CODE_EXTENSIONS = new Set([
   '.toml', '.sql', '.sh', '.bash', '.md', '.txt',
 ]);
 
+const MAX_CACHE_SIZE = 100;
+
 export class GitHubProvider implements CodebaseProvider {
   readonly name: string;
   private owner: string;
@@ -32,6 +34,11 @@ export class GitHubProvider implements CodebaseProvider {
   private token?: string;
   private treeCache: Map<string, CodebaseFile[]> = new Map();
   private fileCache: Map<string, string> = new Map();
+
+  private evictOldestEntry<K, V>(map: Map<K, V>): void {
+    const firstKey = map.keys().next().value;
+    if (firstKey !== undefined) map.delete(firstKey);
+  }
 
   constructor(owner: string, repo: string, branch = 'main', token?: string) {
     this.owner = owner;
@@ -93,10 +100,10 @@ export class GitHubProvider implements CodebaseProvider {
           return a.name.localeCompare(b.name);
         });
 
+      if (this.treeCache.size >= MAX_CACHE_SIZE) this.evictOldestEntry(this.treeCache);
       this.treeCache.set(cacheKey, files);
       return files;
-    } catch (err) {
-      console.error(`Failed to list ${path}:`, err);
+    } catch {
       return [];
     }
   }
@@ -120,6 +127,7 @@ export class GitHubProvider implements CodebaseProvider {
         return text.slice(0, 100_000) + '\n// ... truncated (file too large)';
       }
 
+      if (this.fileCache.size >= MAX_CACHE_SIZE) this.evictOldestEntry(this.fileCache);
       this.fileCache.set(path, text);
       return text;
     } catch (err) {

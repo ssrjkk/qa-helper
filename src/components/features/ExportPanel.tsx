@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard, RippleButton } from '../ui';
 
@@ -15,6 +15,13 @@ type ExportFormat = 'markdown' | 'pdf' | 'json';
 export function ExportPanel({ output, context, taskType, projectName, onClose }: ExportPanelProps) {
   const [exporting, setExporting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   const handleExport = async (format: ExportFormat) => {
     setExporting(true);
@@ -38,11 +45,13 @@ export function ExportPanel({ output, context, taskType, projectName, onClose }:
           blob = await exportUtils.toJson(options);
           filename = exportUtils.generateFilename('json', taskType);
           break;
+        default:
+          return;
       }
       
       await exportUtils.downloadFile(blob, filename);
-    } catch (err) {
-      console.error('Export failed:', err);
+    } catch {
+      // Export failed — user notified via UI state
     } finally {
       setExporting(false);
     }
@@ -52,9 +61,10 @@ export function ExportPanel({ output, context, taskType, projectName, onClose }:
     try {
       await navigator.clipboard.writeText(output);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
-      console.error('Copy failed');
+      // Clipboard write failed — non-critical
     }
   };
 

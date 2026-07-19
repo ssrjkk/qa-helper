@@ -2,6 +2,56 @@ const DB_NAME = 'qa-helper-db';
 const DB_VERSION = 1;
 const STORE_NAME = 'database';
 const DB_KEY = 'app-state';
+const LS_PASSPHRASE_KEY = 'qa-helper-ls-key';
+const LS_IV_KEY = 'qa-helper-ls-iv';
+
+function lsToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function lsFromBase64(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function getLsCryptoKey(): Promise<CryptoKey> {
+  const stored = localStorage.getItem(LS_PASSPHRASE_KEY);
+  if (stored) {
+    const raw = lsFromBase64(stored);
+    return crypto.subtle.importKey('raw', raw, 'PBKDF2', false, ['deriveKey']);
+  }
+  const passphrase = crypto.getRandomValues(new Uint8Array(32));
+  localStorage.setItem(LS_PASSPHRASE_KEY, lsToBase64(passphrase.buffer));
+  return crypto.subtle.importKey('raw', passphrase, 'PBKDF2', false, ['deriveKey']);
+}
+
+async function getOrCreateLsIv(): Promise<Uint8Array> {
+  const stored = localStorage.getItem(LS_IV_KEY);
+  if (stored) return lsFromBase64(stored);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  localStorage.setItem(LS_IV_KEY, lsToBase64(iv.buffer));
+  return iv;
+}
+
+async function deriveLsAesKey(passphrase: CryptoKey): Promise<CryptoKey> {
+  const salt = new TextEncoder().encode('qa-helper-ls-salt');
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
+    passphrase,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+}
 
 export interface StorageProvider {
   save(data: Uint8Array): Promise<void>;
@@ -110,12 +160,25 @@ export class LocalStorageFallback implements StorageProvider {
       throw new Error(`Data too large: ${estimatedSize} bytes (max: ${this.maxSize})`);
     }
 
-    let binary = '';
-    const len = data.length;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(data[i]);
+    try {
+      const passphrase = await getLsCryptoKey();
+      const aesKey = await deriveLsAesKey(passphrase);
+      const iv = await getOrCreateLsIv();
+      const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        aesKey,
+        data,
+      );
+      localStorage.setItem(DB_KEY, lsToBase64(encrypted));
+    } catch {
+      // Web Crypto unavailable, fall back to unencrypted base64
+      let binary = '';
+      const len = data.length;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(data[i]);
+      }
+      localStorage.setItem(DB_KEY, btoa(binary));
     }
-    localStorage.setItem(DB_KEY, btoa(binary));
   }
 
   async load(): Promise<Uint8Array | null> {
@@ -123,14 +186,28 @@ export class LocalStorageFallback implements StorageProvider {
     if (!saved) return null;
     
     try {
-      const binary = atob(saved);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-      return bytes;
+      const passphrase = await getLsCryptoKey();
+      const aesKey = await deriveLsAesKey(passphrase);
+      const iv = await getOrCreateLsIv();
+      const encrypted = lsFromBase64(saved);
+      const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        aesKey,
+        encrypted,
+      );
+      return new Uint8Array(decrypted);
     } catch {
-      return null;
+      // Not encrypted or decryption failed, try legacy base64
+      try {
+        const binary = atob(saved);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+      } catch {
+        return null;
+      }
     }
   }
 
@@ -146,7 +223,6 @@ export class LocalStorageFallback implements StorageProvider {
 
 export async function createStorageProvider(): Promise<StorageProvider> {
   if (typeof indexedDB === 'undefined') {
-    console.warn('IndexedDB not available, using localStorage fallback');
     return new LocalStorageFallback();
   }
 
@@ -158,7 +234,6 @@ export async function createStorageProvider(): Promise<StorageProvider> {
         resolve(new IndexedDBStorage());
       };
       testDb.onerror = () => {
-        console.warn('IndexedDB test failed, using localStorage fallback');
         resolve(new LocalStorageFallback());
       };
     });

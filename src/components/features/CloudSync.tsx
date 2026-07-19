@@ -9,7 +9,7 @@ import type { MemoryEntry } from '../../types/memory';
 
 interface CloudSyncProps {
   onSync: () => Promise<void>;
-  onImport: (data: { projects: Project[]; memoryEntries: MemoryEntry[] }) => void;
+  onImport?: (data: { projects: Project[]; memoryEntries: MemoryEntry[] }) => void;
   projectsCount: number;
   canSync: boolean;
   projects: Project[];
@@ -50,7 +50,7 @@ export function CloudSync({ onSync, onImport, projectsCount, canSync, projects, 
   const handleImport = () => {
     try {
       const data = cloudSync.parseShareLink(importData);
-      if (data) {
+      if (data && onImport) {
         onImport(data);
         setImportData('');
         setImportError('');

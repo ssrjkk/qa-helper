@@ -86,9 +86,8 @@ export class ProjectRepository implements IProjectRepository {
       this.db.run("DELETE FROM projects WHERE id = ?", [id]);
       this.db.run("COMMIT");
       this.saveDb();
-    } catch (err) {
+    } catch {
       this.db.run("ROLLBACK");
-      console.error('Delete project transaction error:', err);
     }
   }
 }
