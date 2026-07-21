@@ -63,9 +63,10 @@ export default function App() {
             className="text-center mb-12"
           >
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent mb-2">
-              QA Copilot BY ssrjkk
+              QA Copilot
             </h1>
             <p className="text-gray-400">AI-Powered QA Assistant</p>
+            <p className="text-gray-600 text-xs mt-1">by ssrjkk</p>
           </motion.header>
 
           {db.error ? (
@@ -92,6 +93,9 @@ export default function App() {
             </div>
           )}
         </div>
+        <footer className="relative z-10 text-center pb-8 text-xs text-gray-600">
+          QA Copilot by ssrjkk | MIT License
+        </footer>
       </div>
 
       <AnimatePresence>

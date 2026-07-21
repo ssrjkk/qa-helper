@@ -9,10 +9,12 @@
 [![CI](https://github.com/ssrjkk/qa-helper/actions/workflows/ci.yml/badge.svg)](https://github.com/ssrjkk/qa-helper/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-160%20passed-22c55e)](#testing)
 [![Bundle](https://img.shields.io/bundlejs/size/@minified?gzip=true&label=bundle&color=6366f1)](#tech-stack)
-[![License](https://img.shields.io/github/license/ssrjkk/qa-helper)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](#tech-stack)
 
-[Quick Start](#-quick-start) · [Features](#-features) · [Providers](#-ai-providers) · [Deploy](#-deploy) · [Contributing](#-contributing)
+[Quick Start](#quick-start) | [Features](#features) | [Providers](#ai-providers) | [Deploy](#deploy) | [Contributing](#contributing)
+
+**[Russian / Русский](README.ru.md)**
 
 </div>
 
@@ -22,40 +24,40 @@
 
 A browser-based QA assistant that turns your task descriptions into structured outputs — test plans, test cases, automation code, bug reports, security checks, and more. No server required. Runs entirely in your browser with SQLite (WebAssembly).
 
-**Core idea:** Describe what you need → pick a task type → get a professional QA artifact.
+**Core idea:** Describe what you need, pick a task type, get a professional QA artifact.
 
 <div align="center">
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                                                      │
-│   📝 "Login page has form validation for email       │
-│       and password fields, supports OAuth via        │
-│       Google. Write test cases."                     │
-│                                                      │
-│   Task: ✅ Test Cases                                │
-│                                                      │
-│   → 🚀 Execute                                       │
-│                                                      │
-│   ┌──────────────────────────────────────────┐       │
-│   │ Test Case: TC-LOGIN-001                  │       │
-│   │ Title: Valid email + password login       │       │
-│   │ Steps: 1. Navigate to /login             │       │
-│   │   2. Enter valid email                   │       │
-│   │   3. Enter valid password                │       │
-│   │   4. Click "Sign In"                     │       │
-│   │ Expected: Redirect to dashboard          │       │
-│   │ Priority: P0  │  Type: Functional        │       │
-│   └──────────────────────────────────────────┘       │
-│                                                      │
-└──────────────────────────────────────────────────────┘
++----------------------------------------------------------+
+|                                                          |
+|   "Login page has form validation for email              |
+|    and password fields, supports OAuth via               |
+|    Google. Write test cases."                            |
+|                                                          |
+|   Task: Test Cases                                       |
+|                                                          |
+|   -> Execute                                             |
+|                                                          |
+|   +------------------------------------------+           |
+|   | Test Case: TC-LOGIN-001                  |           |
+|   | Title: Valid email + password login       |           |
+|   | Steps: 1. Navigate to /login             |           |
+|   |   2. Enter valid email                   |           |
+|   |   3. Enter valid password                |           |
+|   |   4. Click "Sign In"                     |           |
+|   | Expected: Redirect to dashboard          |           |
+|   | Priority: P0  |  Type: Functional        |           |
+|   +------------------------------------------+           |
+|                                                          |
++----------------------------------------------------------+
 ```
 
 </div>
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 **3 steps to your first QA output:**
 
@@ -68,8 +70,6 @@ npm install && npm run dev
 Open `http://localhost:5173`, enter your API key, pick a task type, describe your context, and hit Execute.
 
 > **No API key?** Use Groq or DeepSeek — both are free and don't require a credit card.
-
-### Other ways to run
 
 <details>
 <summary><b>Docker</b></summary>
@@ -91,13 +91,13 @@ npm run preview   # preview locally
 
 ---
 
-## ✨ Features
+## Features
 
 <table>
 <tr>
 <td width="50%">
 
-### 📋 17 Task Types
+### 17 Task Types
 
 **Generate** — Test Plans, Test Cases, Automation Code, API Tests, Load Tests, Mobile Tests, AI Model Tests
 
@@ -110,7 +110,7 @@ npm run preview   # preview locally
 </td>
 <td width="50%">
 
-### 🧠 Smart Features
+### Smart Features
 
 - **Streaming responses** — output appears in real-time
 - **Structured Memory** — AI extracts tech stack, bug patterns, conventions, and reuses them across tasks
@@ -124,7 +124,7 @@ npm run preview   # preview locally
 <tr>
 <td>
 
-### 🔒 Security
+### Security
 
 - AES-256-GCM encryption for API keys (PBKDF2)
 - XSS sanitization on all inputs
@@ -136,7 +136,7 @@ npm run preview   # preview locally
 </td>
 <td>
 
-### ⚡ Developer Experience
+### Developer Experience
 
 - **160 tests** (unit, integration, property-based)
 - **16 E2E tests** (Playwright)
@@ -151,64 +151,52 @@ npm run preview   # preview locally
 
 ---
 
-## 🤖 AI Providers
+## AI Providers
 
 QA Copilot supports **9 providers** with a unified interface. Pick any — the experience is identical.
 
 | Provider | Free? | Default Model | Get Key |
 |----------|-------|---------------|---------|
-| **Groq** | ✅ Free | `llama-3.3-70b-versatile` | [console.groq.com](https://console.groq.com) |
-| **DeepSeek** | ✅ Free | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com) |
-| **Gemini** | ✅ Free | `gemini-1.5-flash` | [ai.google.dev](https://ai.google.dev) |
-| **OpenRouter** | ✅ Free | `deepseek/deepseek-chat` | [openrouter.ai](https://openrouter.ai/keys) |
-| **Together AI** | ✅ Free | `meta-llama/Llama-3.3-70B-Instruct` | [api.together.ai](https://api.together.ai) |
-| **Novita AI** | ✅ Free | `deepseek/deepseek-chat` | [novita.ai](https://novita.ai) |
-| **Lepton AI** | ✅ Free | `llama-3.3-70b-instruct` | [lepton.ai](https://www.lepton.ai) |
-| **Claude** | 💰 Paid | `claude-sonnet-4-20250514` | [console.anthropic.com](https://console.anthropic.com) |
-| **OpenAI** | 💰 Paid | `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
-
-> ✅ = Free tier, no credit card required
+| **Groq** | Yes | `llama-3.3-70b-versatile` | [console.groq.com](https://console.groq.com) |
+| **DeepSeek** | Yes | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com) |
+| **Gemini** | Yes | `gemini-1.5-flash` | [ai.google.dev](https://ai.google.dev) |
+| **OpenRouter** | Yes | `deepseek/deepseek-chat` | [openrouter.ai](https://openrouter.ai/keys) |
+| **Together AI** | Yes | `meta-llama/Llama-3.3-70B-Instruct` | [api.together.ai](https://api.together.ai) |
+| **Novita AI** | Yes | `deepseek/deepseek-chat` | [novita.ai](https://novita.ai) |
+| **Lepton AI** | Yes | `llama-3.3-70b-instruct` | [lepton.ai](https://www.lepton.ai) |
+| **Claude** | Paid | `claude-sonnet-4-20250514` | [console.anthropic.com](https://console.anthropic.com) |
+| **OpenAI** | Paid | `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
 
 ---
 
-## 📸 Screenshots
-
-<!-- Add screenshots here -->
-
-| Main Interface | Task Selection | Output & Export |
-|:-:|:-:|:-:|
-| *Coming soon* | *Coming soon* | *Coming soon* |
-
----
-
-## 🗄️ Architecture
+## Architecture
 
 ```
 src/
-├── components/
-│   ├── features/          # App panels: ChatArea, Sidebar, TaskSelector, etc.
-│   ├── ui/                # GlassCard, RippleButton, Modal, Toast, etc.
-│   └── layout/            # MainLayout
-├── config/                # Task types, prompts, presets, security config
-├── data/
-│   ├── api/               # 9 AI provider services + UnifiedAiService
-│   ├── codebase/          # GitHub & Local codebase connectors
-│   └── repositories/      # SQLite repositories (Project, Task, Memory)
-├── domain/
-│   ├── entities/          # TypeScript models (Project, Task, Memory, Session)
-│   └── usecases/          # Business logic (ProjectUseCases, TaskUseCases, etc.)
-├── hooks/                 # Custom hooks (useDatabase, useExecution, useTheme, etc.)
-├── lib/                   # Core services (database, encryption, export, storage)
-├── presentation/          # Context providers (UseCasesContext)
-├── store/                 # Zustand state management
-└── __tests__/             # Unit, integration, property-based tests
+  components/
+    features/          # App panels: ChatArea, Sidebar, TaskSelector, etc.
+    ui/                # GlassCard, RippleButton, Modal, Toast, etc.
+    layout/            # MainLayout
+  config/              # Task types, prompts, presets, security config
+  data/
+    api/               # 9 AI provider services + UnifiedAiService
+    codebase/          # GitHub & Local codebase connectors
+    repositories/      # SQLite repositories (Project, Task, Memory)
+  domain/
+    entities/          # TypeScript models (Project, Task, Memory, Session)
+    usecases/          # Business logic (ProjectUseCases, TaskUseCases, etc.)
+  hooks/               # Custom hooks (useDatabase, useExecution, useTheme, etc.)
+  lib/                 # Core services (database, encryption, export, storage)
+  presentation/        # Context providers (UseCasesContext)
+  store/               # Zustand state management
+  __tests__/           # Unit, integration, property-based tests
 ```
 
-**Data flow:** UI → Zustand Store → UseCases → Repositories → sql.js (WASM SQLite) → IndexedDB persistence
+**Data flow:** UI -> Zustand Store -> UseCases -> Repositories -> sql.js (WASM SQLite) -> IndexedDB persistence
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
@@ -219,7 +207,7 @@ src/
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 npm run test          # 160 unit/integration tests
@@ -231,10 +219,10 @@ npm run test:e2e      # 16 Playwright E2E tests
 
 ---
 
-## 🚢 Deploy
+## Deploy
 
 ### Vercel / Netlify
-Push to GitHub → connect repo → auto-deploy. Build command: `npm run build`, output: `dist/`.
+Push to GitHub, connect repo, auto-deploy. Build command: `npm run build`, output: `dist/`.
 
 ### Docker
 ```yaml
@@ -254,7 +242,7 @@ npm run build
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -266,14 +254,14 @@ npm run build
 | Virtualization | @tanstack/react-virtual |
 | Testing | Vitest, Playwright, @testing-library |
 | Build | Vite 5, esbuild |
-| CI | GitHub Actions (typecheck → lint → test → build → E2E → Lighthouse) |
+| CI | GitHub Actions (typecheck, lint, test, build, E2E, Lighthouse) |
 | Quality | ESLint 9, Commitlint, Husky, lint-staged |
 
-**Bundle:** 53KB gzipped (main chunk) · **CSS:** 6KB gzipped
+**Bundle:** 53KB gzipped (main chunk) | **CSS:** 6KB gzipped
 
 ---
 
-## 📊 Limits
+## Limits
 
 | Resource | Limit |
 |----------|-------|
@@ -284,7 +272,7 @@ npm run build
 
 ---
 
-## 📦 Environment Variables
+## Environment Variables
 
 All optional — can be configured in-app via the settings modal.
 
@@ -297,7 +285,7 @@ VITE_MAX_TOKENS=8192
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
@@ -318,13 +306,13 @@ npm run test:e2e     # Run E2E tests
 
 ---
 
-## 📝 License
+## License
 
-MIT
+MIT License. Copyright (c) 2026 ssrjkk. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 👤 Author
+## Author
 
 **ssrjkk** — QA Engineer & Software Developer
 
