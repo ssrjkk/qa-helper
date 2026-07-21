@@ -126,6 +126,11 @@ export function MainContent({
         </LazySuspense>
       ) : (
         <>
+          {!selectedTask && (
+            <div className="text-center py-2">
+              <p className="text-sm text-gray-500">Pick a task type below to get started</p>
+            </div>
+          )}
           <TaskSelector selectedTask={selectedTask} onSelect={onSelectTask} />
 
           <LazySuspense>

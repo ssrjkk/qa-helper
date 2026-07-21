@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { MainContent } from './MainContent';
+import { Onboarding, hasSeenOnboarding } from './Onboarding';
 import { MainLayout } from '../layout/MainLayout';
 import { useTheme, useKeyboardShortcuts } from '../../hooks';
 import { useDatabase } from '../../hooks/useDatabase';
@@ -45,6 +47,7 @@ export function AppContent({ db }: AppContentProps) {
   const { toggleTheme } = useTheme();
   const isOnline = useOnlineStatus();
   const [contextError, setContextError] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
 
   const {
     projects,
@@ -173,5 +176,14 @@ export function AppContent({ db }: AppContentProps) {
     />
   );
 
-  return <MainLayout sidebar={sidebar} main={main} />;
+  return (
+    <>
+      <MainLayout sidebar={sidebar} main={main} />
+      <AnimatePresence>
+        {showOnboarding && (
+          <Onboarding onComplete={() => setShowOnboarding(false)} />
+        )}
+      </AnimatePresence>
+    </>
+  );
 }

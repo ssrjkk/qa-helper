@@ -1,240 +1,343 @@
-# QA Copilot BY ssrjkk
+<![CDATA[<div align="center">
 
-AI-Powered QA Assistant — интеллектуальная платформа для автоматизации QA-процессов с использованием Claude API и других LLM провайдеров.
+# QA Copilot
 
-## Автор
+### AI-Powered QA Assistant
 
-**ssrjkk** — QA Engineer & Software Developer
+**Generate test plans, analyze code, write bug reports — powered by 9 AI providers.**
 
-- **Telegram**: [@ssrjkk](https://t.me/ssrjkk)
-- **Email**: ray013lefe@gmail.com
-- **GitHub**: [https://github.com/ssrjkk](https://github.com/ssrjkk)
+[![CI](https://github.com/ssrjkk/qa-helper/actions/workflows/ci.yml/badge.svg)](https://github.com/ssrjkk/qa-helper/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-160%20passed-22c55e)](#testing)
+[![Bundle](https://img.shields.io/bundlejs/size/@minified?gzip=true&label=bundle&color=6366f1)](#tech-stack)
+[![License](https://img.shields.io/github/license/ssrjkk/qa-helper)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](#tech-stack)
 
-## Возможности
+[Quick Start](#-quick-start) · [Features](#-features) · [Providers](#-ai-providers) · [Deploy](#-deploy) · [Contributing](#-contributing)
 
-- **18 типов задач**: Test Plans, Test Cases, Automation, Bug Reports, API Tests, Load Tests, Security Checks, CI/CD и другие
-- **Анализ скриншотов**: Загрузка изображений для AI-анализа UI/UX, accessibility
-- **Structured Memory**: Извлечение и категоризация данных из ответов AI (tech_stack, bug_patterns, edge_cases, conventions, api_endpoints, user_flows)
-- **Multi-Provider AI**: Claude, Groq, OpenAI, Gemini, OpenRouter, DeepSeek, Together AI, Novita AI, Lepton AI — единый интерфейс
-- **Streaming responses**: Мгновенный вывод ответа от AI
-- **SQLite в браузере**: sql.js + WebAssembly с IndexedDB персистентностью
-- **Cloud Sync**: Синхронизация с Firebase/Supabase, backup в localStorage
-- **Export**: Markdown, PDF, JSON, CSV, TXT — гибкий экспорт
-- **Keyboard Shortcuts**: Ctrl+Enter для выполнения, Ctrl+T для темы
-- **Responsive**: Адаптивный дизайн для desktop и mobile
-- **Dark/Light Theme**: Переключение тем с сохранением в localStorage
-
-## Tech Stack
-
-- **React 18** + TypeScript
-- **Vite** — сборка
-- **TailwindCSS** — стилизация
-- **Framer Motion** — анимации
-- **Zustand** — state management
-- **sql.js** — SQLite в WebAssembly
-- **jsPDF** — PDF генерация
-- **Claude API** — AI (Sonnet 4)
-- **Vitest** — тестирование
-
-## Безопасность
-
-- Валидация API ключа (префикс `sk-ant-`)
-- Rate limiting (10 запросов/минута)
-- XSS санитизация ввода
-- Параметризованные SQL запросы (защита от injection)
-- AES-GCM шифрование API ключа при хранении (PBKDF2)
-- Debounce сохранения данных
-- Error Boundary для обработки ошибок
-- Offline-first архитектура
-
-## Быстрый старт
-
-```bash
-# Установка зависимостей
-npm install
-
-# Запуск dev сервера
-npm run dev
-
-# Production сборка
-npm run build
-
-# Preview production сборки
-npm run preview
-```
-
-## Тестирование
-
-```bash
-npm run test               # Запуск тестов (54 теста)
-npm run test:watch         # Watch mode
-```
-
-## Архитектура проекта
-
-```
-src/
-├── App.tsx                 # Главный компонент
-├── main.tsx                # Entry point
-├── config/                 # Конфигурация
-│   ├── api.ts              # Claude API настройки
-│   ├── security.ts         # Лимиты и валидация
-│   ├── tasks.ts            # Типы задач и промпты
-│   ├── prompts.ts          # System prompts
-│   └── presets.ts          # Пресеты контекста
-├── lib/                    # Утилиты и сервисы
-│   ├── database.ts         # SQLite DatabaseService
-│   ├── useDatabase.ts      # Hook для работы с БД
-│   ├── rateLimiter.ts      # Rate limiting
-│   ├── useApi.ts           # AI API hook
-│   ├── memory.ts           # Memory utilities
-│   ├── export.ts           # Export engine
-│   ├── cloudSync.ts        # Cloud sync сервис
-│   ├── storage.ts          # IndexedDB/LocalStorage
-│   ├── utils.ts            # Утилиты
-│   └── logger.ts           # Логирование
-├── components/
-│   ├── ui/                 # Базовые UI компоненты
-│   ├── features/           # Feature компоненты
-│   └── layout/             # Layout компоненты
-├── domain/                 # Domain layer
-│   ├── entities/           # Сущности (Project, Task, Memory)
-│   └── usecases/           # Business logic
-├── data/                   # Data layer
-│   ├── api/                # AI провайдеры
-│   └── repositories/       # Репозитории
-├── hooks/                  # Custom React hooks
-├── store/                  # Zustand store
-├── presentation/           # Presentation layer
-├── types/                  # TypeScript типы
-└── __tests__/              # Тесты
-```
-
-## Конфигурация
-
-### API Провайдеры
-
-Приложение поддерживает **9 AI провайдеров** с единым интерфейсом:
-
-| Провайдер | Статус | Модель по умолчанию | Ссылка для получения ключа |
-|-----------|--------|---------------------|----------------------------|
-| **Claude** (Anthropic) | 💰 Платно | claude-sonnet-4-20250514 | [console.anthropic.com](https://console.anthropic.com) |
-| **Groq** | ✅ Бесплатно | llama-3.3-70b-versatile | [console.groq.com](https://console.groq.com) |
-| **OpenAI** | 💰 Платно | gpt-4o-mini | [platform.openai.com](https://platform.openai.com) |
-| **Gemini** | ✅ Бесплатно | gemini-1.5-flash | [ai.google.dev](https://ai.google.dev/gemini-api/docs) |
-| **OpenRouter** | ✅ Бесплатно | deepseek/deepseek-chat | [openrouter.ai](https://openrouter.ai/keys) |
-| **DeepSeek** | ✅ Бесплатно | deepseek-chat | [platform.deepseek.com](https://platform.deepseek.com) |
-| **Together AI** | ✅ Бесплатно | meta-llama/Llama-3.3-70B-Instruct | [api.together.ai](https://api.together.ai) |
-| **Novita AI** | ✅ Бесплатно | deepseek/deepseek-chat | [novita.ai](https://novita.ai) |
-| **Lepton AI** | ✅ Бесплатно | llama-3.3-70b-instruct | [lepton.ai](https://www.lepton.ai) |
-
-> ℹ️ **Бесплатные провайдеры** (отмечены ✅) не требуют кредитной карты и предоставляют бесплатные лимиты.
-
-### Лимиты
-
-- Rate limit: 10 запросов/минуту
-- Context: 100,000 символов
-- Screenshot: 5MB максимум
-
-## Типы задач
-
-### Generate
-- Test Plan
-- Test Cases
-- Automation Code
-- API Tests
-- Load Test
-- Mobile Tests
-- AI Model Tests
-
-### Analyze
-- Requirements
-- Observability
-- Quality Metrics
-
-### Review
-- Bug Report
-- Code Review
-- Screenshot Analysis
-
-### Setup
-- Security Check
-- CI Pipeline
-- Checklist
-- Contract Tests
-
-## Структура БД
-
-```sql
--- Projects
-CREATE TABLE projects (
-  id INTEGER PRIMARY KEY,
-  name TEXT,
-  description TEXT,
-  memory TEXT,
-  created_at TEXT,
-  updated_at TEXT
-);
-
--- Tasks
-CREATE TABLE tasks (
-  id INTEGER PRIMARY KEY,
-  project_id INTEGER,
-  task_type TEXT,
-  context TEXT,
-  output TEXT,
-  created_at TEXT
-);
-
--- Screenshots
-CREATE TABLE screenshots (
-  id INTEGER PRIMARY KEY,
-  task_id INTEGER,
-  image_data TEXT,
-  analysis_result TEXT,
-  created_at TEXT
-);
-
--- Conversation History
-CREATE TABLE conversation_history (
-  id INTEGER PRIMARY KEY,
-  project_id INTEGER,
-  role TEXT,
-  content TEXT,
-  task_type TEXT,
-  created_at TEXT
-);
-
--- Memory Entries
-CREATE TABLE memory_entries (
-  id INTEGER PRIMARY KEY,
-  project_id INTEGER,
-  category TEXT,
-  key TEXT,
-  value TEXT,
-  confidence REAL,
-  source_task_id INTEGER,
-  created_at TEXT,
-  updated_at TEXT
-);
-```
-
-## Вклад в проект
-
-1. Fork репозитория
-2. Создайте ветку (`git checkout -b feature/amazing-feature`)
-3. Commit изменения (`git commit -m 'Add amazing feature'`)
-4. Push в ветку (`git push origin feature/amazing-feature`)
-5. Создайте Pull Request
-
-## Обратная связь
-
-- Bug reports: GitHub Issues
-- Questions: Telegram @ssrjkk
-- Email: ray013lefe@gmail.com
-
-
+</div>
 
 ---
 
-Made with ❤️ by [ssrjkk](https://github.com/ssrjkk)
+## What is QA Copilot?
+
+A browser-based QA assistant that turns your task descriptions into structured outputs — test plans, test cases, automation code, bug reports, security checks, and more. No server required. Runs entirely in your browser with SQLite (WebAssembly).
+
+**Core idea:** Describe what you need → pick a task type → get a professional QA artifact.
+
+<div align="center">
+
+```
+┌──────────────────────────────────────────────────────┐
+│                                                      │
+│   📝 "Login page has form validation for email       │
+│       and password fields, supports OAuth via        │
+│       Google. Write test cases."                     │
+│                                                      │
+│   Task: ✅ Test Cases                                │
+│                                                      │
+│   → 🚀 Execute                                       │
+│                                                      │
+│   ┌──────────────────────────────────────────┐       │
+│   │ Test Case: TC-LOGIN-001                  │       │
+│   │ Title: Valid email + password login       │       │
+│   │ Steps: 1. Navigate to /login             │       │
+│   │   2. Enter valid email                   │       │
+│   │   3. Enter valid password                │       │
+│   │   4. Click "Sign In"                     │       │
+│   │ Expected: Redirect to dashboard          │       │
+│   │ Priority: P0  │  Type: Functional        │       │
+│   └──────────────────────────────────────────┘       │
+│                                                      │
+└──────────────────────────────────────────────────────┘
+```
+
+</div>
+
+---
+
+## 🚀 Quick Start
+
+**3 steps to your first QA output:**
+
+```bash
+git clone https://github.com/ssrjkk/qa-helper.git
+cd qa-copilot
+npm install && npm run dev
+```
+
+Open `http://localhost:5173`, enter your API key, pick a task type, describe your context, and hit Execute.
+
+> **No API key?** Use Groq or DeepSeek — both are free and don't require a credit card.
+
+### Other ways to run
+
+<details>
+<summary><b>Docker</b></summary>
+
+```bash
+docker compose up -d
+# Open http://localhost:3000
+```
+</details>
+
+<details>
+<summary><b>Production build</b></summary>
+
+```bash
+npm run build     # dist/ folder
+npm run preview   # preview locally
+```
+</details>
+
+---
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%">
+
+### 📋 17 Task Types
+
+**Generate** — Test Plans, Test Cases, Automation Code, API Tests, Load Tests, Mobile Tests, AI Model Tests
+
+**Analyze** — Requirements Analysis, Observability, Quality Metrics
+
+**Review** — Bug Reports, Code Review, Screenshot Analysis
+
+**Setup** — Security Checks, CI/CD Pipelines, Checklists, Contract Tests
+
+</td>
+<td width="50%">
+
+### 🧠 Smart Features
+
+- **Streaming responses** — output appears in real-time
+- **Structured Memory** — AI extracts tech stack, bug patterns, conventions, and reuses them across tasks
+- **Context Presets** — pre-built templates for E2E, Unit, API, Mobile testing
+- **Agent Mode** — multi-step reasoning for complex QA tasks
+- **Export** — Markdown, PDF, JSON, CSV, TXT
+- **Session History** — virtualized list, search, load previous sessions
+
+</td>
+</tr>
+<tr>
+<td>
+
+### 🔒 Security
+
+- AES-256-GCM encryption for API keys (PBKDF2)
+- XSS sanitization on all inputs
+- Parameterized SQL queries
+- Rate limiting (10 req/min)
+- Content Security Policy headers
+- Master password protection
+
+</td>
+<td>
+
+### ⚡ Developer Experience
+
+- **160 tests** (unit, integration, property-based)
+- **16 E2E tests** (Playwright)
+- **Lighthouse CI** in GitHub Actions
+- Pre-commit hooks (eslint, lint-staged)
+- Commitlint with conventional commits
+- Strict TypeScript + ESLint zero warnings
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🤖 AI Providers
+
+QA Copilot supports **9 providers** with a unified interface. Pick any — the experience is identical.
+
+| Provider | Free? | Default Model | Get Key |
+|----------|-------|---------------|---------|
+| **Groq** | ✅ Free | `llama-3.3-70b-versatile` | [console.groq.com](https://console.groq.com) |
+| **DeepSeek** | ✅ Free | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com) |
+| **Gemini** | ✅ Free | `gemini-1.5-flash` | [ai.google.dev](https://ai.google.dev) |
+| **OpenRouter** | ✅ Free | `deepseek/deepseek-chat` | [openrouter.ai](https://openrouter.ai/keys) |
+| **Together AI** | ✅ Free | `meta-llama/Llama-3.3-70B-Instruct` | [api.together.ai](https://api.together.ai) |
+| **Novita AI** | ✅ Free | `deepseek/deepseek-chat` | [novita.ai](https://novita.ai) |
+| **Lepton AI** | ✅ Free | `llama-3.3-70b-instruct` | [lepton.ai](https://www.lepton.ai) |
+| **Claude** | 💰 Paid | `claude-sonnet-4-20250514` | [console.anthropic.com](https://console.anthropic.com) |
+| **OpenAI** | 💰 Paid | `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
+
+> ✅ = Free tier, no credit card required
+
+---
+
+## 📸 Screenshots
+
+<!-- Add screenshots here -->
+
+| Main Interface | Task Selection | Output & Export |
+|:-:|:-:|:-:|
+| *Coming soon* | *Coming soon* | *Coming soon* |
+
+---
+
+## 🗄️ Architecture
+
+```
+src/
+├── components/
+│   ├── features/          # App panels: ChatArea, Sidebar, TaskSelector, etc.
+│   ├── ui/                # GlassCard, RippleButton, Modal, Toast, etc.
+│   └── layout/            # MainLayout
+├── config/                # Task types, prompts, presets, security config
+├── data/
+│   ├── api/               # 9 AI provider services + UnifiedAiService
+│   ├── codebase/          # GitHub & Local codebase connectors
+│   └── repositories/      # SQLite repositories (Project, Task, Memory)
+├── domain/
+│   ├── entities/          # TypeScript models (Project, Task, Memory, Session)
+│   └── usecases/          # Business logic (ProjectUseCases, TaskUseCases, etc.)
+├── hooks/                 # Custom hooks (useDatabase, useExecution, useTheme, etc.)
+├── lib/                   # Core services (database, encryption, export, storage)
+├── presentation/          # Context providers (UseCasesContext)
+├── store/                 # Zustand state management
+└── __tests__/             # Unit, integration, property-based tests
+```
+
+**Data flow:** UI → Zustand Store → UseCases → Repositories → sql.js (WASM SQLite) → IndexedDB persistence
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl/Cmd + Enter` | Execute task |
+| `Ctrl/Cmd + Z` | Undo context |
+| `Ctrl/Cmd + Shift + Z` | Redo context |
+| `Ctrl/Cmd + T` | Toggle theme |
+| `Ctrl/Cmd + K` | Set API key |
+
+---
+
+## 🧪 Testing
+
+```bash
+npm run test          # 160 unit/integration tests
+npm run test:watch    # Watch mode
+npm run test:e2e      # 16 Playwright E2E tests
+```
+
+**Test coverage:** utils, database, security, components, tasks, QaAgent, circuit breaker, zip parser, property-based (10k iterations).
+
+---
+
+## 🚢 Deploy
+
+### Vercel / Netlify
+Push to GitHub → connect repo → auto-deploy. Build command: `npm run build`, output: `dist/`.
+
+### Docker
+```yaml
+services:
+  qa-copilot:
+    build: .
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+```
+
+### Self-hosted
+```bash
+npm run build
+# Serve dist/ with any static file server (nginx, Apache, Caddy)
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| UI | React 18, TypeScript 5.7, TailwindCSS 3 |
+| State | Zustand 5 |
+| Animations | Framer Motion 11 |
+| Database | sql.js (SQLite WASM) + IndexedDB |
+| PDF | jsPDF |
+| Virtualization | @tanstack/react-virtual |
+| Testing | Vitest, Playwright, @testing-library |
+| Build | Vite 5, esbuild |
+| CI | GitHub Actions (typecheck → lint → test → build → E2E → Lighthouse) |
+| Quality | ESLint 9, Commitlint, Husky, lint-staged |
+
+**Bundle:** 51KB gzipped (main chunk) · **CSS:** 6KB gzipped
+
+---
+
+## 📊 Limits
+
+| Resource | Limit |
+|----------|-------|
+| Context length | 100,000 characters |
+| Rate limit | 10 requests/minute |
+| Screenshot upload | 5MB max |
+| Session history | 50 entries |
+
+---
+
+## 📦 Environment Variables
+
+All optional — can be configured in-app via the settings modal.
+
+```env
+# .env (optional)
+VITE_API_URL=https://api.anthropic.com/v1/messages
+VITE_MODEL=claude-sonnet-4-20250514
+VITE_MAX_TOKENS=8192
+```
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make changes (ensure `npm run lint` and `npm run test` pass)
+4. Commit with conventional format: `git commit -m 'feat: add amazing feature'`
+5. Push and create a Pull Request
+
+### Development
+
+```bash
+npm install
+npm run dev          # Start dev server
+npm run lint         # Check linting
+npm run typecheck    # Check types
+npm run test         # Run tests
+npm run test:e2e     # Run E2E tests
+```
+
+---
+
+## 📝 License
+
+MIT
+
+---
+
+## 👤 Author
+
+**ssrjkk** — QA Engineer & Software Developer
+
+- Telegram: [@ssrjkk](https://t.me/ssrjkk)
+- GitHub: [ssrjkk](https://github.com/ssrjkk)
+- Email: ray013lefe@gmail.com
+
+---
+
+<div align="center">
+
+**Built with care for the QA community.**
+
+</div>
+]]>

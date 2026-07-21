@@ -173,6 +173,25 @@ export function ChatArea({
             ⚠️ {contextError}
           </motion.p>
         )}
+        {!context && selectedTask && !loading && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="text-xs text-gray-500">Try:</span>
+            {[
+              'Login form with email validation and OAuth',
+              'REST API /users endpoint with pagination',
+              'Mobile responsive navbar with hamburger menu',
+              'Payment checkout flow with Stripe integration',
+            ].map(hint => (
+              <button
+                key={hint}
+                onClick={() => onContextChange(hint)}
+                className="text-xs px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+              >
+                {hint}
+              </button>
+            ))}
+          </div>
+        )}
       </GlassCard>
 
       <div className="flex items-center gap-4">
@@ -204,6 +223,12 @@ export function ChatArea({
           </RippleButton>
         )}
       </div>
+
+      {!apiKeyValid && !loading && (
+        <p className="text-xs text-center text-gray-500">
+          Set an API key in the sidebar to start generating
+        </p>
+      )}
 
       <AnimatePresence>
         {error && (

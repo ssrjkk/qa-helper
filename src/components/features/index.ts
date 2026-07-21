@@ -7,3 +7,4 @@ export { ExportPanel } from './ExportPanel';
 export { MetricsDashboard } from './MetricsDashboard';
 export { ApiKeyModal } from './ApiKeyModal';
 export { AppContent } from './AppContent';
+export { Onboarding, hasSeenOnboarding, markOnboardingSeen } from './Onboarding';
