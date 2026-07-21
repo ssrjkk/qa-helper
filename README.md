@@ -57,6 +57,12 @@ A browser-based QA assistant that turns your task descriptions into structured o
 
 ---
 
+## About
+
+QA Copilot is a browser-based, zero-server QA assistant that generates professional QA artifacts from task descriptions. It connects to 9 AI providers (7 free), runs a tool-use agentic loop with codebase analysis, and stores everything locally via SQLite WASM. Built for QA engineers who need fast, structured outputs without leaving the browser.
+
+---
+
 ## Quick Start
 
 **3 steps to your first QA output:**
