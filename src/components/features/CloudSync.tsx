@@ -66,7 +66,7 @@ export function CloudSync({ onSync, onImport, projectsCount, canSync, projects, 
   const formatLastSync = (date: string | null) => {
     if (!date) return 'Never';
     const d = new Date(date);
-    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+    return `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
   };
 
   const statusText =

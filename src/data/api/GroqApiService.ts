@@ -50,29 +50,28 @@ export class GroqApiService {
     this.model = model;
   }
 
-  private getRetryableError(error: Error, status?: number): { type: string; retryAfter?: number } {
-    if (!navigator.onLine) {
-      return { type: 'network' };
+  private getRetryableError(error: Error): { type: string; retryAfter?: number } {
+    if (!navigator.onLine) return { type: 'network' };
+
+    const msg = error.message;
+    const statusMatch = msg.match(/(?:failed|error).*?:\s*(\d{3})/i) || msg.match(/\b(429|5\d{2})\b/);
+
+    if (statusMatch) {
+      const status = parseInt(statusMatch[1]);
+      if (status === 429) {
+        const resetAfter = msg.match(/retry-after:\s*(\d+)/i)?.[1];
+        return { type: 'rate_limit', retryAfter: resetAfter ? parseInt(resetAfter) : 5 };
+      }
+      if (status >= 500 && status <= 504) return { type: 'server_error' };
     }
 
-    if (status === 429) {
-      return { type: 'rate_limit', retryAfter: 5 };
-    }
-
-    if (status === 500 || status === 502 || status === 503) {
-      return { type: 'server_error' };
-    }
-
-    if (error.message.includes('fetch') || error.message.includes('network')) {
-      return { type: 'network' };
-    }
+    if (msg.includes('fetch') || msg.includes('network')) return { type: 'network' };
 
     return { type: 'unknown' };
   }
 
   private calculateBackoff(attempt: number): number {
-    const baseDelay = 1000;
-    const delay = Math.min(baseDelay * Math.pow(2, attempt), 30000);
+    const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
     const jitter = delay * 0.1 * (Math.random() * 2 - 1);
     return Math.round(delay + jitter);
   }
@@ -125,10 +124,8 @@ export class GroqApiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw Object.assign(
-          new Error(errorData.error?.message || `API request failed: ${response.status}`),
-          { status: response.status }
-        );
+        const msg = errorData.error?.message || `API request failed: ${response.status}`;
+        throw Object.assign(new Error(msg), { status: response.status });
       }
 
       const reader = response.body?.getReader();
@@ -143,25 +140,23 @@ export class GroqApiService {
         if (done || currentRequestId !== this.requestId) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
 
-            try {
-              const parsed: GroqStreamChunk = JSON.parse(data);
-              if (parsed.choices?.[0]?.delta?.content) {
-                fullResponse += parsed.choices[0].delta.content;
-                onChunk?.(parsed.choices[0].delta.content);
-              }
-              if (parsed.usage) {
-                inputTokens = parsed.usage.prompt_tokens;
-                outputTokens = parsed.usage.completion_tokens;
-              }
-            } catch { /* malformed SSE chunk, skip */ }
-          }
+          try {
+            const parsed: GroqStreamChunk = JSON.parse(data);
+            if (parsed.choices?.[0]?.delta?.content) {
+              fullResponse += parsed.choices[0].delta.content;
+              onChunk?.(parsed.choices[0].delta.content);
+            }
+            if (parsed.usage) {
+              inputTokens = parsed.usage.prompt_tokens;
+              outputTokens = parsed.usage.completion_tokens;
+            }
+          } catch { /* malformed SSE chunk, skip */ }
         }
       }
 

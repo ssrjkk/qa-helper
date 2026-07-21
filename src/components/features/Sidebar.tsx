@@ -144,6 +144,7 @@ export function Sidebar({
       </AnimatePresence>
       
       <StructuredMemory
+        projectId={selectedProject ?? 0}
         entries={memoryEntries}
         onAddEntry={onAddMemoryEntry}
         onDeleteEntry={onDeleteMemoryEntry}
@@ -159,7 +160,6 @@ export function Sidebar({
       />
 
       <TeamFeatures
-        projects={projects}
         currentProject={currentProj || null}
         onExportForTeam={onExportProject}
         onImportFromTeam={onImportProject}

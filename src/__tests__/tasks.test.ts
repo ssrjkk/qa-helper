@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { TASK_TYPES, TASK_PROMPTS } from '../config/tasks';
+import { TASK_TYPES } from '../config/tasks';
+import { STRUCTURED_PROMPTS } from '../config/prompts';
 
 describe('TASK_TYPES', () => {
   it('should have task types', () => {
@@ -32,22 +33,31 @@ describe('TASK_TYPES', () => {
   });
 });
 
-describe('TASK_PROMPTS', () => {
+describe('STRUCTURED_PROMPTS', () => {
   it('should have prompts for all task types', () => {
     TASK_TYPES.forEach(task => {
-      expect(TASK_PROMPTS[task.id]).toBeDefined();
-      expect(typeof TASK_PROMPTS[task.id]).toBe('function');
+      expect(STRUCTURED_PROMPTS[task.id]).toBeDefined();
     });
   });
 
-  it('should include context in prompt', () => {
-    const prompt = TASK_PROMPTS.test_plan('my context');
-    expect(prompt).toContain('my context');
+  it('should have system, userTemplate, outputFormat, qualityCriteria', () => {
+    TASK_TYPES.forEach(task => {
+      const prompt = STRUCTURED_PROMPTS[task.id];
+      expect(typeof prompt.system).toBe('string');
+      expect(typeof prompt.userTemplate).toBe('string');
+      expect(typeof prompt.outputFormat).toBe('string');
+      expect(Array.isArray(prompt.qualityCriteria)).toBe(true);
+    });
+  });
+
+  it('should include context in userTemplate', () => {
+    const prompt = STRUCTURED_PROMPTS.test_plan;
+    expect(prompt.userTemplate).toContain('{context}');
   });
 
   it('should have specific prompts for different tasks', () => {
-    expect(TASK_PROMPTS.bug_report('ctx')).toContain('bug report');
-    expect(TASK_PROMPTS.test_cases('ctx')).toContain('test cases');
-    expect(TASK_PROMPTS.automation_code('ctx')).toContain('automation');
+    expect(STRUCTURED_PROMPTS.bug_report.system).toBeDefined();
+    expect(STRUCTURED_PROMPTS.test_cases.system).toBeDefined();
+    expect(STRUCTURED_PROMPTS.automation_code.system).toBeDefined();
   });
 });

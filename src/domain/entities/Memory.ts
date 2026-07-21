@@ -19,16 +19,18 @@ export interface UpdateMemoryEntryDTO {
   confidence?: number;
 }
 
+const VALID_CATEGORIES = new Set<string>(MEMORY_CATEGORIES.map(c => c.id));
+
 export function mapRowToMemoryEntry(row: Record<string, unknown>): MemoryEntry {
   return {
-    id: row.id as number,
-    project_id: row.project_id as number,
-    category: row.category as MemoryCategory,
-    key: row.key as string,
-    value: row.value as string,
-    confidence: row.confidence as number,
-    source_task_id: row.source_task_id as number | undefined,
-    created_at: row.created_at as string,
-    updated_at: row.updated_at as string,
+    id: Number(row.id) || 0,
+    project_id: Number(row.project_id) || 0,
+    category: VALID_CATEGORIES.has(String(row.category)) ? (String(row.category) as MemoryCategory) : 'custom',
+    key: String(row.key || ''),
+    value: String(row.value || ''),
+    confidence: typeof row.confidence === 'number' ? row.confidence : Number(row.confidence) || 0.8,
+    source_task_id: row.source_task_id != null ? Number(row.source_task_id) : undefined,
+    created_at: String(row.created_at || ''),
+    updated_at: String(row.updated_at || ''),
   };
 }

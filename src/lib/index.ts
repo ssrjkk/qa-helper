@@ -1,3 +1,3 @@
-export { validateApiKey, sanitizeInput, formatDate, encryptApiKey, decryptApiKey, saveApiKey, loadApiKey, clearApiKey } from './utils';
+export { validateApiKey, sanitizeInput, formatDate, copyToClipboard } from './utils';
+export { encryptApiKey, decryptApiKey, saveApiKey, loadApiKey, clearApiKey } from './encryption';
 export type { ValidationResult } from './utils';
-export { keyManager, KeyManager } from './keyManagement';

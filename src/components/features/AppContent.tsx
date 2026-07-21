@@ -9,7 +9,7 @@ import { useProjectData } from '../../hooks/useProjectData';
 import { useExecution } from '../../hooks/useExecution';
 import { useCodebase } from '../../hooks/useCodebase';
 import { useMemoryEntries } from '../../hooks/useMemoryEntries';
-import { validateApiKey } from '../../lib';
+import { validateApiKey, copyToClipboard } from '../../lib';
 import { SECURITY_CONFIG } from '../../config';
 import { useClaudeApi } from '../../presentation';
 import { useAppStore } from '../../store/useAppStore';
@@ -83,7 +83,7 @@ export function AppContent({ db }: AppContentProps) {
       {
         key: 'c',
         modifiers: ['meta', 'ctrl', 'shift'],
-        action: () => navigator.clipboard.writeText(output).catch(() => {}),
+        action: () => copyToClipboard(output),
         description: 'Copy output',
       },
       {
@@ -156,7 +156,7 @@ export function AppContent({ db }: AppContentProps) {
       apiKeyValid={apiKeyValid}
       onExecute={handleExecute}
       onReset={handleReset}
-      onCopy={() => navigator.clipboard.writeText(output).catch(() => {})}
+      onCopy={() => copyToClipboard(output)}
       contextError={contextError}
       onContextError={setContextError}
       outputRef={outputRef}

@@ -22,23 +22,3 @@ export const TASK_TYPES = [
 ] as const;
 
 export type TaskType = typeof TASK_TYPES[number];
-
-export const TASK_PROMPTS: Record<string, (ctx: string) => string> = {
-  test_plan: (ctx) => `Create comprehensive QA test plan: strategy, scope, environments, risks, schedule.\n\n${ctx}`,
-  test_cases: (ctx) => `Generate detailed test cases with steps, expected results, severity.\n\n${ctx}`,
-  automation_code: (ctx) => `Write production-ready automation code with POM, fixtures, assertions.\n\n${ctx}`,
-  bug_report: (ctx) => `Create professional bug report with reproduction steps, severity, impact.\n\n${ctx}`,
-  code_review: (ctx) => `Review code for test coverage, flakiness, best practices.\n\n${ctx}`,
-  api_tests: (ctx) => `Generate complete API test suite with auth, validation, security tests.\n\n${ctx}`,
-  load_test: (ctx) => `Design load & performance test strategy with scripts.\n\n${ctx}`,
-  security_check: (ctx) => `Create OWASP-based security testing checklist and plan.\n\n${ctx}`,
-  ci_pipeline: (ctx) => `Create production CI/CD pipeline with parallel execution, quality gates.\n\n${ctx}`,
-  checklist: (ctx) => `Generate comprehensive pre-release QA checklist.\n\n${ctx}`,
-  requirements: (ctx) => `Analyze requirements for gaps, risks, testability.\n\n${ctx}`,
-  observability: (ctx) => `Design observability strategy with logs, metrics, traces.\n\n${ctx}`,
-  contract_tests: (ctx) => `Create consumer-driven contract tests with Pact.\n\n${ctx}`,
-  ai_model_tests: (ctx) => `Design AI/ML model testing suite with quality metrics.\n\n${ctx}`,
-  mobile_tests: (ctx) => `Generate mobile test strategy and automation suite.\n\n${ctx}`,
-  quality_metrics: (ctx) => `Define quality metrics framework with KPIs and dashboards.\n\n${ctx}`,
-  screenshot_analysis: (ctx) => `Analyze screenshot for UI defects, accessibility, UX issues.\n\n${ctx}`,
-};

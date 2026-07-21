@@ -24,6 +24,9 @@ export interface SyncData {
 }
 
 const SYNC_KEY = 'qa-helper-sync';
+const SYNC_STATUS_KEY = `${SYNC_KEY}-status`;
+const SYNC_CONFIG_KEY = `${SYNC_KEY}-config`;
+const SYNC_BACKUP_KEY = `${SYNC_KEY}-backup`;
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1000;
 
@@ -44,34 +47,51 @@ export class CloudSyncService {
 
   private loadStatus(): void {
     try {
-      const saved = localStorage.getItem(SYNC_KEY + '-status');
+      const saved = localStorage.getItem(SYNC_STATUS_KEY);
       if (saved) {
-        this.status = JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && typeof parsed.status === 'string') {
+          this.status = parsed;
+        }
       }
-    } catch { /* failed to parse saved sync status, use default */ }
+    } catch {
+      if (import.meta.env.DEV) console.warn('[cloudSync] Failed to load sync status');
+    }
   }
 
   private saveStatus(): void {
     try {
-      localStorage.setItem(SYNC_KEY + '-status', JSON.stringify(this.status));
+      localStorage.setItem(SYNC_STATUS_KEY, JSON.stringify(this.status));
       this.notifyListeners();
-    } catch { /* localStorage may be full or unavailable */ }
+    } catch {
+      if (import.meta.env.DEV) console.warn('[cloudSync] Failed to save sync status');
+    }
   }
 
   private loadConfig(): void {
     try {
-      const saved = localStorage.getItem(SYNC_KEY + '-config');
+      const saved = localStorage.getItem(SYNC_CONFIG_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved) as CloudConfig;
-        if (parsed.apiKey && keyManager.isReady()) {
-          keyManager.decryptApiKey(parsed.apiKey).then(decrypted => {
-            if (decrypted) this.config = { ...parsed, apiKey: decrypted };
-          }).catch(() => { this.config = parsed; });
-        } else {
-          this.config = parsed;
+        const parsed = JSON.parse(saved) as Record<string, unknown>;
+        if (parsed && typeof parsed.provider === 'string') {
+          const config: CloudConfig = {
+            provider: parsed.provider as CloudConfig['provider'],
+            apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : undefined,
+            projectId: typeof parsed.projectId === 'string' ? parsed.projectId : undefined,
+            url: typeof parsed.url === 'string' ? parsed.url : undefined,
+          };
+          if (config.apiKey && keyManager.isReady()) {
+            keyManager.decryptApiKey(config.apiKey).then(decrypted => {
+              if (decrypted) this.config = { ...config, apiKey: decrypted };
+            }).catch(() => { this.config = config; });
+          } else {
+            this.config = config;
+          }
         }
       }
-    } catch { /* failed to parse saved config, use default */ }
+    } catch {
+      if (import.meta.env.DEV) console.warn('[cloudSync] Failed to load config');
+    }
   }
 
   private notifyListeners(): void {
@@ -95,8 +115,10 @@ export class CloudSyncService {
       if (toStore.apiKey && keyManager.isReady()) {
         toStore.apiKey = await keyManager.encryptApiKey(toStore.apiKey);
       }
-      localStorage.setItem(SYNC_KEY + '-config', JSON.stringify(toStore));
-    } catch { /* localStorage may be full or unavailable */ }
+      localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(toStore));
+    } catch {
+      if (import.meta.env.DEV) console.warn('[cloudSync] Failed to save config');
+    }
   }
 
   getConfig(): CloudConfig {
@@ -123,8 +145,8 @@ export class CloudSyncService {
       if (data.memoryEntries !== undefined && !Array.isArray(data.memoryEntries)) return null;
 
       const validEntries = Array.isArray(data.memoryEntries)
-        ? (data.memoryEntries as MemoryEntry[]).filter(
-            (e) => e && typeof e === 'object' && typeof e.key === 'string' && typeof e.value === 'string',
+        ? data.memoryEntries.filter(
+            (e: unknown): e is MemoryEntry => e != null && typeof e === 'object' && 'key' in e && 'value' in e && typeof (e as MemoryEntry).key === 'string' && typeof (e as MemoryEntry).value === 'string',
           )
         : [];
 
@@ -138,18 +160,18 @@ export class CloudSyncService {
   }
 
   private async withRetry<T>(fn: () => Promise<T>): Promise<T> {
-    let lastError: Error | null = null;
+    let lastError: unknown;
     for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
       try {
         return await fn();
       } catch (err) {
-        lastError = err as Error;
+        lastError = err;
         if (attempt < MAX_RETRY_ATTEMPTS) {
           await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
         }
       }
     }
-    throw lastError ?? new Error('Max retry attempts exceeded');
+    throw lastError instanceof Error ? lastError : new Error('Max retry attempts exceeded');
   }
 
   async syncToCloud(projects: Project[], memoryEntries: MemoryEntry[]): Promise<boolean> {
@@ -185,7 +207,7 @@ export class CloudSyncService {
 
   private async syncToLocal(projects: Project[], memoryEntries: MemoryEntry[]): Promise<boolean> {
     const data = await this.exportData(projects, memoryEntries);
-    localStorage.setItem(SYNC_KEY + '-backup', data);
+    localStorage.setItem(SYNC_BACKUP_KEY, data);
     this.status = {
       lastSync: new Date().toISOString(),
       status: 'synced',
@@ -252,7 +274,7 @@ export class CloudSyncService {
       
       switch (this.config.provider) {
         case 'local': {
-          const stored = localStorage.getItem(SYNC_KEY + '-backup');
+          const stored = localStorage.getItem(SYNC_BACKUP_KEY);
           if (!stored) return null;
           data = await this.importData(stored);
           break;
@@ -318,8 +340,8 @@ export class CloudSyncService {
       if (!Array.isArray(decoded.projects)) return null;
       if (decoded.projects.length > 0 && typeof decoded.projects[0].name !== 'string') return null;
       const validEntries = Array.isArray(decoded.memoryEntries)
-        ? (decoded.memoryEntries as MemoryEntry[]).filter(
-            (e) => e && typeof e === 'object' && typeof e.key === 'string' && typeof e.value === 'string',
+        ? decoded.memoryEntries.filter(
+            (e: unknown): e is MemoryEntry => e != null && typeof e === 'object' && 'key' in e && 'value' in e && typeof (e as MemoryEntry).key === 'string' && typeof (e as MemoryEntry).value === 'string',
           )
         : [];
       return { projects: decoded.projects as Project[], memoryEntries: validEntries };
@@ -351,11 +373,11 @@ export class CloudSyncService {
   }
 
   clearLocalBackup(): void {
-    localStorage.removeItem(SYNC_KEY + '-backup');
+    localStorage.removeItem(SYNC_BACKUP_KEY);
   }
 
   hasLocalBackup(): boolean {
-    return localStorage.getItem(SYNC_KEY + '-backup') !== null;
+    return localStorage.getItem(SYNC_BACKUP_KEY) !== null;
   }
 }
 

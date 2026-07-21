@@ -1,3 +1,5 @@
+import { arrayBufferToBase64, base64ToArrayBuffer } from './base64';
+
 const DB_NAME = 'qa-helper-db';
 const DB_VERSION = 1;
 const STORE_NAME = 'database';
@@ -5,40 +7,22 @@ const DB_KEY = 'app-state';
 const LS_PASSPHRASE_KEY = 'qa-helper-ls-key';
 const LS_IV_KEY = 'qa-helper-ls-iv';
 
-function lsToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
-function lsFromBase64(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
 async function getLsCryptoKey(): Promise<CryptoKey> {
   const stored = localStorage.getItem(LS_PASSPHRASE_KEY);
   if (stored) {
-    const raw = lsFromBase64(stored);
+    const raw = base64ToArrayBuffer(stored);
     return crypto.subtle.importKey('raw', raw, 'PBKDF2', false, ['deriveKey']);
   }
   const passphrase = crypto.getRandomValues(new Uint8Array(32));
-  localStorage.setItem(LS_PASSPHRASE_KEY, lsToBase64(passphrase.buffer));
+  localStorage.setItem(LS_PASSPHRASE_KEY, arrayBufferToBase64(passphrase.buffer));
   return crypto.subtle.importKey('raw', passphrase, 'PBKDF2', false, ['deriveKey']);
 }
 
 async function getOrCreateLsIv(): Promise<Uint8Array> {
   const stored = localStorage.getItem(LS_IV_KEY);
-  if (stored) return lsFromBase64(stored);
+  if (stored) return base64ToArrayBuffer(stored);
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  localStorage.setItem(LS_IV_KEY, lsToBase64(iv.buffer));
+  localStorage.setItem(LS_IV_KEY, arrayBufferToBase64(iv.buffer));
   return iv;
 }
 
@@ -120,6 +104,7 @@ export class IndexedDBStorage implements StorageProvider {
         request.onsuccess = () => resolve(request.result || null);
       });
     } catch {
+      if (import.meta.env.DEV) console.warn('[storage] IndexedDB load failed');
       return null;
     }
   }
@@ -135,7 +120,9 @@ export class IndexedDBStorage implements StorageProvider {
         request.onerror = () => reject(new Error('Failed to clear IndexedDB'));
         request.onsuccess = () => resolve();
       });
-    } catch { /* IndexedDB clear failed, log and continue */ }
+    } catch {
+      if (import.meta.env.DEV) console.warn('[storage] IndexedDB clear failed');
+    }
   }
 
   async getSize(): Promise<number> {
@@ -169,15 +156,10 @@ export class LocalStorageFallback implements StorageProvider {
         aesKey,
         data,
       );
-      localStorage.setItem(DB_KEY, lsToBase64(encrypted));
+      localStorage.setItem(DB_KEY, arrayBufferToBase64(encrypted));
     } catch {
       // Web Crypto unavailable, fall back to unencrypted base64
-      let binary = '';
-      const len = data.length;
-      for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(data[i]);
-      }
-      localStorage.setItem(DB_KEY, btoa(binary));
+      localStorage.setItem(DB_KEY, arrayBufferToBase64(data.buffer));
     }
   }
 
@@ -189,7 +171,7 @@ export class LocalStorageFallback implements StorageProvider {
       const passphrase = await getLsCryptoKey();
       const aesKey = await deriveLsAesKey(passphrase);
       const iv = await getOrCreateLsIv();
-      const encrypted = lsFromBase64(saved);
+      const encrypted = base64ToArrayBuffer(saved);
       const decrypted = await crypto.subtle.decrypt(
         { name: 'AES-GCM', iv },
         aesKey,
@@ -199,13 +181,9 @@ export class LocalStorageFallback implements StorageProvider {
     } catch {
       // Not encrypted or decryption failed, try legacy base64
       try {
-        const binary = atob(saved);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-        return bytes;
+        return base64ToArrayBuffer(saved);
       } catch {
+        if (import.meta.env.DEV) console.warn('[storage] Failed to decode localStorage data');
         return null;
       }
     }
@@ -238,6 +216,7 @@ export async function createStorageProvider(): Promise<StorageProvider> {
       };
     });
   } catch {
+    if (import.meta.env.DEV) console.warn('[storage] Failed to probe IndexedDB');
     return new LocalStorageFallback();
   }
 }

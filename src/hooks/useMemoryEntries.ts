@@ -72,18 +72,22 @@ export function useMemoryEntries(selectedProject: number | null, db: UseDatabase
       try {
         const parsed: ImportData = JSON.parse(data);
         if (!parsed.project) return false;
+        const project = parsed.project;
 
-        const existingProject = projects.find((p) => p.name === parsed.project!.name);
-        const projectId = existingProject?.id || createProject(parsed.project.name);
+        const existingProject = projects.find((p) => p.name === project.name);
+        const projectId = existingProject?.id || createProject(project.name);
         if (!projectId || projectId <= 0) return false;
 
         if (parsed.memoryEntries?.length) {
           for (const entry of parsed.memoryEntries) {
-            const { id: _id, created_at: _ca, updated_at: _ua, ...rest } = entry;
-            void _id;
-            void _ca;
-            void _ua;
-            createMemoryEntry({ ...rest, project_id: projectId });
+            createMemoryEntry({
+              project_id: projectId,
+              category: entry.category,
+              key: entry.key,
+              value: entry.value,
+              confidence: entry.confidence,
+              source_task_id: entry.source_task_id,
+            });
           }
         }
 
@@ -92,6 +96,7 @@ export function useMemoryEntries(selectedProject: number | null, db: UseDatabase
         setSelectedProject(projectId);
         return true;
       } catch {
+        if (import.meta.env.DEV) console.warn('[useMemoryEntries] Failed to import project');
         return false;
       }
     },

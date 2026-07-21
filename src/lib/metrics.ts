@@ -22,9 +22,14 @@ class MetricsCollector {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && typeof parsed.totalRequests === 'number') {
+          return parsed;
+        }
       }
-    } catch { /* ignore */ }
+    } catch {
+      if (import.meta.env.DEV) console.warn('[metrics] Failed to load metrics from localStorage');
+    }
     return this.getEmptyMetrics();
   }
 
@@ -44,7 +49,9 @@ class MetricsCollector {
   private saveMetrics(): void {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.metrics));
-    } catch { /* ignore */ }
+    } catch {
+      if (import.meta.env.DEV) console.warn('[metrics] Failed to save metrics to localStorage');
+    }
   }
 
   recordRequest(taskType: string, success: boolean, tokens: number = 0, responseTime: number = 0): void {

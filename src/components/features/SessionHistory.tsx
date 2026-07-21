@@ -38,7 +38,7 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
 
   const truncate = (text: string, length: number): string => {
     if (text.length <= length) return text;
-    return text.slice(0, length) + '...';
+    return `${text.slice(0, length)}...`;
   };
 
   const filteredSessions = useMemo(() => sessions.filter(session => {

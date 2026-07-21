@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard, RippleButton } from '../ui';
+import { copyToClipboard } from '../../lib';
 
 interface ExportPanelProps {
   output: string;
@@ -29,26 +30,22 @@ export function ExportPanel({ output, context, taskType, projectName, onClose }:
       const { exportUtils } = await import('../../lib/export');
       const options = { output, context, taskType, projectName };
       
-      let blob: Blob;
-      let filename: string;
-      
-      switch (format) {
-        case 'markdown':
-          blob = await exportUtils.toMarkdown(options);
-          filename = exportUtils.generateFilename('md', taskType);
-          break;
-        case 'pdf':
-          blob = await exportUtils.toPdf(options);
-          filename = exportUtils.generateFilename('pdf', taskType);
-          break;
-        case 'json':
-          blob = await exportUtils.toJson(options);
-          filename = exportUtils.generateFilename('json', taskType);
-          break;
-        default:
-          return;
-      }
-      
+      const handlers: Record<ExportFormat, () => Promise<{ blob: Blob; filename: string }>> = {
+        markdown: async () => ({
+          blob: await exportUtils.toMarkdown(options),
+          filename: exportUtils.generateFilename('md', taskType),
+        }),
+        pdf: async () => ({
+          blob: await exportUtils.toPdf(options),
+          filename: exportUtils.generateFilename('pdf', taskType),
+        }),
+        json: async () => ({
+          blob: await exportUtils.toJson(options),
+          filename: exportUtils.generateFilename('json', taskType),
+        }),
+      };
+
+      const { blob, filename } = await handlers[format]();
       await exportUtils.downloadFile(blob, filename);
     } catch {
       // Export failed — user notified via UI state
@@ -59,7 +56,7 @@ export function ExportPanel({ output, context, taskType, projectName, onClose }:
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(output);
+      await copyToClipboard(output);
       setCopied(true);
       if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
       copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
@@ -69,10 +66,10 @@ export function ExportPanel({ output, context, taskType, projectName, onClose }:
   };
 
   const formats = [
-    { id: 'markdown' as ExportFormat, label: 'Markdown', icon: '📝', desc: 'For docs' },
-    { id: 'pdf' as ExportFormat, label: 'PDF', icon: '📄', desc: 'Printable' },
-    { id: 'json' as ExportFormat, label: 'JSON', icon: '📋', desc: 'Raw data' }
-  ];
+    { id: 'markdown' as const, label: 'Markdown', icon: '📝', desc: 'For docs' },
+    { id: 'pdf' as const, label: 'PDF', icon: '📄', desc: 'Printable' },
+    { id: 'json' as const, label: 'JSON', icon: '📋', desc: 'Raw data' }
+  ] as const;
 
   return (
     <AnimatePresence>

@@ -1,3 +1,5 @@
+import { arrayBufferToBase64, base64ToArrayBuffer } from './base64';
+
 const DB_NAME = 'qa-copilot-keys';
 const DB_VERSION = 1;
 const STORE_NAME = 'key-vault';
@@ -5,24 +7,6 @@ const SALT_KEY = 'master-salt';
 const VERIFY_KEY = 'verify-token';
 const PBKDF2_ITERATIONS = 100_000;
 const IV_LENGTH = 12;
-
-function toBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
-function fromBase64(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
 
 async function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -84,11 +68,11 @@ async function encryptWith(key: CryptoKey, plaintext: string): Promise<string> {
   const combined = new Uint8Array(iv.length + new Uint8Array(encrypted).length);
   combined.set(iv);
   combined.set(new Uint8Array(encrypted), iv.length);
-  return toBase64(combined.buffer);
+  return arrayBufferToBase64(combined.buffer);
 }
 
 async function decryptWith(key: CryptoKey, encoded: string): Promise<string> {
-  const combined = fromBase64(encoded);
+  const combined = base64ToArrayBuffer(encoded);
   const iv = combined.slice(0, IV_LENGTH);
   const data = combined.slice(IV_LENGTH);
   const decrypted = await crypto.subtle.decrypt(

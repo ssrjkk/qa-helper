@@ -1,5 +1,4 @@
 import { type AiProvider, PROVIDER_KEY_PATTERNS } from '../config/security';
-import { keyManager } from './keyManagement';
 
 export interface ValidationResult {
   valid: boolean;
@@ -104,16 +103,14 @@ export function retry<T>(
   return new Promise((resolve, reject) => {
     const attempt = async (n: number): Promise<void> => {
       try {
-        const result = await fn();
-        resolve(result);
+        resolve(await fn());
       } catch (err) {
-        const lastError = err as Error;
         if (n < options.maxAttempts) {
           const waitMs = options.backoff ? options.delay * n : options.delay;
           await new Promise(r => setTimeout(r, waitMs));
           return attempt(n + 1);
         }
-        reject(lastError);
+        reject(err instanceof Error ? err : new Error(String(err)));
       }
     };
     attempt(1);
@@ -130,12 +127,12 @@ export function chunk<T>(array: T[], size: number): T[][] {
 }
 
 export function groupBy<T>(array: T[], keyFn: (item: T) => string): Record<string, T[]> {
-  return array.reduce((acc, item) => {
+  const result: Record<string, T[]> = {};
+  for (const item of array) {
     const key = keyFn(item);
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
-    return acc;
-  }, {} as Record<string, T[]>);
+    (result[key] ??= []).push(item);
+  }
+  return result;
 }
 
 export function unique<T>(array: T[], keyFn?: (item: T) => unknown): T[] {
@@ -151,14 +148,14 @@ export function unique<T>(array: T[], keyFn?: (item: T) => unknown): T[] {
 
 export function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(item => deepClone(item)) as unknown as T;
-  const cloned = {} as T;
+  if (Array.isArray(obj)) return obj.map(item => deepClone(item)) as T;
+  const cloned: Record<string, unknown> = {};
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      cloned[key] = deepClone(obj[key]);
+      cloned[key] = deepClone(obj[key as keyof T]);
     }
   }
-  return cloned;
+  return cloned as T;
 }
 
 export function sleep(ms: number): Promise<void> {
@@ -239,9 +236,9 @@ export function randomInt(min: number, max: number): number {
 
 export function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {
   const result = {} as Pick<T, K>;
-  keys.forEach(key => {
+  for (const key of keys) {
     if (key in obj) result[key] = obj[key];
-  });
+  }
   return result;
 }
 
@@ -251,148 +248,11 @@ export function omit<T extends object, K extends keyof T>(obj: T, keys: K[]): Om
   return result as Omit<T, K>;
 }
 
-const STORAGE_KEY_SALT = 'qa-helper-salt';
-const STORAGE_KEY_API_KEY = 'qa-api-key';
-const PBKDF2_ITERATIONS = 100000;
-const ENCRYPTION_ALGORITHM = 'AES-GCM';
-const KEY_LENGTH = 256;
-const IV_LENGTH = 12;
-const SALT_LENGTH = 16;
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-
-async function getOrCreateSalt(): Promise<Uint8Array> {
-  const storedSalt = localStorage.getItem(STORAGE_KEY_SALT);
-  if (storedSalt) {
-    return new Uint8Array(base64ToArrayBuffer(storedSalt));
-  }
-  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-  localStorage.setItem(STORAGE_KEY_SALT, arrayBufferToBase64(salt.buffer));
-  return salt;
-}
-
-const LEGACY_KEY_STORAGE = 'qa-helper-legacy-key';
-const LEGACY_KEY_LENGTH = 32;
-
-async function getOrCreateLegacyKey(): Promise<string> {
-  const stored = localStorage.getItem(LEGACY_KEY_STORAGE);
-  if (stored) return stored;
-  const randomBytes = crypto.getRandomValues(new Uint8Array(LEGACY_KEY_LENGTH));
-  const key = arrayBufferToBase64(randomBytes.buffer);
-  localStorage.setItem(LEGACY_KEY_STORAGE, key);
-  return key;
-}
-
-async function legacyDeriveKey(salt: Uint8Array): Promise<CryptoKey> {
-  const encoder = new TextEncoder();
-  const passphrase = await getOrCreateLegacyKey();
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(passphrase),
-    'PBKDF2',
-    false,
-    ['deriveBits', 'deriveKey']
-  );
-  
-  return crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt: salt,
-      iterations: PBKDF2_ITERATIONS,
-      hash: 'SHA-256'
-    },
-    keyMaterial,
-    { name: ENCRYPTION_ALGORITHM, length: KEY_LENGTH },
-    false,
-    ['encrypt', 'decrypt']
-  );
-}
-
-async function legacyEncrypt(apiKey: string): Promise<string> {
-  const salt = await getOrCreateSalt();
-  const key = await legacyDeriveKey(salt);
-  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
-  const encoder = new TextEncoder();
-  
-  const encrypted = await crypto.subtle.encrypt(
-    { name: ENCRYPTION_ALGORITHM, iv: iv },
-    key,
-    encoder.encode(apiKey)
-  );
-  
-  const combined = new Uint8Array(iv.length + encrypted.byteLength);
-  combined.set(iv);
-  combined.set(new Uint8Array(encrypted), iv.length);
-  
-  return arrayBufferToBase64(combined.buffer);
-}
-
-async function legacyDecrypt(encryptedData: string): Promise<string | null> {
+export async function copyToClipboard(text: string): Promise<boolean> {
   try {
-    const combined = new Uint8Array(base64ToArrayBuffer(encryptedData));
-    const iv = combined.slice(0, IV_LENGTH);
-    const data = combined.slice(IV_LENGTH);
-    const salt = await getOrCreateSalt();
-    const key = await legacyDeriveKey(salt);
-    
-    const decrypted = await crypto.subtle.decrypt(
-      { name: ENCRYPTION_ALGORITHM, iv: iv },
-      key,
-      new Uint8Array(data)
-    );
-    
-    return new TextDecoder().decode(decrypted);
+    await navigator.clipboard.writeText(text);
+    return true;
   } catch {
-    return null;
+    return false;
   }
-}
-
-export async function encryptApiKey(apiKey: string): Promise<string> {
-  if (keyManager.isReady()) {
-    return keyManager.encryptApiKey(apiKey);
-  }
-  return legacyEncrypt(apiKey);
-}
-
-export async function decryptApiKey(encryptedData: string): Promise<string | null> {
-  if (keyManager.isReady()) {
-    try {
-      return await keyManager.decryptApiKey(encryptedData);
-    } catch {
-      return legacyDecrypt(encryptedData);
-    }
-  }
-  return legacyDecrypt(encryptedData);
-}
-
-export async function saveApiKey(apiKey: string): Promise<void> {
-  const encrypted = await encryptApiKey(apiKey);
-  localStorage.setItem(STORAGE_KEY_API_KEY, encrypted);
-}
-
-export async function loadApiKey(): Promise<string | null> {
-  const encrypted = localStorage.getItem(STORAGE_KEY_API_KEY);
-  if (!encrypted) return null;
-  return decryptApiKey(encrypted);
-}
-
-export function clearApiKey(): void {
-  localStorage.removeItem(STORAGE_KEY_API_KEY);
-  localStorage.removeItem(STORAGE_KEY_SALT);
 }

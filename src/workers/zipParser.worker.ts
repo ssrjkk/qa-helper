@@ -53,7 +53,6 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   try {
     const zip = await JSZip.loadAsync(data);
     const files: ZipFileEntry[] = [];
-    let totalSize = 0;
 
     const filePromises: Promise<void>[] = [];
 
@@ -67,18 +66,15 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       const lowerName = name.toLowerCase();
       if (IGNORED_DIRS.has(name) || name === '.DS_Store' || name === 'Thumbs.db') return;
 
-      const ext = '.' + lowerName.split('.').pop();
+      const ext = `.${lowerName.split('.').pop() ?? ''}`;
       if (!CODE_EXTENSIONS.has(ext)) return;
 
       const promise = zipEntry.async('string').then((content) => {
-        const fileSize = new TextEncoder().encode(content).byteLength;
-        totalSize += fileSize;
-
         files.push({
           path: relativePath,
           name,
           content,
-          size: fileSize,
+          size: new TextEncoder().encode(content).byteLength,
           lastModified: zipEntry.date,
         });
       });
@@ -89,6 +85,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     clearTimeout(timeoutId);
 
     const parseTimeMs = performance.now() - startTime;
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
 
     const result: ZipParseResult = {
       files: files.sort((a, b) => a.path.localeCompare(b.path)),

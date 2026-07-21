@@ -9,22 +9,27 @@ export class ProjectUseCases {
   }
 
   getProjectById(id: number): Project | undefined {
+    if (id <= 0) return undefined;
     return this.projectRepo.findById(id);
   }
 
   createProject(data: CreateProjectDTO): number {
-    return this.projectRepo.create(data);
+    if (!data.name?.trim()) return -1;
+    return this.projectRepo.create({ ...data, name: data.name.trim() });
   }
 
   updateProject(id: number, data: UpdateProjectDTO): void {
+    if (id <= 0) return;
     this.projectRepo.update(id, data);
   }
 
   deleteProject(id: number): void {
+    if (id <= 0) return;
     this.projectRepo.delete(id);
   }
 
   updateProjectMemory(id: number, memory: string): void {
+    if (id <= 0) return;
     this.projectRepo.update(id, { memory });
   }
 }

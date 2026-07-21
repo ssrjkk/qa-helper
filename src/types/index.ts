@@ -16,14 +16,6 @@ export interface Task {
   created_at: string;
 }
 
-export interface Screenshot {
-  id: number;
-  task_id: number;
-  image_data: string;
-  analysis_result?: string;
-  created_at: string;
-}
-
 export interface ConversationMessage {
   id: number;
   project_id: number;
@@ -35,5 +27,4 @@ export interface ConversationMessage {
 
 export type TabType = 'new' | 'history';
 
-export type { Database, Statement } from 'sql.js';
 export * from './memory';

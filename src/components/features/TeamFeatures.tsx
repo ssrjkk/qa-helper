@@ -18,13 +18,11 @@ export interface SharedProject {
 }
 
 interface TeamFeaturesProps {
-  projects: Project[];
   currentProject: Project | null;
   onShare?: (projectId: number, emails: string[], role: 'editor' | 'viewer') => Promise<void>;
   onExportForTeam: (project: Project) => string;
   onImportFromTeam: (data: string) => Promise<boolean>;
   teamMembers?: TeamMember[];
-  onInviteMember?: (email: string, role: string) => Promise<void>;
   onRemoveMember?: (memberId: string) => Promise<void>;
 }
 

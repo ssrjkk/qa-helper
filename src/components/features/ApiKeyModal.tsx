@@ -22,8 +22,8 @@ export function ApiKeyModal({ onClose, provider = 'claude' }: ApiKeyModalProps) 
       store.setApiKey(key);
       await saveApiKey(key);
       store.setShowApiKeyInput(false);
-    } catch (err) {
-      console.error('Failed to save API key:', err);
+    } catch {
+      store.setError('Failed to save API key');
     } finally {
       setSaving(false);
     }

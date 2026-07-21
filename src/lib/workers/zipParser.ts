@@ -39,8 +39,7 @@ export class ZipParserWorker {
       }
     };
 
-    this.worker.onerror = (error) => {
-      console.error('[ZipParserWorker] Fatal error:', error);
+    this.worker.onerror = () => {
       this.terminate();
     };
   }
@@ -54,7 +53,10 @@ export class ZipParserWorker {
 
     return new Promise<ZipParseResult>((resolve, reject) => {
       this.pendingRequests.set(requestId, { resolve, reject });
-      this.worker!.postMessage({ requestId, data, filename }, [data]);
+      const worker = this.worker;
+      if (worker) {
+        worker.postMessage({ requestId, data, filename }, [data]);
+      }
     });
   }
 

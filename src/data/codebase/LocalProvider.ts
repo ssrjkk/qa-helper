@@ -1,17 +1,6 @@
 import type { CodebaseFile, CodebaseProvider, CodebaseSearchResult } from './CodebaseProvider';
 import type { ZipFileEntry } from '../../workers/zipParser.worker';
-
-const IGNORED_DIRS = new Set([
-  'node_modules', '.git', 'dist', 'build', '.next', '.nuxt',
-  'coverage', '.cache', '__pycache__', '.venv', 'vendor',
-]);
-
-const CODE_EXTENSIONS = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.go', '.rs',
-  '.rb', '.php', '.cs', '.swift', '.kt', '.scala', '.vue', '.svelte',
-  '.html', '.css', '.scss', '.less', '.json', '.yaml', '.yml',
-  '.toml', '.sql', '.sh', '.bash', '.md', '.txt',
-]);
+import { IGNORED_DIRS, IGNORED_FILES, CODE_EXTENSIONS } from './constants';
 
 interface FileEntry {
   path: string;
@@ -86,7 +75,7 @@ export class LocalProvider implements CodebaseProvider {
   }
 
   private isIgnored(name: string): boolean {
-    return IGNORED_DIRS.has(name) || name === '.DS_Store' || name === 'Thumbs.db';
+    return IGNORED_DIRS.has(name) || IGNORED_FILES.has(name);
   }
 
   private async walkEntry(entry: FileSystemEntry, basePath: string): Promise<void> {

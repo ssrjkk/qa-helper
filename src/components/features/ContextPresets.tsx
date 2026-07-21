@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CONTEXT_PRESETS, type ContextPreset } from '../../config';
+import { CONTEXT_PRESETS, searchPresets, type ContextPreset } from '../../config';
 import { Input } from '../ui';
 
 interface ContextPresetsProps {
@@ -24,13 +24,7 @@ export function ContextPresets({ onSelect, currentContext }: ContextPresetsProps
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredPresets = search
-    ? CONTEXT_PRESETS.filter(preset =>
-        preset.name.toLowerCase().includes(search.toLowerCase()) ||
-        preset.description.toLowerCase().includes(search.toLowerCase()) ||
-        preset.tags.some(tag => tag.includes(search.toLowerCase()))
-      )
-    : CONTEXT_PRESETS;
+  const filteredPresets = search ? searchPresets(search) : CONTEXT_PRESETS;
 
   const handleSelect = (preset: ContextPreset) => {
     const newContext = currentContext

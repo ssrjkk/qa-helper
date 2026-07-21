@@ -7,6 +7,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { SLIDE_UP, SPRING } from '../../lib/animations';
 
 interface StructuredMemoryProps {
+  projectId: number;
   entries: MemoryEntry[];
   onAddEntry: (entry: Omit<MemoryEntry, 'id' | 'created_at' | 'updated_at'>) => void;
   onDeleteEntry: (id: number) => void;
@@ -14,7 +15,7 @@ interface StructuredMemoryProps {
   isLoading?: boolean;
 }
 
-export function StructuredMemory({ entries, onAddEntry, onDeleteEntry, onUpdateEntry }: StructuredMemoryProps) {
+export function StructuredMemory({ projectId, entries, onAddEntry, onDeleteEntry, onUpdateEntry }: StructuredMemoryProps) {
   const [selectedCategory, setSelectedCategory] = useState<MemoryCategory | null>(null);
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
@@ -24,10 +25,10 @@ export function StructuredMemory({ entries, onAddEntry, onDeleteEntry, onUpdateE
   const summary = getMemorySummary(memory);
 
   const handleAddEntry = () => {
-    if (!selectedCategory || !newValue.trim() || entries.length === 0) return;
+    if (!selectedCategory || !newValue.trim()) return;
 
     onAddEntry({
-      project_id: entries[0].project_id,
+      project_id: projectId,
       category: selectedCategory,
       key: newKey.trim() || 'entry',
       value: newValue.trim(),
@@ -42,10 +43,9 @@ export function StructuredMemory({ entries, onAddEntry, onDeleteEntry, onUpdateE
     ? entries.filter(e => e.category === selectedCategory)
     : entries;
 
-  const groupedEntries = MEMORY_CATEGORIES.reduce((acc, cat) => {
-    acc[cat.id] = entries.filter(e => e.category === cat.id);
-    return acc;
-  }, {} as Record<MemoryCategory, MemoryEntry[]>);
+  const groupedEntries = Object.fromEntries(
+    MEMORY_CATEGORIES.map(cat => [cat.id, entries.filter(e => e.category === cat.id)])
+  ) as Record<MemoryCategory, MemoryEntry[]>;
 
   return (
     <Accordion

@@ -39,30 +39,28 @@ export class MemoryUseCases {
 
   getMemorySummary(projectId: number): MemorySummary {
     const entries = this.getEntriesByProject(projectId);
-    
-    const techStackCount = entries.filter(e => e.category === 'tech_stack').length;
-    const requirementsCount = entries.filter(e => e.category === 'test_requirements').length;
-    const edgeCasesCount = entries.filter(e => e.category === 'edge_cases').length;
-    const bugPatternsCount = entries.filter(e => e.category === 'bug_patterns').length;
+    const counts: Record<string, number> = { tech_stack: 0, test_requirements: 0, edge_cases: 0, bug_patterns: 0 };
+
+    for (const e of entries) {
+      if (e.category in counts) counts[e.category]++;
+    }
 
     return {
-      techStackCount,
-      requirementsCount,
-      edgeCasesCount,
-      bugPatternsCount,
+      techStackCount: counts.tech_stack,
+      requirementsCount: counts.test_requirements,
+      edgeCasesCount: counts.edge_cases,
+      bugPatternsCount: counts.bug_patterns,
       totalCount: entries.length,
     };
   }
 
   getSummaryText(projectId: number): string {
-    const summary = this.getMemorySummary(projectId);
+    const s = this.getMemorySummary(projectId);
     const parts: string[] = [];
-
-    if (summary.techStackCount > 0) parts.push(`${summary.techStackCount} tech items`);
-    if (summary.requirementsCount > 0) parts.push(`${summary.requirementsCount} requirements`);
-    if (summary.edgeCasesCount > 0) parts.push(`${summary.edgeCasesCount} edge cases`);
-    if (summary.bugPatternsCount > 0) parts.push(`${summary.bugPatternsCount} bug patterns`);
-
+    if (s.techStackCount > 0) parts.push(`${s.techStackCount} tech items`);
+    if (s.requirementsCount > 0) parts.push(`${s.requirementsCount} requirements`);
+    if (s.edgeCasesCount > 0) parts.push(`${s.edgeCasesCount} edge cases`);
+    if (s.bugPatternsCount > 0) parts.push(`${s.bugPatternsCount} bug patterns`);
     return parts.join(' • ') || 'No structured memory yet';
   }
 
@@ -79,9 +77,11 @@ export class MemoryUseCases {
       custom: [],
     };
 
-    entries.forEach(entry => {
-      grouped[entry.category].push(entry);
-    });
+    for (const entry of entries) {
+      if (entry.category in grouped) {
+        grouped[entry.category].push(entry);
+      }
+    }
 
     return grouped;
   }

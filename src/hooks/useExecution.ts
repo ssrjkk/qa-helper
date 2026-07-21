@@ -33,6 +33,23 @@ export function useExecution(
     };
   }, [abortApi]);
 
+  const saveResult = useCallback((output: string) => {
+    const s = useAppStore.getState();
+    if (!selectedProject || !s.selectedTask || !output) return;
+    createTask({
+      projectId: selectedProject,
+      taskType: s.selectedTask,
+      context: s.context,
+      output,
+    });
+    addSession({
+      task_type: s.selectedTask,
+      context: s.context,
+      output,
+      created_at: new Date().toISOString(),
+    });
+  }, [selectedProject, createTask, addSession]);
+
   const handleExecute = useCallback(async () => {
     if (isExecutingRef.current) return;
     const s = useAppStore.getState();
@@ -62,20 +79,7 @@ export function useExecution(
 
           if (result.output) {
             setOutput(result.output);
-            if (selectedProject && s.selectedTask) {
-              createTask({
-                projectId: selectedProject,
-                taskType: s.selectedTask,
-                context: s.context,
-                output: result.output,
-              });
-              addSession({
-                task_type: s.selectedTask,
-                context: s.context,
-                output: result.output,
-                created_at: new Date().toISOString(),
-              });
-            }
+            saveResult(result.output);
           }
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Unknown error');
@@ -110,20 +114,7 @@ export function useExecution(
 
       if (result.success && result.output) {
         setOutput(result.output);
-        if (selectedProject && s.selectedTask) {
-          createTask({
-            projectId: selectedProject,
-            taskType: s.selectedTask,
-            context: s.context,
-            output: result.output,
-          });
-          addSession({
-            task_type: s.selectedTask,
-            context: s.context,
-            output: result.output,
-            created_at: new Date().toISOString(),
-          });
-        }
+        saveResult(result.output);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -131,7 +122,7 @@ export function useExecution(
       setIsLoading(false);
       isExecutingRef.current = false;
     }
-  }, [selectedProject, executeApi, getProject, createTask, codebaseProvider, aiService, setIsLoading, setError, setOutput, setAgentSteps, addAgentStep, addSession]);
+  }, [selectedProject, executeApi, getProject, codebaseProvider, aiService, setIsLoading, setError, setOutput, setAgentSteps, addAgentStep, saveResult]);
 
   const handleReset = useCallback(() => {
     agentRef.current?.abort();

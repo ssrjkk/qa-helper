@@ -20,10 +20,6 @@ describe('SECURITY_CONFIG', () => {
     expect(SECURITY_CONFIG.maxRequestsPerWindow).toBe(10);
   });
 
-  it('should have screenshot size as 5MB', () => {
-    expect(SECURITY_CONFIG.maxScreenshotSize).toBe(5 * 1024 * 1024);
-  });
-
   it('should have rate limit of 10 requests per minute', () => {
     expect(SECURITY_CONFIG.maxRequestsPerWindow).toBe(10);
     expect(SECURITY_CONFIG.rateLimitWindow).toBe(60000);
@@ -32,13 +28,13 @@ describe('SECURITY_CONFIG', () => {
 
 describe('API Key Encryption', () => {
   it('should export encrypt and decrypt functions', async () => {
-    const { encryptApiKey, decryptApiKey } = await import('../lib/utils');
+    const { encryptApiKey, decryptApiKey } = await import('../lib/encryption');
     expect(typeof encryptApiKey).toBe('function');
     expect(typeof decryptApiKey).toBe('function');
   });
 
   it('should encrypt and decrypt API key correctly', async () => {
-    const { encryptApiKey, decryptApiKey } = await import('../lib/utils');
+    const { encryptApiKey, decryptApiKey } = await import('../lib/encryption');
     const testKey = 'sk-ant-test-api-key-1234567890';
     
     const encrypted = await encryptApiKey(testKey);
@@ -50,7 +46,7 @@ describe('API Key Encryption', () => {
   });
 
   it('should handle save and load API key', async () => {
-    const { saveApiKey, loadApiKey, clearApiKey } = await import('../lib/utils');
+    const { saveApiKey, loadApiKey, clearApiKey } = await import('../lib/encryption');
     const testKey = 'sk-ant-load-test-key-1234567890';
     
     await saveApiKey(testKey);
@@ -63,13 +59,13 @@ describe('API Key Encryption', () => {
   });
 
   it('should return null for invalid encrypted data', async () => {
-    const { decryptApiKey } = await import('../lib/utils');
+    const { decryptApiKey } = await import('../lib/encryption');
     const result = await decryptApiKey('invalid-data');
     expect(result).toBeNull();
   });
 
   it('should generate different ciphertext for same plaintext', async () => {
-    const { encryptApiKey, clearApiKey } = await import('../lib/utils');
+    const { encryptApiKey, clearApiKey } = await import('../lib/encryption');
     const testKey = 'sk-ant-random-test-key-1234567890';
     
     clearApiKey();

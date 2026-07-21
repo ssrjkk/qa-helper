@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useRef, useState, useCallback, useEffect } from 'react';
-import type { Database } from '../../types';
+import type { Database } from 'sql.js';
 import { ProjectRepository, TaskRepository, MemoryRepository } from '../../data/repositories';
 import { ProjectUseCases, TaskUseCases, MemoryUseCases } from '../../domain/usecases';
 import { UnifiedAiService, createUnifiedAiService, type AiProvider, getDefaultModelForProvider } from '../../data/api';
@@ -179,14 +179,23 @@ export function useClaudeApi() {
 
     aiService.setApiKey(apiKey);
 
-    const result = await aiService.executeWithRetry({
-      ...options,
-      signal: controller.signal,
-      onRetryAttempt: (attempt, delay, err) => {
-        setRetryInfo({ attempt, delay, error: err, isRetrying: true });
-      },
-      onChunk: options.onChunk,
-    });
+    let result;
+    try {
+      result = await aiService.executeWithRetry({
+        ...options,
+        signal: controller.signal,
+        onRetryAttempt: (attempt, delay, err) => {
+          setRetryInfo({ attempt, delay, error: err, isRetrying: true });
+        },
+        onChunk: options.onChunk,
+      });
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMsg);
+      setIsLoading(false);
+      setRetryInfo(null);
+      return { success: false, error: errorMsg };
+    }
 
     setIsLoading(false);
     setRetryInfo(null);

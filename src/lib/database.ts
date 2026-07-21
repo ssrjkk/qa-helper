@@ -1,6 +1,7 @@
 import type { Database } from 'sql.js';
 import type { Project, Task, ConversationMessage } from '../types';
 import type { MemoryEntry } from '../types/memory';
+import { queryAll, queryOne, safeRun, execTransaction, buildUpdateQuery } from './dbHelpers';
 
 export class DatabaseService {
   private lastError: string | null = null;
@@ -25,73 +26,42 @@ export class DatabaseService {
   }
 
   execTransaction(operations: (() => void)[]): boolean {
-    try {
-      this.db.run("BEGIN TRANSACTION");
-      for (const op of operations) {
-        op();
-      }
-      this.db.run("COMMIT");
-      this.saveDb();
-      this.clearError();
-      return true;
-    } catch (err) {
-      this.db.run("ROLLBACK");
-      this.lastError = (err as Error).message;
+    const error = execTransaction(this.db, this.saveDb, operations);
+    if (error) {
+      this.lastError = error;
       return false;
     }
+    this.clearError();
+    return true;
   }
 
   private safeRun(sql: string, params?: (string | number | null)[]): boolean {
-    try {
-      this.db.run(sql, params);
-      this.clearError();
-      return true;
-    } catch (err) {
-      this.lastError = (err as Error).message;
+    const error = safeRun(this.db, sql, params);
+    if (error) {
+      this.lastError = error;
       return false;
     }
-  }
-
-  private rowToObject(columns: string[], values: unknown[]): Record<string, unknown> {
-    const obj: Record<string, unknown> = {};
-    columns.forEach((col, i) => { obj[col] = values[i]; });
-    return obj;
+    this.clearError();
+    return true;
   }
 
   private queryAll<T>(sql: string, params?: (string | number | null)[]): T[] {
-    try {
-      const stmt = this.db.prepare(sql);
-      if (params) stmt.bind(params);
-      
-      const results: T[] = [];
-      while (stmt.step()) {
-        const cols = stmt.getColumnNames();
-        const vals = stmt.get();
-        results.push(this.rowToObject(cols, vals) as T);
-      }
-      stmt.free();
-      return results;
-    } catch {
-      return [];
-    }
+    return queryAll<T>(this.db, sql, params);
   }
 
   private queryOne<T>(sql: string, params?: (string | number | null)[]): T | undefined {
+    return queryOne<T>(this.db, sql, params);
+  }
+
+  private insertAndReturnId(sql: string, params?: (string | number | null)[]): number {
+    this.safeRun(sql, params);
+    if (this.lastError) return -1;
     try {
-      const stmt = this.db.prepare(sql);
-      if (params) stmt.bind(params);
-      
-      if (!stmt.step()) {
-        stmt.free();
-        return undefined;
-      }
-      
-      const cols = stmt.getColumnNames();
-      const vals = stmt.get();
-      stmt.free();
-      return this.rowToObject(cols, vals) as T;
+      this.saveDb();
+      const result = this.db.exec("SELECT last_insert_rowid() as id");
+      return Number(result[0].values[0][0]);
     } catch {
-      return undefined;
+      return -1;
     }
   }
 
@@ -104,37 +74,22 @@ export class DatabaseService {
   }
 
   createProject(name: string, description: string = ""): number {
-    this.safeRun("INSERT INTO projects (name, description, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))", [name, description]);
-    if (this.lastError) return -1;
-    try {
-      this.saveDb();
-      const result = this.db.exec("SELECT last_insert_rowid() as id");
-      return result[0].values[0][0] as number;
-    } catch {
-      return -1;
-    }
+    return this.insertAndReturnId(
+      "INSERT INTO projects (name, description, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))",
+      [name, description],
+    );
   }
 
   updateProject(id: number, updates: Partial<Project>): boolean {
-    const fields: string[] = [];
-    const values: (string | number | null)[] = [];
-    
-    if (updates.name !== undefined) { fields.push('name = ?'); values.push(updates.name); }
-    if (updates.description !== undefined) { fields.push('description = ?'); values.push(updates.description); }
-    if (updates.memory !== undefined) { fields.push('memory = ?'); values.push(updates.memory); }
-    
-    if (fields.length > 0) {
-      fields.push('updated_at = datetime("now")');
-      values.push(id);
-      this.safeRun(`UPDATE projects SET ${fields.join(', ')} WHERE id = ?`, values);
-      this.saveDb();
-      return !this.lastError;
-    }
-    return false;
+    const result = buildUpdateQuery('projects', updates as Record<string, unknown>, id);
+    if (!result) return false;
+    this.safeRun(result.sql, result.params);
+    this.saveDb();
+    return !this.lastError;
   }
 
   updateProjectMemory(id: number, memory: string): void {
-    this.safeRun("UPDATE projects SET memory = ?, updated_at = datetime('now') WHERE id = ?", [memory, id]);
+    this.safeRun("UPDATE projects SET memory = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [memory, id]);
     this.saveDb();
   }
 
@@ -156,18 +111,10 @@ export class DatabaseService {
   }
 
   createTask(projectId: number, taskType: string, context: string, output: string): number {
-    this.safeRun(
+    return this.insertAndReturnId(
       "INSERT INTO tasks (project_id, task_type, context, output, created_at) VALUES (?, ?, ?, ?, datetime('now'))",
-      [projectId, taskType, context, output]
+      [projectId, taskType, context, output],
     );
-    if (this.lastError) return -1;
-    try {
-      this.saveDb();
-      const result = this.db.exec("SELECT last_insert_rowid() as id");
-      return result[0].values[0][0] as number;
-    } catch {
-      return -1;
-    }
   }
 
   batchCreateTasks(tasks: Array<{ projectId: number; taskType: string; context: string; output: string }>): number[] {
@@ -178,7 +125,7 @@ export class DatabaseService {
         [task.projectId, task.taskType, task.context, task.output]
       );
       const result = this.db.exec("SELECT last_insert_rowid() as id");
-      results.push(result[0].values[0][0] as number);
+      results.push(Number(result[0].values[0][0]));
     });
     this.execTransaction(operations);
     return results;
@@ -189,18 +136,10 @@ export class DatabaseService {
   }
 
   addConversationMessage(projectId: number, role: 'user' | 'assistant', content: string, taskType?: string): number {
-    this.safeRun(
+    return this.insertAndReturnId(
       "INSERT INTO conversation_history (project_id, role, content, task_type, created_at) VALUES (?, ?, ?, ?, datetime('now'))",
-      [projectId, role, content, taskType || null]
+      [projectId, role, content, taskType || null],
     );
-    if (this.lastError) return -1;
-    try {
-      this.saveDb();
-      const result = this.db.exec("SELECT last_insert_rowid() as id");
-      return result[0].values[0][0] as number;
-    } catch {
-      return -1;
-    }
   }
 
   getConversationHistory(projectId: number, limit: number = 50): ConversationMessage[] {
@@ -230,18 +169,10 @@ export class DatabaseService {
   }
 
   createMemoryEntry(entry: Omit<MemoryEntry, 'id' | 'created_at' | 'updated_at'>): number {
-    this.safeRun(
+    return this.insertAndReturnId(
       "INSERT INTO memory_entries (project_id, category, key, value, confidence, source_task_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
-      [entry.project_id, entry.category, entry.key, entry.value, entry.confidence, entry.source_task_id || null]
+      [entry.project_id, entry.category, entry.key, entry.value, entry.confidence, entry.source_task_id || null],
     );
-    if (this.lastError) return -1;
-    try {
-      this.saveDb();
-      const result = this.db.exec("SELECT last_insert_rowid() as id");
-      return result[0].values[0][0] as number;
-    } catch {
-      return -1;
-    }
   }
 
   batchCreateMemoryEntries(entries: Array<Omit<MemoryEntry, 'id' | 'created_at' | 'updated_at'>>): number[] {
@@ -252,29 +183,18 @@ export class DatabaseService {
         [entry.project_id, entry.category, entry.key, entry.value, entry.confidence, entry.source_task_id || null]
       );
       const result = this.db.exec("SELECT last_insert_rowid() as id");
-      results.push(result[0].values[0][0] as number);
+      results.push(Number(result[0].values[0][0]));
     });
     this.execTransaction(operations);
     return results;
   }
 
   updateMemoryEntry(id: number, updates: Partial<MemoryEntry>): boolean {
-    const fields: string[] = [];
-    const values: (string | number | null)[] = [];
-    
-    if (updates.key !== undefined) { fields.push('key = ?'); values.push(updates.key); }
-    if (updates.value !== undefined) { fields.push('value = ?'); values.push(updates.value); }
-    if (updates.confidence !== undefined) { fields.push('confidence = ?'); values.push(updates.confidence); }
-    if (updates.category !== undefined) { fields.push('category = ?'); values.push(updates.category); }
-    
-    if (fields.length > 0) {
-      fields.push('updated_at = datetime("now")');
-      values.push(id);
-      this.safeRun(`UPDATE memory_entries SET ${fields.join(', ')} WHERE id = ?`, values);
-      this.saveDb();
-      return !this.lastError;
-    }
-    return false;
+    const result = buildUpdateQuery('memory_entries', updates as Record<string, unknown>, id);
+    if (!result) return false;
+    this.safeRun(result.sql, result.params);
+    this.saveDb();
+    return !this.lastError;
   }
 
   deleteMemoryEntry(id: number): void {
@@ -321,7 +241,7 @@ export class DatabaseService {
   getDatabaseSize(): number {
     const result = this.db.exec("PRAGMA page_count");
     if (result.length > 0 && result[0].values.length > 0) {
-      return (result[0].values[0][0] as number) * 4096;
+      return Number(result[0].values[0][0]) * 4096;
     }
     return 0;
   }

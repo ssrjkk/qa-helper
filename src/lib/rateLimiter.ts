@@ -28,12 +28,16 @@ function loadState(): RateLimitState {
   try {
     const saved = localStorage.getItem(RATE_LIMIT_KEY);
     if (saved) {
-      const parsed = JSON.parse(saved) as RateLimitState;
-      const now = Date.now();
-      parsed.requests = parsed.requests.filter(t => now - t < config.windowMs);
-      return parsed;
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.requests)) {
+        const now = Date.now();
+        parsed.requests = parsed.requests.filter((t: number) => now - t < config.windowMs);
+        return parsed;
+      }
     }
-  } catch { /* failed to parse saved rate limit state, use default */ }
+  } catch {
+    if (import.meta.env.DEV) console.warn('[rateLimiter] Failed to load state from localStorage');
+  }
   return { requests: [], config };
 }
 
@@ -41,7 +45,9 @@ function saveState(state: RateLimitState): void {
   if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(state));
-  } catch { /* localStorage may be full or unavailable */ }
+  } catch {
+    if (import.meta.env.DEV) console.warn('[rateLimiter] Failed to save state to localStorage');
+  }
 }
 
 let state = loadState();

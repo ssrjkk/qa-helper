@@ -189,13 +189,13 @@ Remember: Start by listing directories and reading relevant files. Only produce 
         }
 
         const truncatedContent = toolResult.content.length > 15000
-          ? toolResult.content.slice(0, 15000) + '\n... (truncated)'
+          ? `${toolResult.content.slice(0, 15_000)}\n... (truncated)`
           : toolResult.content;
 
         emitStep({
           id: createStepId(),
           type: 'tool_result',
-          content: truncatedContent.slice(0, 200) + (truncatedContent.length > 200 ? '...' : ''),
+          content: truncatedContent.length > 200 ? `${truncatedContent.slice(0, 200)}...` : truncatedContent,
           toolName: toolCall.name,
           toolOutput: truncatedContent,
           timestamp: Date.now(),

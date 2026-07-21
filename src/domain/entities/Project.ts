@@ -15,11 +15,11 @@ export interface UpdateProjectDTO {
 
 export function mapRowToProject(row: Record<string, unknown>): Project {
   return {
-    id: row.id as number,
-    name: row.name as string,
-    description: (row.description as string) || undefined,
-    memory: (row.memory as string) || undefined,
-    created_at: row.created_at as string,
-    updated_at: row.updated_at as string,
+    id: Number(row.id) || 0,
+    name: String(row.name || ''),
+    description: row.description != null ? String(row.description) : undefined,
+    memory: row.memory != null ? String(row.memory) : undefined,
+    created_at: String(row.created_at || ''),
+    updated_at: String(row.updated_at || ''),
   };
 }

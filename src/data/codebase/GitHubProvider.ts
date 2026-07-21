@@ -1,4 +1,5 @@
 import type { CodebaseFile, CodebaseProvider, CodebaseSearchResult } from './CodebaseProvider';
+import { IGNORED_DIRS, IGNORED_FILES, CODE_EXTENSIONS } from './constants';
 
 interface GitHubContentItem {
   name: string;
@@ -6,23 +7,6 @@ interface GitHubContentItem {
   type: 'file' | 'dir';
   size?: number;
 }
-
-const IGNORED_DIRS = new Set([
-  'node_modules', '.git', 'dist', 'build', '.next', '.nuxt',
-  'coverage', '.cache', '__pycache__', '.venv', 'vendor',
-]);
-
-const IGNORED_FILES = new Set([
-  'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml',
-  '.DS_Store', 'Thumbs.db',
-]);
-
-const CODE_EXTENSIONS = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.go', '.rs',
-  '.rb', '.php', '.cs', '.swift', '.kt', '.scala', '.vue', '.svelte',
-  '.html', '.css', '.scss', '.less', '.json', '.yaml', '.yml',
-  '.toml', '.sql', '.sh', '.bash', '.md', '.txt',
-]);
 
 const MAX_CACHE_SIZE = 100;
 
@@ -84,7 +68,7 @@ export class GitHubProvider implements CodebaseProvider {
           if (item.type === 'dir') return !IGNORED_DIRS.has(item.name);
           if (item.type === 'file') {
             if (IGNORED_FILES.has(item.name)) return false;
-            const ext = '.' + item.name.split('.').pop()?.toLowerCase();
+            const ext = `.${item.name.split('.').pop()?.toLowerCase()}`;
             return CODE_EXTENSIONS.has(ext);
           }
           return false;
@@ -124,7 +108,7 @@ export class GitHubProvider implements CodebaseProvider {
       const text = await response.text();
 
       if (text.length > 100_000) {
-        return text.slice(0, 100_000) + '\n// ... truncated (file too large)';
+        return `${text.slice(0, 100_000)}\n// ... truncated (file too large)`;
       }
 
       if (this.fileCache.size >= MAX_CACHE_SIZE) this.evictOldestEntry(this.fileCache);

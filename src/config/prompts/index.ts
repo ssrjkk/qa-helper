@@ -17,13 +17,15 @@ export const STRUCTURED_PROMPTS: Record<string, StructuredPrompt> = {
   ...SETUP_PROMPTS,
 };
 
+const DEFAULT_SYSTEM = 'You are a world-class Senior QA Engineer and Test Architect.';
+
 export function buildPrompt(taskId: string, context: string, projectMemory?: string): { system: string; user: string } {
   const prompt = STRUCTURED_PROMPTS[taskId];
 
   if (!prompt) {
     return {
-      system: 'You are a QA assistant.',
-      user: context
+      system: DEFAULT_SYSTEM,
+      user: context,
     };
   }
 
@@ -33,8 +35,16 @@ export function buildPrompt(taskId: string, context: string, projectMemory?: str
     userPrompt = `## Project Memory/Context\n${projectMemory}\n\n${userPrompt}`;
   }
 
+  if (prompt.outputFormat) {
+    userPrompt = `${userPrompt}\n\n## Output Format\n${prompt.outputFormat}`;
+  }
+
+  if (prompt.qualityCriteria.length > 0) {
+    userPrompt = `${userPrompt}\n\n## Quality Criteria\n${prompt.qualityCriteria.map(c => `- ${c}`).join('\n')}`;
+  }
+
   return {
     system: prompt.system,
-    user: userPrompt
+    user: userPrompt,
   };
 }

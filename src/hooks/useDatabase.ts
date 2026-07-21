@@ -21,7 +21,7 @@ export function useDatabase() {
       const storage = await createStorageProvider();
       await storage.save(exported);
     } catch (err) {
-      setError('Failed to save database: ' + (err instanceof Error ? err.message : String(err)));
+      setError(`Failed to save database: ${err instanceof Error ? err.message : String(err)}`);
     }
   }, [db]);
 

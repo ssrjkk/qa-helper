@@ -22,6 +22,9 @@ export default function App() {
   useEffect(() => {
     keyManager.hasStoredSalt().then(has => {
       if (!has) setKeyReady(true);
+    }).catch(() => {
+      if (import.meta.env.DEV) console.warn('[App] Failed to check stored salt');
+      setKeyReady(true);
     });
   }, []);
 
@@ -29,6 +32,8 @@ export default function App() {
     setKeyReady(true);
     loadApiKey().then((decrypted) => {
       if (decrypted) setApiKey(decrypted);
+    }).catch(() => {
+      if (import.meta.env.DEV) console.warn('[App] Failed to load API key after master password');
     });
   };
 

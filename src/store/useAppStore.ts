@@ -87,10 +87,10 @@ export const useAppStore = create<AppState>()(
     setMemoryEntries: (entries) => set((state) => { state.memoryEntries = entries; }),
     addMemoryEntry: (entry) => set((state) => { state.memoryEntries.push(entry); }),
     removeMemoryEntry: (id) => set((state) => {
-      state.memoryEntries = state.memoryEntries.filter((e) => e.id !== id);
+      state.memoryEntries = state.memoryEntries.filter((e: MemoryEntry) => e.id !== id);
     }),
     updateMemoryEntry: (id, updates) => set((state) => {
-      const entry = state.memoryEntries.find((e) => e.id === id);
+      const entry = state.memoryEntries.find((e: MemoryEntry) => e.id === id);
       if (entry) Object.assign(entry, updates);
     }),
 

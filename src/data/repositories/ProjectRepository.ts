@@ -1,5 +1,6 @@
 import { Project, CreateProjectDTO, UpdateProjectDTO, mapRowToProject } from '../../domain/entities';
-import type { Database } from '../../types';
+import type { Database } from 'sql.js';
+import { queryAll, queryOne, insertAndReturnId, buildUpdateQuery, safeRun, execTransaction } from '../../lib/dbHelpers';
 
 export interface IProjectRepository {
   findAll(): Project[];
@@ -16,78 +17,37 @@ export class ProjectRepository implements IProjectRepository {
   ) {}
 
   findAll(): Project[] {
-    try {
-      const result = this.db.exec("SELECT * FROM projects ORDER BY updated_at DESC");
-      if (result.length === 0) return [];
-      const { columns, values } = result[0];
-      return values.map(row => {
-        const obj: Record<string, unknown> = {};
-        columns.forEach((col, i) => { obj[col] = row[i]; });
-        return mapRowToProject(obj);
-      });
-    } catch {
-      return [];
-    }
+    return queryAll<Record<string, unknown>>(this.db, "SELECT * FROM projects ORDER BY updated_at DESC").map(mapRowToProject);
   }
 
   findById(id: number): Project | undefined {
-    try {
-      const stmt = this.db.prepare("SELECT * FROM projects WHERE id = ?");
-      stmt.bind([id]);
-      if (!stmt.step()) {
-        stmt.free();
-        return undefined;
-      }
-      const cols = stmt.getColumnNames();
-      const vals = stmt.get();
-      stmt.free();
-      const obj: Record<string, unknown> = {};
-      cols.forEach((col, i) => { obj[col] = vals[i]; });
-      return mapRowToProject(obj);
-    } catch {
-      return undefined;
-    }
+    const row = queryOne<Record<string, unknown>>(this.db, "SELECT * FROM projects WHERE id = ?", [id]);
+    return row ? mapRowToProject(row) : undefined;
   }
 
   create(data: CreateProjectDTO): number {
-    try {
-      this.db.run("INSERT INTO projects (name, description) VALUES (?, ?)", [data.name, data.description || '']);
-      this.saveDb();
-      const result = this.db.exec("SELECT last_insert_rowid() as id");
-      return result[0].values[0][0] as number;
-    } catch {
-      return -1;
-    }
+    return insertAndReturnId(
+      this.db, this.saveDb,
+      "INSERT INTO projects (name, description) VALUES (?, ?)",
+      [data.name, data.description || ''],
+    );
   }
 
   update(id: number, data: UpdateProjectDTO): void {
-    const fields: string[] = [];
-    const values: (string | number | null)[] = [];
-    
-    if (data.name !== undefined) { fields.push('name = ?'); values.push(data.name); }
-    if (data.description !== undefined) { fields.push('description = ?'); values.push(data.description); }
-    if (data.memory !== undefined) { fields.push('memory = ?'); values.push(data.memory); }
-    
-    if (fields.length > 0) {
-      fields.push('updated_at = CURRENT_TIMESTAMP');
-      values.push(id);
-      this.db.run(`UPDATE projects SET ${fields.join(', ')} WHERE id = ?`, values);
+    const update = buildUpdateQuery('projects', data as Record<string, unknown>, id);
+    if (update) {
+      safeRun(this.db, update.sql, update.params);
       this.saveDb();
     }
   }
 
   delete(id: number): void {
-    try {
-      this.db.run("BEGIN TRANSACTION");
-      this.db.run("DELETE FROM tasks WHERE project_id = ?", [id]);
-      this.db.run("DELETE FROM screenshots WHERE task_id IN (SELECT id FROM tasks WHERE project_id = ?)", [id]);
-      this.db.run("DELETE FROM conversation_history WHERE project_id = ?", [id]);
-      this.db.run("DELETE FROM memory_entries WHERE project_id = ?", [id]);
-      this.db.run("DELETE FROM projects WHERE id = ?", [id]);
-      this.db.run("COMMIT");
-      this.saveDb();
-    } catch {
-      this.db.run("ROLLBACK");
-    }
+    execTransaction(this.db, this.saveDb, [
+      () => this.db.run("DELETE FROM screenshots WHERE task_id IN (SELECT id FROM tasks WHERE project_id = ?)", [id]),
+      () => this.db.run("DELETE FROM tasks WHERE project_id = ?", [id]),
+      () => this.db.run("DELETE FROM conversation_history WHERE project_id = ?", [id]),
+      () => this.db.run("DELETE FROM memory_entries WHERE project_id = ?", [id]),
+      () => this.db.run("DELETE FROM projects WHERE id = ?", [id]),
+    ]);
   }
 }

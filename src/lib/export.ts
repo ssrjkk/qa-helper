@@ -273,6 +273,10 @@ export const exportUtils = {
           blob = await this.toText({ ...options, timestamp });
           filename = this.generateFilename('txt', options.taskType);
           break;
+        case 'csv':
+          blob = await this.toCsv([{ output: options.output, context: options.context, taskType: options.taskType }]);
+          filename = this.generateFilename('csv', options.taskType);
+          break;
         default:
           continue;
       }

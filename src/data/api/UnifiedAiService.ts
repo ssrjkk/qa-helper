@@ -60,19 +60,20 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
 
   constructor() {
     const d = makeDefaultModels();
+    const m = (p: AiProvider): string => d.get(p) ?? getDefaultModelForProvider(p).id;
 
     this.claudeService = new ClaudeApiService({
       baseUrl: 'https://api.anthropic.com/v1/messages',
-      model: d.get('claude')!,
+      model: m('claude'),
       maxTokens: 8192,
       anthropicVersion: '2023-06-01',
       provider: 'claude',
     });
-    this.groqService = new GroqApiService({ apiKey: '', model: d.get('groq')!, maxTokens: 8192 });
-    this.openRouterService = new OpenRouterApiService({ apiKey: '', model: d.get('openrouter')!, maxTokens: 8192 });
-    this.deepSeekService = new DeepSeekApiService({ apiKey: '', model: d.get('deepseek')!, maxTokens: 8192 });
-    this.togetherService = new TogetherApiService({ apiKey: '', model: d.get('together')!, maxTokens: 32768 });
-    this.novitaService = new NovitaApiService({ apiKey: '', model: d.get('novita')!, maxTokens: 8192 });
+    this.groqService = new GroqApiService({ apiKey: '', model: m('groq'), maxTokens: 8192 });
+    this.openRouterService = new OpenRouterApiService({ apiKey: '', model: m('openrouter'), maxTokens: 8192 });
+    this.deepSeekService = new DeepSeekApiService({ apiKey: '', model: m('deepseek'), maxTokens: 8192 });
+    this.togetherService = new TogetherApiService({ apiKey: '', model: m('together'), maxTokens: 32768 });
+    this.novitaService = new NovitaApiService({ apiKey: '', model: m('novita'), maxTokens: 8192 });
 
     for (const p of Object.keys(PROVIDER_MODELS) as AiProvider[]) {
       this.circuitBreakers.set(p, new CircuitBreaker({
@@ -175,6 +176,23 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
       : { ...options };
   }
 
+  private async dispatchExecute(method: 'execute' | 'executeWithRetry', opts: Record<string, unknown>): Promise<ApiResult> {
+    try {
+      switch (this.currentProvider) {
+        case 'claude': return this.claudeService[method](opts as Parameters<ClaudeApiService['execute']>[0]);
+        case 'groq': return this.groqService[method](opts as Parameters<GroqApiService['execute']>[0]);
+        case 'openrouter': return this.openRouterService[method](opts as Parameters<OpenRouterApiService['execute']>[0]);
+        case 'deepseek': return this.deepSeekService[method](opts as Parameters<DeepSeekApiService['execute']>[0]);
+        case 'together': return this.togetherService[method](opts as Parameters<TogetherApiService['execute']>[0]);
+        case 'novita': return this.novitaService[method](opts as Parameters<NovitaApiService['execute']>[0]);
+        default: return { success: false, error: `Provider ${this.currentProvider} not implemented` };
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { success: false, error: msg };
+    }
+  }
+
   async execute(options: {
     systemPrompt: string;
     userMessage: string;
@@ -195,15 +213,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
 
     let result: ApiResult;
     try {
-      switch (this.currentProvider) {
-        case 'claude': result = await this.claudeService.execute(opts as Parameters<ClaudeApiService['execute']>[0]); break;
-        case 'groq': result = await this.groqService.execute(opts as Parameters<GroqApiService['execute']>[0]); break;
-        case 'openrouter': result = await this.openRouterService.execute(opts as Parameters<OpenRouterApiService['execute']>[0]); break;
-        case 'deepseek': result = await this.deepSeekService.execute(opts as Parameters<DeepSeekApiService['execute']>[0]); break;
-        case 'together': result = await this.togetherService.execute(opts as Parameters<TogetherApiService['execute']>[0]); break;
-        case 'novita': result = await this.novitaService.execute(opts as Parameters<NovitaApiService['execute']>[0]); break;
-        default: result = { success: false, error: `Provider ${this.currentProvider} not implemented` };
-      }
+      result = await this.dispatchExecute('execute', opts);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       cb?.execute(() => Promise.reject(new Error(msg))).catch(() => {});
@@ -235,15 +245,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
 
     let result: ApiResult;
     try {
-      switch (this.currentProvider) {
-        case 'claude': result = await this.claudeService.executeWithRetry(opts as Parameters<ClaudeApiService['executeWithRetry']>[0]); break;
-        case 'groq': result = await this.groqService.executeWithRetry(opts as Parameters<GroqApiService['executeWithRetry']>[0]); break;
-        case 'openrouter': result = await this.openRouterService.executeWithRetry(opts as Parameters<OpenRouterApiService['executeWithRetry']>[0]); break;
-        case 'deepseek': result = await this.deepSeekService.executeWithRetry(opts as Parameters<DeepSeekApiService['executeWithRetry']>[0]); break;
-        case 'together': result = await this.togetherService.executeWithRetry(opts as Parameters<TogetherApiService['executeWithRetry']>[0]); break;
-        case 'novita': result = await this.novitaService.executeWithRetry(opts as Parameters<NovitaApiService['executeWithRetry']>[0]); break;
-        default: result = { success: false, error: `Provider ${this.currentProvider} not implemented` };
-      }
+      result = await this.dispatchExecute('executeWithRetry', opts);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       cb?.execute(() => Promise.reject(new Error(msg))).catch(() => {});

@@ -24,33 +24,34 @@ export class ClaudeApiService {
     this.config = config;
   }
 
-  private getRetryableError(error: Error, status?: number): RetryableError {
+  private getRetryableError(error: Error): RetryableError {
     if (!navigator.onLine) {
       return { type: 'network', message: 'No internet connection' };
     }
 
-    if (status === 429) {
-      const resetAfter = error.message.match(/retry-after:\s*(\d+)/i)?.[1];
-      return {
-        type: 'rate_limit',
-        message: 'API rate limit exceeded',
-        retryAfter: resetAfter ? parseInt(resetAfter) : 5
-      };
+    const msg = error.message;
+    const statusMatch = msg.match(/(?:failed|error).*?:\s*(\d{3})/i) || msg.match(/\b(429|5\d{2})\b/);
+
+    if (statusMatch) {
+      const status = parseInt(statusMatch[1]);
+      if (status === 429) {
+        const resetAfter = msg.match(/retry-after:\s*(\d+)/i)?.[1];
+        return { type: 'rate_limit', message: 'API rate limit exceeded', retryAfter: resetAfter ? parseInt(resetAfter) : 5 };
+      }
+      if (status >= 500 && status <= 504) {
+        return { type: 'server_error', message: `Server error: ${status}` };
+      }
     }
 
-    if (status === 500 || status === 502 || status === 503 || status === 504) {
-      return { type: 'server_error', message: `Server error: ${status}` };
+    if (msg.includes('fetch') || msg.includes('network')) {
+      return { type: 'network', message: msg };
     }
 
-    if (error.message.includes('fetch') || error.message.includes('network')) {
-      return { type: 'network', message: error.message };
-    }
-
-    return { type: 'unknown', message: error.message };
+    return { type: 'unknown', message: msg };
   }
 
-  private calculateBackoff(attempt: number, baseDelay: number = 1000, maxDelay: number = 30000): number {
-    const delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
+  private calculateBackoff(attempt: number): number {
+    const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
     const jitter = delay * 0.1 * (Math.random() * 2 - 1);
     return Math.round(delay + jitter);
   }
@@ -111,17 +112,15 @@ export class ClaudeApiService {
           'x-api-key': apiKey,
           'anthropic-version': this.config.anthropicVersion || '2023-06-01',
           'content-type': 'application/json'
-        } as Record<string, string>,
+        },
         body: JSON.stringify(requestBody),
         signal
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw Object.assign(
-          new Error(errorData.error?.message || `API request failed: ${response.status}`),
-          { status: response.status }
-        );
+        const msg = errorData.error?.message || `API request failed: ${response.status}`;
+        throw Object.assign(new Error(msg), { status: response.status });
       }
 
       const reader = response.body?.getReader();
@@ -136,24 +135,22 @@ export class ClaudeApiService {
         if (done || currentRequestId !== this.requestId) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
 
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                fullResponse += parsed.delta.text;
-                onChunk?.(parsed.delta.text);
-              }
-              if (parsed.type === 'message_delta' && parsed.usage?.output_tokens) {
-                outputTokens = parsed.usage.output_tokens;
-              }
-            } catch { /* malformed SSE chunk, skip */ }
-          }
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              fullResponse += parsed.delta.text;
+              onChunk?.(parsed.delta.text);
+            }
+            if (parsed.type === 'message_delta' && parsed.usage?.output_tokens) {
+              outputTokens = parsed.usage.output_tokens;
+            }
+          } catch { /* malformed SSE chunk, skip */ }
         }
       }
 
@@ -194,7 +191,6 @@ export class ClaudeApiService {
     }
   ): Promise<ApiResult> {
     const maxRetries = options.maxRetries ?? 3;
-    const baseDelay = 1000;
     let lastError: string = '';
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -219,7 +215,7 @@ export class ClaudeApiService {
 
         const delay = retryableError.retryAfter 
           ? retryableError.retryAfter * 1000 
-          : this.calculateBackoff(attempt, baseDelay);
+          : this.calculateBackoff(attempt);
 
         options.onRetryAttempt?.(attempt + 1, delay, lastError);
         await new Promise(resolve => setTimeout(resolve, delay));

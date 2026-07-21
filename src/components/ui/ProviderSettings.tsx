@@ -24,7 +24,7 @@ export function ProviderSettings({
   const [isOpen, setIsOpen] = useState(false);
   const [tempApiKey, setTempApiKey] = useState('');
 
-  const freeProviders = (Object.entries(PROVIDER_INFO) as [AiProvider, typeof PROVIDER_INFO.claude][])
+  const freeProviders = (Object.entries(PROVIDER_INFO) as [AiProvider, (typeof PROVIDER_INFO)[AiProvider]][])
     .filter(([, info]) => info.free)
     .map(([key]) => key);
 
@@ -85,7 +85,7 @@ export function ProviderSettings({
                 </div>
 
                 <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Select AI provider">
-                  {(Object.entries(PROVIDER_INFO) as [AiProvider, typeof PROVIDER_INFO.claude][]).map(([key, info]) => (
+                  {(Object.entries(PROVIDER_INFO) as [AiProvider, (typeof PROVIDER_INFO)[AiProvider]][]).map(([key, info]) => (
                     <button
                       key={key}
                       role="radio"

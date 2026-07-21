@@ -13,8 +13,8 @@ export function useTheme(): UseThemeReturn {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'dark';
     
-    const saved = localStorage.getItem('qa-helper-theme') as Theme | null;
-    if (saved) return saved;
+    const saved = localStorage.getItem('qa-helper-theme');
+    if (saved === 'dark' || saved === 'light') return saved;
     
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });

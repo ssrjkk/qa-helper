@@ -4,7 +4,6 @@ export { ErrorBoundary } from './ErrorBoundary';
 export { Input, Select, Textarea } from './Form';
 export { GlassCard } from './GlassCard';
 export { Modal } from './Modal';
-export { ProviderSettings } from './ProviderSettings';
 export { RateLimitBar } from './RateLimitBar';
 export { RippleButton } from './RippleButton';
 export { SaveIndicator } from './SaveIndicator';
