@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # QA Copilot
 
@@ -61,7 +61,7 @@ A browser-based QA assistant that turns your task descriptions into structured o
 
 ```bash
 git clone https://github.com/ssrjkk/qa-helper.git
-cd qa-copilot
+cd qa-helper
 npm install && npm run dev
 ```
 
@@ -213,10 +213,9 @@ src/
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl/Cmd + Enter` | Execute task |
-| `Ctrl/Cmd + Z` | Undo context |
-| `Ctrl/Cmd + Shift + Z` | Redo context |
+| `Ctrl/Cmd + Shift + C` | Copy output |
 | `Ctrl/Cmd + T` | Toggle theme |
-| `Ctrl/Cmd + K` | Set API key |
+| `Escape` | Close modal |
 
 ---
 
@@ -270,7 +269,7 @@ npm run build
 | CI | GitHub Actions (typecheck → lint → test → build → E2E → Lighthouse) |
 | Quality | ESLint 9, Commitlint, Husky, lint-staged |
 
-**Bundle:** 51KB gzipped (main chunk) · **CSS:** 6KB gzipped
+**Bundle:** 53KB gzipped (main chunk) · **CSS:** 6KB gzipped
 
 ---
 
@@ -340,4 +339,3 @@ MIT
 **Built with care for the QA community.**
 
 </div>
-]]>
