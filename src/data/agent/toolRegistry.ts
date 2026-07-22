@@ -33,7 +33,8 @@ export async function executeTool(
           content = 'Error: file path is required.';
           break;
         }
-        if (path.includes('..') || path.startsWith('/')) {
+        const normalized = path.replace(/\\/g, '/');
+        if (normalized.includes('..') || normalized.startsWith('/')) {
           content = 'Error: path traversal is not allowed.';
           break;
         }

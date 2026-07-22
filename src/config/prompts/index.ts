@@ -29,7 +29,7 @@ export function buildPrompt(taskId: string, context: string, projectMemory?: str
     };
   }
 
-  let userPrompt = prompt.userTemplate.replace('{context}', context);
+  let userPrompt = prompt.userTemplate.replace(/\{context\}/g, context);
 
   if (projectMemory) {
     userPrompt = `## Project Memory/Context\n${projectMemory}\n\n${userPrompt}`;

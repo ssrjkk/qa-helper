@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DatabaseService } from '../lib/database';
 import initSqlJs from 'sql.js';
 import type { Database } from 'sql.js';
@@ -71,6 +71,10 @@ describe('DatabaseService', () => {
     service = new DatabaseService(db, saveDbMock);
   });
 
+  afterEach(() => {
+    db.close();
+  });
+
   describe('execTransaction', () => {
     it('should execute all operations in a transaction', () => {
       service.execTransaction([
@@ -79,7 +83,7 @@ describe('DatabaseService', () => {
       ]);
       
       const result = db.exec("SELECT COUNT(*) as count FROM projects");
-      expect(result[0].values[0][0]).toBe(2);
+      expect(result[0]!.values[0]![0]).toBe(2);
       expect(saveDbMock).toHaveBeenCalled();
     });
 
@@ -92,7 +96,7 @@ describe('DatabaseService', () => {
       ]);
       
       const result = db.exec("SELECT COUNT(*) as count FROM projects");
-      expect(result[0].values[0][0]).toBe(initialCount[0].values[0][0]);
+      expect(result[0]!.values[0]![0]).toBe(initialCount[0]!.values[0]![0]);
     });
 
     it('should return false on error', () => {
@@ -115,15 +119,43 @@ describe('DatabaseService', () => {
     });
   });
 
+  describe('searchMemoryEntries', () => {
+    it('should escape backslashes in search terms', () => {
+      db.run("INSERT INTO projects (name) VALUES ('Test')");
+      const result = db.exec("SELECT last_insert_rowid() as id");
+      const projectId = result[0]!.values[0]![0] as number;
+
+      db.run("INSERT INTO memory_entries (project_id, category, key, value) VALUES (?, 'test', 'path', 'C:\\Users\\test')", [projectId]);
+      db.run("INSERT INTO memory_entries (project_id, category, key, value) VALUES (?, 'test', 'key', 'normal value')", [projectId]);
+
+      const found = service.searchMemoryEntries(projectId, 'C:\\Users');
+      expect(found.length).toBe(1);
+      expect(found[0]!.value).toBe('C:\\Users\\test');
+    });
+
+    it('should escape LIKE wildcards in search terms', () => {
+      db.run("INSERT INTO projects (name) VALUES ('Test')");
+      const result = db.exec("SELECT last_insert_rowid() as id");
+      const projectId = result[0]!.values[0]![0] as number;
+
+      db.run("INSERT INTO memory_entries (project_id, category, key, value) VALUES (?, 'test', 'key', '100% done')", [projectId]);
+      db.run("INSERT INTO memory_entries (project_id, category, key, value) VALUES (?, 'test', 'key', '10050 done')", [projectId]);
+
+      const found = service.searchMemoryEntries(projectId, '100%');
+      expect(found.length).toBe(1);
+      expect(found[0]!.value).toBe('100% done');
+    });
+  });
+
   describe('deleteProject', () => {
     it('should delete project and all related data', () => {
       db.run("INSERT INTO projects (name) VALUES ('Test Project')");
       let result = db.exec("SELECT last_insert_rowid() as id");
-      const projectId = result[0].values[0][0] as number;
+      const projectId = result[0]!.values[0]![0] as number;
       
       db.run("INSERT INTO tasks (project_id, task_type) VALUES (" + projectId + ", 'test')");
       result = db.exec("SELECT last_insert_rowid() as id");
-      const taskId = result[0].values[0][0] as number;
+      const taskId = result[0]!.values[0]![0] as number;
       
       db.run("INSERT INTO screenshots (task_id) VALUES (" + taskId + ")");
       db.run("INSERT INTO conversation_history (project_id, role, content) VALUES (" + projectId + ", 'user', 'hello')");
@@ -134,25 +166,25 @@ describe('DatabaseService', () => {
       let stmt = db.prepare("SELECT COUNT(*) FROM projects WHERE id = ?");
       stmt.bind([projectId]);
       stmt.step();
-      expect(stmt.get()[0]).toBe(0);
+      expect(stmt.get()[0]!).toBe(0);
       stmt.free();
 
       stmt = db.prepare("SELECT COUNT(*) FROM tasks WHERE project_id = ?");
       stmt.bind([projectId]);
       stmt.step();
-      expect(stmt.get()[0]).toBe(0);
+      expect(stmt.get()[0]!).toBe(0);
       stmt.free();
 
       stmt = db.prepare("SELECT COUNT(*) FROM conversation_history WHERE project_id = ?");
       stmt.bind([projectId]);
       stmt.step();
-      expect(stmt.get()[0]).toBe(0);
+      expect(stmt.get()[0]!).toBe(0);
       stmt.free();
 
       stmt = db.prepare("SELECT COUNT(*) FROM memory_entries WHERE project_id = ?");
       stmt.bind([projectId]);
       stmt.step();
-      expect(stmt.get()[0]).toBe(0);
+      expect(stmt.get()[0]!).toBe(0);
       stmt.free();
     });
   });

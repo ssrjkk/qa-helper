@@ -70,7 +70,7 @@ describe('Property-Based: parseToolCall (real toolParser.ts)', () => {
 describe('Property-Based: Zustand Store (real useAppStore)', () => {
   const catAr: MemoryCategory[] = ['tech_stack', 'edge_cases', 'custom'];
   const makeEntry = (id: number): MemoryEntry => ({
-    id, project_id: 1, category: catAr[id % 3], key: `k${id}`, value: `v${id}`,
+    id, project_id: 1, category: catAr[id % 3]!, key: `k${id}`, value: `v${id}`,
     confidence: 0.8, created_at: '2024-01-01', updated_at: '2024-01-01',
   });
 
@@ -102,7 +102,7 @@ describe('Property-Based: Zustand Store (real useAppStore)', () => {
         (sessions) => {
           useAppStore.setState({ sessions: [] });
           sessions.forEach((s) => useAppStore.getState().addSession(s));
-          expect(useAppStore.getState().sessions[0]).toEqual(sessions[sessions.length - 1]);
+          expect(useAppStore.getState().sessions[0]).toEqual(sessions[sessions.length - 1]!);
         },
       ),
       { numRuns: 200 },
@@ -172,7 +172,7 @@ describe('Property-Based: Zustand Store (real useAppStore)', () => {
           steps.forEach((st) => useAppStore.getState().addAgentStep({ ...st, type: 'thinking' as const, timestamp: 0 }));
           const stored = useAppStore.getState().agentSteps;
           expect(stored.length).toBe(steps.length);
-          steps.forEach((st, i) => { expect(stored[i].id).toBe(st.id); });
+          steps.forEach((st, i) => { expect(stored[i]!.id).toBe(st.id); });
         },
       ),
       { numRuns: 200 },

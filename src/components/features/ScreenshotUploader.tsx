@@ -83,7 +83,7 @@ export function ScreenshotUploader({
         processed = await compressImage(result);
       }
       
-      const b64 = processed.split(',')[1];
+      const b64 = processed.split(',')[1] ?? '';
       setPreview(processed);
       onScreenshotChange(b64);
     };

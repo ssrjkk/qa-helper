@@ -59,7 +59,8 @@ export class DatabaseService {
     try {
       this.saveDb();
       const result = this.db.exec("SELECT last_insert_rowid() as id");
-      return Number(result[0].values[0][0]);
+      const firstRow = result[0]?.values[0]?.[0];
+      return firstRow != null ? Number(firstRow) : -1;
     } catch {
       return -1;
     }
@@ -125,7 +126,8 @@ export class DatabaseService {
         [task.projectId, task.taskType, task.context, task.output]
       );
       const result = this.db.exec("SELECT last_insert_rowid() as id");
-      results.push(Number(result[0].values[0][0]));
+      const firstRow = result[0]?.values[0]?.[0];
+      results.push(firstRow != null ? Number(firstRow) : -1);
     });
     this.execTransaction(operations);
     return results;
@@ -183,7 +185,8 @@ export class DatabaseService {
         [entry.project_id, entry.category, entry.key, entry.value, entry.confidence, entry.source_task_id || null]
       );
       const result = this.db.exec("SELECT last_insert_rowid() as id");
-      results.push(Number(result[0].values[0][0]));
+      const firstRow = result[0]?.values[0]?.[0];
+      results.push(firstRow != null ? Number(firstRow) : -1);
     });
     this.execTransaction(operations);
     return results;
@@ -203,7 +206,7 @@ export class DatabaseService {
   }
 
   searchMemoryEntries(projectId: number, searchTerm: string): MemoryEntry[] {
-    const escaped = searchTerm.replace(/%/g, '\\%').replace(/_/g, '\\_');
+    const escaped = searchTerm.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
     const term = `%${escaped}%`;
     return this.queryAll<MemoryEntry>(
       "SELECT * FROM memory_entries WHERE project_id = ? AND (key LIKE ? ESCAPE '\\' OR value LIKE ? ESCAPE '\\') ORDER BY created_at DESC",
@@ -239,11 +242,12 @@ export class DatabaseService {
   }
 
   getDatabaseSize(): number {
-    const result = this.db.exec("PRAGMA page_count");
-    if (result.length > 0 && result[0].values.length > 0) {
-      return Number(result[0].values[0][0]) * 4096;
-    }
-    return 0;
+    const countResult = this.db.exec("PRAGMA page_count");
+    const pageCount = countResult[0]?.values[0]?.[0];
+    if (pageCount == null) return 0;
+    const sizeResult = this.db.exec("PRAGMA page_size");
+    const pageSize = sizeResult[0]?.values[0]?.[0];
+    return Number(pageCount) * Number(pageSize || 4096);
   }
 
   exportAll(): { projects: Project[]; tasks: Task[]; memoryEntries: MemoryEntry[] } {

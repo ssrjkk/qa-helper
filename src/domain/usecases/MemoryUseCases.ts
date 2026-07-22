@@ -42,14 +42,14 @@ export class MemoryUseCases {
     const counts: Record<string, number> = { tech_stack: 0, test_requirements: 0, edge_cases: 0, bug_patterns: 0 };
 
     for (const e of entries) {
-      if (e.category in counts) counts[e.category]++;
+      if (e.category in counts) counts[e.category] = (counts[e.category] ?? 0) + 1;
     }
 
     return {
-      techStackCount: counts.tech_stack,
-      requirementsCount: counts.test_requirements,
-      edgeCasesCount: counts.edge_cases,
-      bugPatternsCount: counts.bug_patterns,
+      techStackCount: counts.tech_stack ?? 0,
+      requirementsCount: counts.test_requirements ?? 0,
+      edgeCasesCount: counts.edge_cases ?? 0,
+      bugPatternsCount: counts.bug_patterns ?? 0,
       totalCount: entries.length,
     };
   }

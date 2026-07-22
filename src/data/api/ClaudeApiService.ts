@@ -33,7 +33,7 @@ export class ClaudeApiService {
     const statusMatch = msg.match(/(?:failed|error).*?:\s*(\d{3})/i) || msg.match(/\b(429|5\d{2})\b/);
 
     if (statusMatch) {
-      const status = parseInt(statusMatch[1]);
+      const status = parseInt(statusMatch[1]!);
       if (status === 429) {
         const resetAfter = msg.match(/retry-after:\s*(\d+)/i)?.[1];
         return { type: 'rate_limit', message: 'API rate limit exceeded', retryAfter: resetAfter ? parseInt(resetAfter) : 5 };
@@ -82,7 +82,6 @@ export class ClaudeApiService {
     }
 
     const currentRequestId = ++this.requestId;
-    RateLimiter.recordRequest();
 
     let fullResponse = '';
     let outputTokens = 0;
@@ -93,7 +92,8 @@ export class ClaudeApiService {
       ];
 
       if (screenshotBase64) {
-        messages[0].content = [
+        const firstMsg = messages[0]!;
+        firstMsg.content = [
           { type: 'image', source: { type: 'base64', media_type: 'image/png', data: screenshotBase64 } },
           { type: 'text', text: userMessage }
         ];
@@ -218,7 +218,13 @@ export class ClaudeApiService {
           : this.calculateBackoff(attempt);
 
         options.onRetryAttempt?.(attempt + 1, delay, lastError);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(resolve, delay);
+          options.signal?.addEventListener('abort', () => {
+            clearTimeout(timer);
+            reject(new DOMException('Aborted', 'AbortError'));
+          }, { once: true });
+        });
       }
     }
 

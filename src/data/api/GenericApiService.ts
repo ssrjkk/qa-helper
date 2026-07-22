@@ -36,6 +36,7 @@ export class GenericApiService {
   abort(): void {
     if (this.abortController) {
       this.abortController.abort();
+      this.abortController = null;
     }
   }
 
@@ -56,6 +57,9 @@ export class GenericApiService {
   }): Promise<ApiResult> {
     const { systemPrompt, userMessage, signal, maxRetries = 3 } = options;
 
+    if (this.abortController) {
+      this.abortController.abort();
+    }
     this.abortController = new AbortController();
     const combinedSignal = signal
       ? AbortSignal.any([signal, this.abortController.signal])
@@ -120,7 +124,13 @@ export class GenericApiService {
         if (attempt < maxRetries && isRetryableError(error.message)) {
           const delay = Math.pow(2, attempt - 1) * 1000;
           options.onRetryAttempt?.(attempt, delay, error.message);
-          await new Promise((r) => setTimeout(r, delay));
+          await new Promise((r, reject) => {
+            const timer = setTimeout(r, delay);
+            combinedSignal.addEventListener('abort', () => {
+              clearTimeout(timer);
+              reject(new DOMException('Aborted', 'AbortError'));
+            }, { once: true });
+          });
           continue;
         }
 

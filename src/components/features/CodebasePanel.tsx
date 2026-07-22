@@ -16,7 +16,7 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   ];
   for (const pattern of patterns) {
     const match = url.match(pattern);
-    if (match) return { owner: match[1], repo: match[2].replace(/\.git$/, '') };
+    if (match) return { owner: match[1]!, repo: match[2]!.replace(/\.git$/, '') };
   }
   return null;
 }

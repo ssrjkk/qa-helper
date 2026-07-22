@@ -39,7 +39,7 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[], enabled: boolean = t
 
         if (keyMatch && metaMatch && ctrlMatch && shiftMatch && altMatch) {
           if (isInput && !modifiers.includes('meta') && !modifiers.includes('ctrl')) {
-            if (['k', 's'].includes(shortcut.key.toLowerCase())) continue;
+            continue;
           }
 
           e.preventDefault();

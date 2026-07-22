@@ -107,7 +107,7 @@ export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
                 <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ width: `${(task.count / topTasks[0].count) * 100}%` }}
+                    animate={{ width: `${topTasks[0] ? (task.count / topTasks[0].count) * 100 : 0}%` }}
                     transition={{ delay: i * 0.1 }}
                     className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
                   />

@@ -57,7 +57,7 @@ export class GroqApiService {
     const statusMatch = msg.match(/(?:failed|error).*?:\s*(\d{3})/i) || msg.match(/\b(429|5\d{2})\b/);
 
     if (statusMatch) {
-      const status = parseInt(statusMatch[1]);
+      const status = parseInt(statusMatch[1]!);
       if (status === 429) {
         const resetAfter = msg.match(/retry-after:\s*(\d+)/i)?.[1];
         return { type: 'rate_limit', retryAfter: resetAfter ? parseInt(resetAfter) : 5 };
@@ -188,6 +188,7 @@ export class GroqApiService {
     userMessage: string;
     taskType?: string;
     maxRetries?: number;
+    signal?: AbortSignal;
     onRetryAttempt?: (attempt: number, delay: number, error: string) => void;
     onChunk?: (text: string) => void;
   }): Promise<ApiResult> {
@@ -218,7 +219,13 @@ export class GroqApiService {
           : this.calculateBackoff(attempt);
 
         options.onRetryAttempt?.(attempt + 1, delay, lastError);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(resolve, delay);
+          options.signal?.addEventListener('abort', () => {
+            clearTimeout(timer);
+            reject(new DOMException('Aborted', 'AbortError'));
+          }, { once: true });
+        });
       }
     }
 

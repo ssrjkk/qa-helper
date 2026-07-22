@@ -125,19 +125,18 @@ export class CloudSyncService {
     return { ...this.config };
   }
 
-  async exportData(projects: Project[], memoryEntries: MemoryEntry[]): Promise<string> {
-    const data: SyncData = {
+  async exportData(projects: Project[], memoryEntries: MemoryEntry[]): Promise<SyncData> {
+    return {
       version: 1,
       exportedAt: new Date().toISOString(),
       projects,
       memoryEntries,
     };
-    return JSON.stringify(data, null, 2);
   }
 
   async importData(jsonString: string): Promise<{ projects: Project[]; memoryEntries: MemoryEntry[] } | null> {
     try {
-      const data = JSON.parse(jsonString);
+      const data = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
       if (!data || typeof data !== 'object') return null;
       if (!Array.isArray(data.projects)) return null;
       if (data.projects.length > 0 && typeof data.projects[0] !== 'object') return null;
@@ -207,11 +206,11 @@ export class CloudSyncService {
 
   private async syncToLocal(projects: Project[], memoryEntries: MemoryEntry[]): Promise<boolean> {
     const data = await this.exportData(projects, memoryEntries);
-    localStorage.setItem(SYNC_BACKUP_KEY, data);
+    localStorage.setItem(SYNC_BACKUP_KEY, JSON.stringify(data, null, 2));
     this.status = {
       lastSync: new Date().toISOString(),
       status: 'synced',
-      entriesCount: projects.length,
+      entriesCount: projects.length + memoryEntries.length,
     };
     this.saveStatus();
     return true;
@@ -222,12 +221,13 @@ export class CloudSyncService {
       throw new Error('Firebase config missing');
     }
     
+    const data = await this.exportData(projects, memoryEntries);
     const response = await fetch(`${this.config.url}/sync.json`, {
       method: 'PUT',
       headers: new Headers({
         'Authorization': `Bearer ${this.config.apiKey}`,
       }),
-      body: JSON.stringify(await this.exportData(projects, memoryEntries)),
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) throw new Error('Firebase sync failed');
@@ -235,7 +235,7 @@ export class CloudSyncService {
     this.status = {
       lastSync: new Date().toISOString(),
       status: 'synced',
-      entriesCount: projects.length,
+      entriesCount: projects.length + memoryEntries.length,
     };
     this.saveStatus();
     return true;
@@ -262,7 +262,7 @@ export class CloudSyncService {
     this.status = {
       lastSync: new Date().toISOString(),
       status: 'synced',
-      entriesCount: projects.length,
+      entriesCount: projects.length + memoryEntries.length,
     };
     this.saveStatus();
     return true;
@@ -290,7 +290,8 @@ export class CloudSyncService {
           );
           if (!response.ok) return null;
           const json = await response.json();
-          data = await this.importData(JSON.stringify(json));
+          const raw = typeof json === 'string' ? json : JSON.stringify(json);
+          data = await this.importData(raw);
           break;
         }
         case 'supabase': {
@@ -303,7 +304,8 @@ export class CloudSyncService {
           }));
           if (!response.ok) return null;
           const { data: jsonData } = await response.json();
-          data = await this.importData(jsonData);
+          const raw = typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData);
+          data = await this.importData(raw);
           break;
         }
         default:
@@ -352,7 +354,7 @@ export class CloudSyncService {
 
   async backupToFile(projects: Project[], memoryEntries: MemoryEntry[]): Promise<void> {
     const data = await this.exportData(projects, memoryEntries);
-    const blob = new Blob([data], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

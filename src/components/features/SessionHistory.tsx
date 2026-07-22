@@ -118,7 +118,7 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
             }}
           >
             {virtualizer.getVirtualItems().map((virtualRow) => {
-              const session = filteredSessions[virtualRow.index];
+              const session = filteredSessions[virtualRow.index]!;
               const taskInfo = getTaskInfo(session.task_type);
               const isExpanded = expandedId === session.created_at;
               

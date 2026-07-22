@@ -67,7 +67,10 @@ export interface AiModel {
 
 export function getDefaultModelForProvider(provider: AiProvider): AiModel {
   const models = PROVIDER_MODELS[provider];
-  return models.find(m => m.default) ?? models[0];
+  if (!models || models.length === 0) {
+    throw new Error(`No models defined for provider: ${provider}`);
+  }
+  return models.find(m => m.default) ?? models[0]!;
 }
 
 export function getVisionProviders(): AiProvider[] {

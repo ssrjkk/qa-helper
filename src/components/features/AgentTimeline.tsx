@@ -148,7 +148,7 @@ export function AgentTimeline({ steps, isRunning }: AgentTimelineProps) {
 
       {!isRunning && toolCalls.length > 0 && (
         <div className="text-xs text-gray-500 pt-1 border-t border-white/5">
-          Completed {toolCalls.length} tool calls in {steps[steps.length - 1] ? Math.round((steps[steps.length - 1].timestamp - steps[0].timestamp) / 1000) : 0}s
+          Completed {toolCalls.length} tool calls in {steps[steps.length - 1] && steps[0] ? Math.round((steps[steps.length - 1]!.timestamp - steps[0]!.timestamp) / 1000) : 0}s
         </div>
       )}
     </div>

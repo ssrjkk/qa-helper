@@ -148,14 +148,7 @@ export function unique<T>(array: T[], keyFn?: (item: T) => unknown): T[] {
 
 export function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(item => deepClone(item)) as T;
-  const cloned: Record<string, unknown> = {};
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      cloned[key] = deepClone(obj[key as keyof T]);
-    }
-  }
-  return cloned as T;
+  return structuredClone(obj);
 }
 
 export function sleep(ms: number): Promise<void> {

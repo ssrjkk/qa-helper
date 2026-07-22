@@ -27,6 +27,7 @@ export function useDatabase() {
 
   useEffect(() => {
     let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+    let mounted = true;
 
     const initDb = async () => {
       try {
@@ -71,18 +72,20 @@ export function useDatabase() {
         
         service.initMemoryTable();
         
+        if (!mounted) return;
         setDb(database);
         setDbService(service);
         setProjects(service.getProjects());
         setIsDbReady(true);
       } catch {
-        setError('Failed to initialize database');
+        if (mounted) setError('Failed to initialize database');
       }
     };
     
     initDb();
 
     return () => {
+      mounted = false;
       if (saveTimeout) clearTimeout(saveTimeout);
     };
   }, []);

@@ -64,6 +64,9 @@ export class ZipParserWorker {
     if (this.worker) {
       this.worker.terminate();
       this.worker = null;
+      for (const pending of this.pendingRequests.values()) {
+        pending.reject(new Error('Worker terminated'));
+      }
       this.pendingRequests.clear();
     }
   }

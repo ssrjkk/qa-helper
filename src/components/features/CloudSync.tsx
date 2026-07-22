@@ -42,9 +42,13 @@ export function CloudSync({ onSync, onImport, projectsCount, canSync, projects, 
     setShareLink(link);
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareLink);
-    addToast('Link copied to clipboard', 'success');
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      addToast('Link copied to clipboard', 'success');
+    } catch {
+      addToast('Failed to copy link', 'error');
+    }
   };
 
   const handleImport = () => {

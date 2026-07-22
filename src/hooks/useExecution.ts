@@ -85,6 +85,7 @@ export function useExecution(
           setError(err instanceof Error ? err.message : 'Unknown error');
         } finally {
           setIsLoading(false);
+          isExecutingRef.current = false;
           agentRef.current = null;
         }
         return;
@@ -127,6 +128,7 @@ export function useExecution(
   const handleReset = useCallback(() => {
     agentRef.current?.abort();
     abortApi();
+    isExecutingRef.current = false;
     resetTask();
   }, [abortApi, resetTask]);
 

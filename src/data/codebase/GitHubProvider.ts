@@ -54,7 +54,7 @@ export class GitHubProvider implements CodebaseProvider {
     }
 
     try {
-      const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${path}?ref=${this.branch}`;
+      const url = `https://api.github.com/repos/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(this.branch)}`;
       const response = await fetch(url, { headers: this.getHeaders() });
 
       if (!response.ok) {
@@ -98,7 +98,7 @@ export class GitHubProvider implements CodebaseProvider {
     }
 
     try {
-      const url = `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/${path}`;
+      const url = `https://raw.githubusercontent.com/${encodeURIComponent(this.owner)}/${encodeURIComponent(this.repo)}/${encodeURIComponent(this.branch)}/${path.split('/').map(encodeURIComponent).join('/')}`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -121,8 +121,9 @@ export class GitHubProvider implements CodebaseProvider {
 
   async searchCode(pattern: string, fileGlob?: string): Promise<CodebaseSearchResult[]> {
     try {
-      let query = `${pattern} repo:${this.owner}/${this.repo}`;
-      if (fileGlob) query += ` filename:${fileGlob}`;
+      const sanitizedPattern = pattern.replace(/repo:|filename:/gi, '');
+      let query = `${sanitizedPattern} repo:${this.owner}/${this.repo}`;
+      if (fileGlob) query += ` filename:${fileGlob.replace(/repo:|filename:/gi, '')}`;
 
       const url = `https://api.github.com/search/code?q=${encodeURIComponent(query)}&per_page=20`;
       const response = await fetch(url, { headers: this.getHeaders() });

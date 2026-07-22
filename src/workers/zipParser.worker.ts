@@ -46,7 +46,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const startTime = performance.now();
   const { requestId, data } = event.data;
 
+  let timedOut = false;
+
   const timeoutId = setTimeout(() => {
+    timedOut = true;
     self.postMessage({ requestId, success: false, error: 'Parse timed out' } satisfies WorkerResponse);
   }, TIMEOUT_MS);
 
@@ -63,8 +66,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       const name = parts[parts.length - 1];
       if (!name) return;
 
+      if (parts.some(p => IGNORED_DIRS.has(p))) return;
+
       const lowerName = name.toLowerCase();
-      if (IGNORED_DIRS.has(name) || name === '.DS_Store' || name === 'Thumbs.db') return;
+      if (name === '.DS_Store' || name === 'Thumbs.db') return;
 
       const ext = `.${lowerName.split('.').pop() ?? ''}`;
       if (!CODE_EXTENSIONS.has(ext)) return;
@@ -74,7 +79,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           path: relativePath,
           name,
           content,
-          size: new TextEncoder().encode(content).byteLength,
+          size: content.length,
           lastModified: zipEntry.date,
         });
       });
@@ -83,6 +88,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
 
     await Promise.all(filePromises);
     clearTimeout(timeoutId);
+
+    if (timedOut) return;
 
     const parseTimeMs = performance.now() - startTime;
     const totalSize = files.reduce((sum, f) => sum + f.size, 0);
@@ -98,6 +105,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     self.postMessage(response);
   } catch (error) {
     clearTimeout(timeoutId);
+    if (timedOut) return;
     const response: WorkerResponse = {
       requestId,
       success: false,

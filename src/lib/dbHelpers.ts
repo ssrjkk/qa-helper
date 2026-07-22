@@ -7,8 +7,8 @@ export function rowToObject(columns: string[], values: unknown[]): Record<string
 }
 
 export function queryAll<T>(db: Database, sql: string, params?: (string | number | null)[]): T[] {
+  const stmt = db.prepare(sql);
   try {
-    const stmt = db.prepare(sql);
     if (params) stmt.bind(params);
     const results: T[] = [];
     while (stmt.step()) {
@@ -16,33 +16,34 @@ export function queryAll<T>(db: Database, sql: string, params?: (string | number
       const vals = stmt.get();
       results.push(rowToObject(cols, vals) as T);
     }
-    stmt.free();
     return results;
   } catch (err) {
     if (import.meta.env.DEV) {
       console.warn('[dbHelpers] queryAll failed:', sql, err);
     }
     return [];
+  } finally {
+    stmt.free();
   }
 }
 
 export function queryOne<T>(db: Database, sql: string, params?: (string | number | null)[]): T | undefined {
+  const stmt = db.prepare(sql);
   try {
-    const stmt = db.prepare(sql);
     if (params) stmt.bind(params);
     if (!stmt.step()) {
-      stmt.free();
       return undefined;
     }
     const cols = stmt.getColumnNames();
     const vals = stmt.get();
-    stmt.free();
     return rowToObject(cols, vals) as T;
   } catch (err) {
     if (import.meta.env.DEV) {
       console.warn('[dbHelpers] queryOne failed:', sql, err);
     }
     return undefined;
+  } finally {
+    stmt.free();
   }
 }
 
@@ -65,8 +66,12 @@ export function execTransaction(db: Database, saveDb: () => void | Promise<void>
     saveDb();
     return null;
   } catch (err) {
-    db.run("ROLLBACK");
-    return err instanceof Error ? err.message : String(err);
+    try { db.run("ROLLBACK"); } catch { /* best-effort */ }
+    const msg = err instanceof Error ? err.message : String(err);
+    if (import.meta.env.DEV) {
+      console.warn('[dbHelpers] transaction failed:', msg);
+    }
+    return msg;
   }
 }
 
@@ -75,18 +80,23 @@ export function insertAndReturnId(db: Database, saveDb: () => void | Promise<voi
     db.run(sql, params);
     saveDb();
     const result = db.exec("SELECT last_insert_rowid() as id");
-    return Number(result[0].values[0][0]);
+    const firstRow = result[0]?.values[0]?.[0];
+    return firstRow != null ? Number(firstRow) : -1;
   } catch {
     return -1;
   }
 }
 
+const SAFE_IDENTIFIER = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
 export function buildUpdateQuery<T extends Record<string, unknown>>(table: string, data: T, id: number): { sql: string; params: (string | number | null)[] } | null {
+  if (!SAFE_IDENTIFIER.test(table)) return null;
+
   const fields: string[] = [];
   const values: (string | number | null)[] = [];
 
   for (const [key, value] of Object.entries(data)) {
-    if (value !== undefined) {
+    if (value !== undefined && SAFE_IDENTIFIER.test(key)) {
       fields.push(`${key} = ?`);
       values.push(value as string | number | null);
     }

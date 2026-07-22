@@ -47,7 +47,7 @@ class MockWorker {
 }
 
 function getLatestWorker(): MockWorker {
-  return MockWorker.instances[MockWorker.instances.length - 1];
+  return MockWorker.instances[MockWorker.instances.length - 1]!;
 }
 
 describe('ZipParserWorker wrapper', () => {
@@ -80,13 +80,14 @@ describe('ZipParserWorker wrapper', () => {
     const worker = getLatestWorker();
     const buffer = new ArrayBuffer(8);
 
-    parser.parse(buffer, 'test.zip');
+    const promise = parser.parse(buffer, 'test.zip').catch(() => {});
 
     const posted = worker.lastPostedData as { requestId: number; data: ArrayBuffer; filename: string };
     expect(posted.requestId).toBe(1);
     expect(posted.data).toBe(buffer);
     expect(posted.filename).toBe('test.zip');
     parser.terminate();
+    return promise;
   });
 
   it('resolves with result on success response', async () => {
@@ -162,10 +163,11 @@ describe('ZipParserWorker wrapper', () => {
     const parser = new ZipParserWorkerClass();
     const worker = getLatestWorker();
 
-    parser.parse(new ArrayBuffer(0), 'test.zip');
+    const promise = parser.parse(new ArrayBuffer(0), 'test.zip').catch(() => {});
     parser.terminate();
 
     expect(() => worker.postMessage({})).toThrow('Worker is terminated');
+    return promise;
   });
 
   it('calls onerror handler and terminates worker', () => {
@@ -182,14 +184,15 @@ describe('ZipParserWorker wrapper', () => {
     const parser = new ZipParserWorkerClass();
     const worker = getLatestWorker();
 
-    parser.parse(new ArrayBuffer(0), 'a.zip');
+    const p1 = parser.parse(new ArrayBuffer(0), 'a.zip').catch(() => {});
     const first = worker.lastPostedData as { requestId: number };
 
-    parser.parse(new ArrayBuffer(0), 'b.zip');
+    const p2 = parser.parse(new ArrayBuffer(0), 'b.zip').catch(() => {});
     const second = worker.lastPostedData as { requestId: number };
 
     expect(second.requestId).toBe(first.requestId + 1);
     parser.terminate();
+    return Promise.all([p1, p2]);
   });
 
   it('ignores responses for unknown requestId', async () => {

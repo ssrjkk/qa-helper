@@ -42,7 +42,7 @@ describe('STRUCTURED_PROMPTS', () => {
 
   it('should have system, userTemplate, outputFormat, qualityCriteria', () => {
     TASK_TYPES.forEach(task => {
-      const prompt = STRUCTURED_PROMPTS[task.id];
+      const prompt = STRUCTURED_PROMPTS[task.id]!;
       expect(typeof prompt.system).toBe('string');
       expect(typeof prompt.userTemplate).toBe('string');
       expect(typeof prompt.outputFormat).toBe('string');
@@ -51,13 +51,13 @@ describe('STRUCTURED_PROMPTS', () => {
   });
 
   it('should include context in userTemplate', () => {
-    const prompt = STRUCTURED_PROMPTS.test_plan;
+    const prompt = STRUCTURED_PROMPTS['test_plan']!;
     expect(prompt.userTemplate).toContain('{context}');
   });
 
   it('should have specific prompts for different tasks', () => {
-    expect(STRUCTURED_PROMPTS.bug_report.system).toBeDefined();
-    expect(STRUCTURED_PROMPTS.test_cases.system).toBeDefined();
-    expect(STRUCTURED_PROMPTS.automation_code.system).toBeDefined();
+    expect(STRUCTURED_PROMPTS['bug_report']!.system).toBeDefined();
+    expect(STRUCTURED_PROMPTS['test_cases']!.system).toBeDefined();
+    expect(STRUCTURED_PROMPTS['automation_code']!.system).toBeDefined();
   });
 });

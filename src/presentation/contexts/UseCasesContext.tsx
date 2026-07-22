@@ -63,9 +63,7 @@ export function UseCasesProvider({ children, db, saveDb }: UseCasesProviderProps
   }, [aiService]);
 
   const useCases = useMemo(() => {
-    if (!db) {
-      throw new Error('Database not initialized');
-    }
+    if (!db) return null;
 
     RateLimiter.init(SECURITY_CONFIG);
 
@@ -84,17 +82,20 @@ export function UseCasesProvider({ children, db, saveDb }: UseCasesProviderProps
     };
   }, [db, saveDb]);
 
-  const contextValue = useMemo(() => ({
-    ...useCases,
-    aiService,
-    saveDb,
-    currentProvider,
-    setCurrentProvider: handleSetCurrentProvider,
-    apiKeys,
-    setApiKey: handleSetApiKey,
-    currentModel,
-    setCurrentModel: handleSetCurrentModel,
-  }), [
+  const contextValue = useMemo(() => {
+    if (!useCases) return null;
+    return {
+      ...useCases,
+      aiService,
+      saveDb,
+      currentProvider,
+      setCurrentProvider: handleSetCurrentProvider,
+      apiKeys,
+      setApiKey: handleSetApiKey,
+      currentModel,
+      setCurrentModel: handleSetCurrentModel,
+    };
+  }, [
     useCases,
     aiService,
     saveDb,
@@ -105,6 +106,8 @@ export function UseCasesProvider({ children, db, saveDb }: UseCasesProviderProps
     currentModel,
     handleSetCurrentModel,
   ]);
+
+  if (!contextValue) return null;
 
   return React.createElement(
     UseCasesContext.Provider,
@@ -168,13 +171,9 @@ export function useClaudeApi() {
     setRetryInfo(null);
 
     const apiKey = options.apiKey || apiKeys[currentProvider];
-    if (currentProvider === 'claude' && !apiKey) {
+    if (!apiKey) {
       setIsLoading(false);
-      return { success: false, error: 'API key is required' };
-    }
-    if (currentProvider === 'groq' && !apiKey) {
-      setIsLoading(false);
-      return { success: false, error: 'Groq API key required. Get free at https://console.groq.com' };
+      return { success: false, error: `${currentProvider} API key is required` };
     }
 
     aiService.setApiKey(apiKey);

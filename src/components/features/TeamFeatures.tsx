@@ -64,9 +64,13 @@ export function TeamFeatures({
     setExportData(data);
   };
 
-  const handleCopyExport = () => {
-    navigator.clipboard.writeText(exportData);
-    addToast('Export copied to clipboard', 'success');
+  const handleCopyExport = async () => {
+    try {
+      await navigator.clipboard.writeText(exportData);
+      addToast('Export copied to clipboard', 'success');
+    } catch {
+      addToast('Failed to copy export', 'error');
+    }
   };
 
   const handleDownloadExport = () => {

@@ -31,6 +31,25 @@ declare module 'framer-motion' {
     nav: ComponentType<MotionProps>;
     a: ComponentType<MotionProps>;
     img: ComponentType<MotionProps>;
+    header: ComponentType<MotionProps>;
+    aside: ComponentType<MotionProps>;
+    main: ComponentType<MotionProps>;
+    pre: ComponentType<MotionProps>;
+    path: ComponentType<MotionProps>;
+    svg: ComponentType<MotionProps>;
+    section: ComponentType<MotionProps>;
+    article: ComponentType<MotionProps>;
+    footer: ComponentType<MotionProps>;
+    table: ComponentType<MotionProps>;
+    tr: ComponentType<MotionProps>;
+    td: ComponentType<MotionProps>;
+    th: ComponentType<MotionProps>;
+    thead: ComponentType<MotionProps>;
+    tbody: ComponentType<MotionProps>;
+    form: ComponentType<MotionProps>;
+    input: ComponentType<MotionProps>;
+    textarea: ComponentType<MotionProps>;
+    label: ComponentType<MotionProps>;
     [key: string]: ComponentType<MotionProps>;
   };
 

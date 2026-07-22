@@ -54,7 +54,8 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
       }
 
       e.preventDefault();
-      onChange(tabs[nextIndex].id);
+      const next = tabs[nextIndex];
+      if (next) onChange(next.id);
     },
     [tabs, activeTab, onChange],
   );

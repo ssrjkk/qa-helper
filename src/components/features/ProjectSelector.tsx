@@ -105,7 +105,7 @@ export function ProjectSelector({
               }}
             >
               {virtualizer.getVirtualItems().map((virtualRow) => {
-                const p = projects[virtualRow.index];
+                const p = projects[virtualRow.index]!;
                 return (
                   <div
                     key={p.id}

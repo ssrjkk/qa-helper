@@ -9,6 +9,8 @@ export interface ApiMetrics {
   responseTimes: number[];
 }
 
+const MAX_DAYS_RETAINED = 30;
+const MAX_TASK_TYPES = 50;
 const STORAGE_KEY = 'qa-metrics';
 
 class MetricsCollector {
@@ -47,6 +49,8 @@ class MetricsCollector {
   }
 
   private saveMetrics(): void {
+    this.pruneOldDays();
+    this.pruneTaskTypes();
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.metrics));
     } catch {
@@ -54,8 +58,26 @@ class MetricsCollector {
     }
   }
 
+  private pruneOldDays(): void {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - MAX_DAYS_RETAINED);
+    const cutoffStr = cutoff.toISOString().split('T')[0]!;
+    for (const key of Object.keys(this.metrics.requestsByDay)) {
+      if (key < cutoffStr) {
+        delete this.metrics.requestsByDay[key];
+      }
+    }
+  }
+
+  private pruneTaskTypes(): void {
+    const entries = Object.entries(this.metrics.requestsByTaskType);
+    if (entries.length <= MAX_TASK_TYPES) return;
+    entries.sort((a, b) => b[1] - a[1]);
+    this.metrics.requestsByTaskType = Object.fromEntries(entries.slice(0, MAX_TASK_TYPES));
+  }
+
   recordRequest(taskType: string, success: boolean, tokens: number = 0, responseTime: number = 0): void {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0]!;
     
     this.metrics.totalRequests++;
     
@@ -67,10 +89,10 @@ class MetricsCollector {
     }
 
     if (taskType) {
-      this.metrics.requestsByTaskType[taskType] = (this.metrics.requestsByTaskType[taskType] || 0) + 1;
+      this.metrics.requestsByTaskType[taskType] = (this.metrics.requestsByTaskType[taskType] ?? 0) + 1;
     }
 
-    this.metrics.requestsByDay[today] = (this.metrics.requestsByDay[today] || 0) + 1;
+    this.metrics.requestsByDay[today] = (this.metrics.requestsByDay[today] ?? 0) + 1;
 
     if (responseTime > 0) {
       this.metrics.responseTimes.push(responseTime);
@@ -86,7 +108,7 @@ class MetricsCollector {
   }
 
   getMetrics(): ApiMetrics {
-    return { ...this.metrics };
+    return { ...this.metrics, responseTimes: [...this.metrics.responseTimes] };
   }
 
   getSuccessRate(): number {
@@ -106,8 +128,8 @@ class MetricsCollector {
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      result.push({ date: dateStr, count: this.metrics.requestsByDay[dateStr] || 0 });
+      const dateStr = date.toISOString().split('T')[0]!;
+      result.push({ date: dateStr, count: this.metrics.requestsByDay[dateStr] ?? 0 });
     }
     return result;
   }

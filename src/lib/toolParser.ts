@@ -8,7 +8,9 @@ export function parseToolCall(response: string): ParsedToolCall | null {
   if (!match) return null;
 
   try {
-    const parsed = JSON.parse(match[1]);
+    const captured = match[1];
+    if (!captured) return null;
+    const parsed = JSON.parse(captured);
     if (parsed && typeof parsed === 'object' && typeof parsed.name === 'string' && parsed.input) {
       return { name: parsed.name, input: parsed.input as Record<string, unknown> };
     }

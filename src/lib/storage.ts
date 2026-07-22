@@ -5,7 +5,6 @@ const DB_VERSION = 1;
 const STORE_NAME = 'database';
 const DB_KEY = 'app-state';
 const LS_PASSPHRASE_KEY = 'qa-helper-ls-key';
-const LS_IV_KEY = 'qa-helper-ls-iv';
 
 async function getLsCryptoKey(): Promise<CryptoKey> {
   const stored = localStorage.getItem(LS_PASSPHRASE_KEY);
@@ -18,12 +17,8 @@ async function getLsCryptoKey(): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', passphrase, 'PBKDF2', false, ['deriveKey']);
 }
 
-async function getOrCreateLsIv(): Promise<Uint8Array> {
-  const stored = localStorage.getItem(LS_IV_KEY);
-  if (stored) return base64ToArrayBuffer(stored);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  localStorage.setItem(LS_IV_KEY, arrayBufferToBase64(iv.buffer));
-  return iv;
+function generateIv(): Uint8Array {
+  return crypto.getRandomValues(new Uint8Array(12));
 }
 
 async function deriveLsAesKey(passphrase: CryptoKey): Promise<CryptoKey> {
@@ -142,25 +137,23 @@ export class LocalStorageFallback implements StorageProvider {
   private readonly maxSize = 5 * 1024 * 1024;
 
   async save(data: Uint8Array): Promise<void> {
-    const estimatedSize = data.length * 1.37;
+    const estimatedSize = Math.ceil((data.length + 28) * 1.37);
     if (estimatedSize > this.maxSize) {
       throw new Error(`Data too large: ${estimatedSize} bytes (max: ${this.maxSize})`);
     }
 
-    try {
-      const passphrase = await getLsCryptoKey();
-      const aesKey = await deriveLsAesKey(passphrase);
-      const iv = await getOrCreateLsIv();
-      const encrypted = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
-        aesKey,
-        data,
-      );
-      localStorage.setItem(DB_KEY, arrayBufferToBase64(encrypted));
-    } catch {
-      // Web Crypto unavailable, fall back to unencrypted base64
-      localStorage.setItem(DB_KEY, arrayBufferToBase64(data.buffer));
-    }
+    const passphrase = await getLsCryptoKey();
+    const aesKey = await deriveLsAesKey(passphrase);
+    const iv = generateIv();
+    const encrypted = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      aesKey,
+      data,
+    );
+    const combined = new Uint8Array(iv.length + new Uint8Array(encrypted).length);
+    combined.set(iv, 0);
+    combined.set(new Uint8Array(encrypted), iv.length);
+    localStorage.setItem(DB_KEY, arrayBufferToBase64(combined.buffer));
   }
 
   async load(): Promise<Uint8Array | null> {
@@ -168,18 +161,19 @@ export class LocalStorageFallback implements StorageProvider {
     if (!saved) return null;
     
     try {
+      const combined = base64ToArrayBuffer(saved);
+      if (combined.byteLength < 12) return null;
+      const iv = new Uint8Array(combined.slice(0, 12));
+      const ciphertext = combined.slice(12);
       const passphrase = await getLsCryptoKey();
       const aesKey = await deriveLsAesKey(passphrase);
-      const iv = await getOrCreateLsIv();
-      const encrypted = base64ToArrayBuffer(saved);
       const decrypted = await crypto.subtle.decrypt(
         { name: 'AES-GCM', iv },
         aesKey,
-        encrypted,
+        ciphertext,
       );
       return new Uint8Array(decrypted);
     } catch {
-      // Not encrypted or decryption failed, try legacy base64
       try {
         return base64ToArrayBuffer(saved);
       } catch {
@@ -208,11 +202,16 @@ export async function createStorageProvider(): Promise<StorageProvider> {
     const testDb = indexedDB.open('qa-helper-test', 1);
     return new Promise((resolve) => {
       testDb.onsuccess = () => {
+        const db = testDb.result;
+        db.close();
         indexedDB.deleteDatabase('qa-helper-test');
         resolve(new IndexedDBStorage());
       };
       testDb.onerror = () => {
         resolve(new LocalStorageFallback());
+      };
+      testDb.onblocked = () => {
+        resolve(new IndexedDBStorage());
       };
     });
   } catch {

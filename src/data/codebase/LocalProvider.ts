@@ -28,7 +28,7 @@ export class LocalProvider implements CodebaseProvider {
     const entries: FileSystemEntry[] = [];
 
     for (let i = 0; i < items.length; i++) {
-      const item = items[i];
+      const item = items[i]!;
       const entry = item.webkitGetAsEntry?.();
       if (entry) entries.push(entry);
     }
@@ -42,10 +42,10 @@ export class LocalProvider implements CodebaseProvider {
 
     for (const entry of files) {
       const parts = entry.path.split('/');
-      const name = parts[parts.length - 1];
+      const name = parts[parts.length - 1] ?? '';
       if (this.isIgnored(name)) continue;
 
-      const ext = '.' + name.split('.').pop()?.toLowerCase();
+      const ext = '.' + (name.split('.').pop() ?? '').toLowerCase();
       if (!CODE_EXTENSIONS.has(ext)) continue;
 
       this.files.set(entry.path, {
@@ -58,6 +58,7 @@ export class LocalProvider implements CodebaseProvider {
 
       let currentPath = '';
       for (const part of parts.slice(0, -1)) {
+        if (!part) continue;
         const dirPath = currentPath ? `${currentPath}/${part}` : part;
         if (!this.files.has(dirPath)) {
           this.files.set(dirPath, {
@@ -179,8 +180,9 @@ export class LocalProvider implements CodebaseProvider {
 
       const lines = entry.content.split('\n');
       for (let i = 0; i < lines.length; i++) {
-        if (regex.test(lines[i])) {
-          results.push({ path, line: i + 1, content: lines[i].trim() });
+        const line = lines[i];
+        if (line && regex.test(line)) {
+          results.push({ path, line: i + 1, content: line.trim() });
           regex.lastIndex = 0;
         }
         if (results.length >= 50) return results;

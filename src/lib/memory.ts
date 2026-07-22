@@ -19,7 +19,9 @@ const CATEGORY_CONFIGS: CategoryConfig[] = [
 ];
 
 function getConfig(category: MemoryCategory): CategoryConfig {
-  return CATEGORY_CONFIGS.find(c => c.category === category)!;
+  const cfg = CATEGORY_CONFIGS.find(c => c.category === category);
+  if (!cfg) throw new Error(`Unknown memory category: ${category}`);
+  return cfg;
 }
 
 function emptyMemory(): StructuredMemory {

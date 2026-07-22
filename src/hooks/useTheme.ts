@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 type Theme = 'dark' | 'light';
 
@@ -19,6 +19,9 @@ export function useTheme(): UseThemeReturn {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
+
   const applyTheme = useCallback((newTheme: Theme) => {
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(newTheme);
@@ -26,9 +29,13 @@ export function useTheme(): UseThemeReturn {
     setThemeState(newTheme);
   }, []);
 
+  useEffect(() => {
+    applyTheme(themeRef.current);
+  }, [applyTheme]);
+
   const toggleTheme = useCallback(() => {
-    applyTheme(theme === 'dark' ? 'light' : 'dark');
-  }, [theme, applyTheme]);
+    applyTheme(themeRef.current === 'dark' ? 'light' : 'dark');
+  }, [applyTheme]);
 
   const setTheme = useCallback((newTheme: Theme) => {
     applyTheme(newTheme);
