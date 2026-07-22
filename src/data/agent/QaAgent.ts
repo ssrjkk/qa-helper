@@ -131,6 +131,7 @@ Remember: Start by listing directories and reading relevant files. Only produce 
         result = await this.aiService.executeWithRetry({
           systemPrompt,
           userMessage,
+          signal: options.signal,
           onChunk: options.onChunk,
         });
       } catch (err) {

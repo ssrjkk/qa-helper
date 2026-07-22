@@ -96,6 +96,7 @@ export function buildUpdateQuery<T extends Record<string, unknown>>(table: strin
   const values: (string | number | null)[] = [];
 
   for (const [key, value] of Object.entries(data)) {
+    if (key === 'id') continue;
     if (value !== undefined && SAFE_IDENTIFIER.test(key)) {
       fields.push(`${key} = ?`);
       values.push(value as string | number | null);

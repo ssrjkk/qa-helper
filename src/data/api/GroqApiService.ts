@@ -134,14 +134,17 @@ export class GroqApiService {
       }
 
       const decoder = new TextDecoder();
+      let lineBuffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done || currentRequestId !== this.requestId) break;
 
-        const chunk = decoder.decode(value, { stream: true });
+        lineBuffer += decoder.decode(value, { stream: true });
+        const lines = lineBuffer.split('\n');
+        lineBuffer = lines.pop() || '';
 
-        for (const line of chunk.split('\n')) {
+        for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const data = line.slice(6);
           if (data === '[DONE]') continue;

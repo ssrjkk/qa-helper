@@ -174,12 +174,8 @@ export class LocalStorageFallback implements StorageProvider {
       );
       return new Uint8Array(decrypted);
     } catch {
-      try {
-        return base64ToArrayBuffer(saved);
-      } catch {
-        if (import.meta.env.DEV) console.warn('[storage] Failed to decode localStorage data');
-        return null;
-      }
+      if (import.meta.env.DEV) console.warn('[storage] Decryption failed — data may be corrupted');
+      return null;
     }
   }
 
@@ -208,9 +204,11 @@ export async function createStorageProvider(): Promise<StorageProvider> {
         resolve(new IndexedDBStorage());
       };
       testDb.onerror = () => {
+        indexedDB.deleteDatabase('qa-helper-test');
         resolve(new LocalStorageFallback());
       };
       testDb.onblocked = () => {
+        indexedDB.deleteDatabase('qa-helper-test');
         resolve(new IndexedDBStorage());
       };
     });

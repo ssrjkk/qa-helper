@@ -43,9 +43,14 @@ export function useDatabase() {
             try { database.run("ALTER TABLE projects ADD COLUMN memory TEXT DEFAULT ''"); } catch (e: unknown) {
               if (!(e instanceof Error) || !e.message?.includes('duplicate column')) throw e;
             }
-            } catch {
-              // Column already exists or DB corruption — recreate
-              database = new SQL.Database();
+          } catch {
+            database = new SQL.Database();
+            [
+              "CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT, memory TEXT DEFAULT '', created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)",
+              "CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id INTEGER, task_type TEXT NOT NULL, context TEXT, output TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (project_id) REFERENCES projects(id))",
+              "CREATE TABLE IF NOT EXISTS screenshots (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER, image_data TEXT NOT NULL, analysis_result TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (task_id) REFERENCES tasks(id))",
+              "CREATE TABLE IF NOT EXISTS conversation_history (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id INTEGER, role TEXT NOT NULL, content TEXT NOT NULL, task_type TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (project_id) REFERENCES projects(id))",
+            ].forEach(sql => database.run(sql));
           }
         } else {
           database = new SQL.Database();
