@@ -120,8 +120,11 @@ Remember: Start by listing directories and reading relevant files. Only produce 
         timestamp: Date.now(),
       });
 
-      const conversationHistory = messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
-      const userMessage = `Previous conversation:\n${conversationHistory}\n\nContinue your analysis. If you need more information, use a tool. If you have enough information, provide your final comprehensive output.`;
+      const recentMessages = messages.slice(-6);
+      const conversationHistory = recentMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
+      const omitted = messages.length - recentMessages.length;
+      const contextPrefix = omitted > 0 ? `[Earlier ${omitted} messages omitted for brevity]\n\n` : '';
+      const userMessage = `${contextPrefix}${conversationHistory}\n\nContinue your analysis. If you need more information, use a tool. If you have enough information, provide your final comprehensive output.`;
 
       let result: { success: boolean; output?: string; error?: string };
       try {
@@ -189,7 +192,7 @@ Remember: Start by listing directories and reading relevant files. Only produce 
         }
 
         const truncatedContent = toolResult.content.length > 15000
-          ? `${toolResult.content.slice(0, 15_000)}\n... (truncated)`
+          ? `${toolResult.content.slice(0, 15_000)}\n... (truncated, ${toolResult.content.length - 15000} chars omitted)`
           : toolResult.content;
 
         emitStep({

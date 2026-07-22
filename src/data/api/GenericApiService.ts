@@ -61,9 +61,13 @@ export class GenericApiService {
       this.abortController.abort();
     }
     this.abortController = new AbortController();
-    const combinedSignal = signal
-      ? AbortSignal.any([signal, this.abortController.signal])
-      : this.abortController.signal;
+    let combinedSignal = this.abortController.signal;
+    if (signal) {
+      const mergedController = new AbortController();
+      signal.addEventListener('abort', () => mergedController.abort(signal.reason), { once: true });
+      this.abortController.signal.addEventListener('abort', () => mergedController.abort(this.abortController!.signal.reason), { once: true });
+      combinedSignal = mergedController.signal;
+    }
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -122,7 +126,7 @@ export class GenericApiService {
         }
 
         if (attempt < maxRetries && isRetryableError(error.message)) {
-          const delay = Math.pow(2, attempt - 1) * 1000;
+          const delay = Math.pow(2, attempt) * 1000;
           options.onRetryAttempt?.(attempt, delay, error.message);
           await new Promise((r, reject) => {
             const timer = setTimeout(r, delay);
