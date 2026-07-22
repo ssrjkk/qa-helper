@@ -90,6 +90,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
 
   private setServiceModel(provider: AiProvider, model: string): void {
     switch (provider) {
+      case 'claude': this.claudeService.setModel(model); break;
       case 'groq': this.groqService.setModel(model); break;
       case 'openrouter': this.openRouterService.setModel(model); break;
       case 'deepseek': this.deepSeekService.setModel(model); break;

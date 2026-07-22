@@ -24,6 +24,10 @@ export class ClaudeApiService {
     this.config = config;
   }
 
+  setModel(model: string): void {
+    this.config = { ...this.config, model };
+  }
+
   private getRetryableError(error: Error): RetryableError {
     if (!navigator.onLine) {
       return { type: 'network', message: 'No internet connection' };
@@ -103,7 +107,8 @@ export class ClaudeApiService {
         model: this.config.model,
         max_tokens: this.config.maxTokens,
         system: systemPrompt,
-        messages: messages
+        messages: messages,
+        stream: true,
       };
 
       const response = await fetch(this.config.baseUrl, {

@@ -171,7 +171,12 @@ export class LocalProvider implements CodebaseProvider {
   }
 
   async searchCode(pattern: string, fileGlob?: string): Promise<CodebaseSearchResult[]> {
-    const regex = new RegExp(pattern, 'gi');
+    let regex: RegExp;
+    try {
+      regex = new RegExp(pattern, 'gi');
+    } catch {
+      return [{ path: '', line: 0, content: `Error: invalid regex pattern "${pattern}"` }];
+    }
     const results: CodebaseSearchResult[] = [];
 
     for (const [path, entry] of this.files) {

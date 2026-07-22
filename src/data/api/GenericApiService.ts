@@ -65,7 +65,7 @@ export class GenericApiService {
       ? AbortSignal.any([signal, this.abortController.signal])
       : this.abortController.signal;
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const body: Record<string, unknown> = {
           model: this.config.model,
