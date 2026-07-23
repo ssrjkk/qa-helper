@@ -84,7 +84,7 @@ export function ChatArea({
 
   useEffect(() => {
     if (context !== historyState.present) {
-      setHistoryState(context);
+      setHistoryState(context, true);
     }
   }, [context, historyState.present, setHistoryState]);
 
@@ -94,10 +94,10 @@ export function ChatArea({
   };
 
   const handleUndo = () => {
+    const prevValue = historyState.past[historyState.past.length - 1];
     undo();
-    const newValue = historyState.past[historyState.past.length - 1];
-    if (newValue !== undefined) {
-      onContextChange(newValue);
+    if (prevValue !== undefined) {
+      onContextChange(prevValue);
     }
   };
 

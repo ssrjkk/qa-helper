@@ -222,12 +222,16 @@ export class GroqApiService {
           : this.calculateBackoff(attempt);
 
         options.onRetryAttempt?.(attempt + 1, delay, lastError);
-        await new Promise((resolve, reject) => {
-          const timer = setTimeout(resolve, delay);
-          options.signal?.addEventListener('abort', () => {
+        await new Promise<void>((resolve, reject) => {
+          const onAbort = () => {
             clearTimeout(timer);
             reject(new DOMException('Aborted', 'AbortError'));
-          }, { once: true });
+          };
+          options.signal?.addEventListener('abort', onAbort, { once: true });
+          const timer = setTimeout(() => {
+            options.signal?.removeEventListener('abort', onAbort);
+            resolve();
+          }, delay);
         });
       }
     }

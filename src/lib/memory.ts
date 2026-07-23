@@ -190,11 +190,13 @@ export function mergeMemories(existing: StructuredMemory, newMemory: Partial<Str
       const incoming = raw as Record<string, unknown>;
       for (const [k, items] of Object.entries(incoming)) {
         if (!Array.isArray(items)) continue;
-        (bucket[k] ??= []);
+        const existing = bucket[k] ?? [];
+        const merged_arr = [...existing];
         for (const item of items) {
           const s = String(item);
-          if (!bucket[k].includes(s)) bucket[k].push(s);
+          if (!merged_arr.includes(s)) merged_arr.push(s);
         }
+        bucket[k] = merged_arr;
       }
     } else if (cfg.type === 'record' && typeof raw === 'object' && raw !== null) {
       Object.assign(merged[cfg.category], raw);

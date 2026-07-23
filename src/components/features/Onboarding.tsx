@@ -74,8 +74,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleSkip();
+      if (e.key === 'Escape') { handleSkip(); return; }
       if (e.key === 'Enter' || e.key === ' ') {
+        const el = document.activeElement as HTMLElement | null;
+        if (el?.tagName === 'BUTTON') return;
         e.preventDefault();
         handleNext();
       }
