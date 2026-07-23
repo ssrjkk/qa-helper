@@ -137,7 +137,8 @@ export class LocalStorageFallback implements StorageProvider {
   private readonly maxSize = 5 * 1024 * 1024;
 
   async save(data: Uint8Array): Promise<void> {
-    const estimatedSize = Math.ceil((data.length + 28) * 1.37);
+    const base64Length = Math.ceil(data.length / 3) * 4;
+    const estimatedSize = base64Length + 16;
     if (estimatedSize > this.maxSize) {
       throw new Error(`Data too large: ${estimatedSize} bytes (max: ${this.maxSize})`);
     }
@@ -209,7 +210,7 @@ export async function createStorageProvider(): Promise<StorageProvider> {
       };
       testDb.onblocked = () => {
         indexedDB.deleteDatabase('qa-helper-test');
-        resolve(new IndexedDBStorage());
+        resolve(new LocalStorageFallback());
       };
     });
   } catch {

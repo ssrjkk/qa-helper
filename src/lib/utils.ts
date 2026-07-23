@@ -28,7 +28,7 @@ export function validateApiKey(key: string, provider?: AiProvider): ValidationRe
     }
   }
 
-  if (!/^[a-zA-Z0-9_\-./]+$/.test(trimmed)) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
     return { valid: false, error: 'Invalid characters in API key' };
   }
   return { valid: true };

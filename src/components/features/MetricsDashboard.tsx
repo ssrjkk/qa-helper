@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '../ui/GlassCard';
 import { metricsCollector } from '../../lib/metrics';
@@ -7,10 +8,10 @@ interface MetricsDashboardProps {
 }
 
 export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
-  const metrics = metricsCollector.getMetrics();
-  const successRate = metricsCollector.getSuccessRate();
-  const topTasks = metricsCollector.getTopTaskTypes(5);
-  const last7Days = metricsCollector.getLast7DaysRequests();
+  const metrics = useMemo(() => metricsCollector.getMetrics(), []);
+  const successRate = useMemo(() => metricsCollector.getSuccessRate(), []);
+  const topTasks = useMemo(() => metricsCollector.getTopTaskTypes(5), []);
+  const last7Days = useMemo(() => metricsCollector.getLast7DaysRequests(), []);
 
   const maxDayCount = Math.max(...last7Days.map(d => d.count), 1);
 

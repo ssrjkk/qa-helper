@@ -27,7 +27,7 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[], enabled: boolean = t
         const modifiers = shortcut.modifiers || [];
 
         const effectiveModifiers = isMac
-          ? modifiers.map((m) => (m === 'ctrl' ? 'meta' : m))
+          ? [...new Set(modifiers.map((m) => (m === 'ctrl' ? 'meta' : m)))]
           : modifiers;
 
         const metaMatch = effectiveModifiers.includes('meta') ? e.metaKey : !e.metaKey;

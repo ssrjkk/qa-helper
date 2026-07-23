@@ -54,7 +54,16 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
   const virtualizer = useVirtualizer({
     count: filteredSessions.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 100,
+    estimateSize: (index) => {
+      const session = filteredSessions[index];
+      if (!session) return 100;
+      const lineCount = Math.max(
+        Math.ceil(session.context.length / 80),
+        Math.ceil(session.output.length / 80),
+        2
+      );
+      return Math.min(lineCount * 20 + 80, 300);
+    },
     overscan: 5,
   });
 

@@ -226,12 +226,16 @@ export class ClaudeApiService {
           : this.calculateBackoff(attempt);
 
         options.onRetryAttempt?.(attempt + 1, delay, lastError);
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           const timer = setTimeout(resolve, delay);
-          options.signal?.addEventListener('abort', () => {
+          const onAbort = () => {
             clearTimeout(timer);
             reject(new DOMException('Aborted', 'AbortError'));
-          }, { once: true });
+          };
+          options.signal?.addEventListener('abort', onAbort, { once: true });
+          const cleanup = () => options.signal?.removeEventListener('abort', onAbort);
+          const origResolve = resolve;
+          resolve = (() => { cleanup(); origResolve(); }) as () => void;
         });
       }
     }

@@ -158,7 +158,7 @@ export function ChatArea({
         </div>
         <AutoResizeTextarea
           value={historyState.present}
-          onChange={e => { handleContextChange(e.target.value); onContextError(null); }}
+          onChange={e => { handleContextChange(e.target.value); if (e.target.value.length > 20) onContextError(null); }}
           placeholder="Describe your testing needs, stack, features, or paste code..."
           maxLength={maxContextLength}
           className="min-h-32"

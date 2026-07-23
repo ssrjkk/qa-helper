@@ -160,6 +160,7 @@ export function CloudSync({ onSync, onImport, projectsCount, canSync, projects, 
 
         <div className="border-t border-white/10 pt-4">
           <p className="text-xs text-gray-400 mb-2">Share Project</p>
+          <p className="text-xs text-amber-400/80 mb-2">Warning: share links contain unencrypted project data. Anyone with the link can read it.</p>
           <div className="flex gap-2">
             <button
               onClick={handleGenerateLink}

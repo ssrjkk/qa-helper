@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AgentStep } from '../../data/agent/types';
 
@@ -108,7 +108,7 @@ function StepDetail({ step }: { step: AgentStep }) {
 }
 
 export function AgentTimeline({ steps, isRunning }: AgentTimelineProps) {
-  const toolCalls = steps.filter(s => s.type === 'tool_call');
+  const toolCalls = useMemo(() => steps.filter(s => s.type === 'tool_call'), [steps]);
 
   return (
     <div className="space-y-2">

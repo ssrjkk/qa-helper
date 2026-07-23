@@ -111,8 +111,10 @@ export function useDatabase() {
 
   const deleteProject = useCallback((id: number) => {
     if (!dbService || id <= 0) return;
-    dbService.deleteProject(id);
-    setProjects(dbService.getProjects());
+    const success = dbService.deleteProject(id);
+    if (success) {
+      setProjects(dbService.getProjects());
+    }
   }, [dbService]);
 
   const updateProjectMemory = useCallback((id: number, memory: string) => {

@@ -136,9 +136,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
 
   private recordCircuitBreakerResult(result: ApiResult, cb: CircuitBreaker | undefined): void {
     if (!cb) return;
-    if (result.success) {
-      cb.execute(() => Promise.resolve()).catch(() => {});
-    } else if (result.error && !result.error.includes('API key') && !result.error.includes('circuit breaker')) {
+    if (!result.success && result.error && !result.error.includes('API key') && !result.error.includes('circuit breaker')) {
       cb.execute(() => Promise.reject(new Error(result.error))).catch(() => {});
     }
   }
@@ -258,12 +256,14 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
   }
 
   abort(): void {
-    this.claudeService.abort();
-    this.groqService.abort();
-    this.openRouterService.abort();
-    this.deepSeekService.abort();
-    this.togetherService.abort();
-    this.novitaService.abort();
+    switch (this.currentProvider) {
+      case 'claude': this.claudeService.abort(); break;
+      case 'groq': this.groqService.abort(); break;
+      case 'openrouter': this.openRouterService.abort(); break;
+      case 'deepseek': this.deepSeekService.abort(); break;
+      case 'together': this.togetherService.abort(); break;
+      case 'novita': this.novitaService.abort(); break;
+    }
   }
 }
 

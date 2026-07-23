@@ -127,13 +127,17 @@ export class GenericApiService {
 
         if (attempt < maxRetries && isRetryableError(error.message)) {
           const delay = Math.pow(2, attempt) * 1000;
-          options.onRetryAttempt?.(attempt, delay, error.message);
-          await new Promise((r, reject) => {
+          options.onRetryAttempt?.(attempt + 1, delay, error.message);
+          await new Promise<void>((r, reject) => {
             const timer = setTimeout(r, delay);
-            combinedSignal.addEventListener('abort', () => {
+            const onAbort = () => {
               clearTimeout(timer);
               reject(new DOMException('Aborted', 'AbortError'));
-            }, { once: true });
+            };
+            combinedSignal.addEventListener('abort', onAbort, { once: true });
+            const cleanup = () => combinedSignal.removeEventListener('abort', onAbort);
+            const origR = r;
+            r = (() => { cleanup(); origR(); }) as () => void;
           });
           continue;
         }
