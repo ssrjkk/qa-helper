@@ -38,11 +38,12 @@ export class CloudSyncService {
     status: 'idle',
     entriesCount: 0,
   };
+  private configReady: Promise<void>;
 
   constructor(config: CloudConfig = { provider: 'local' }) {
     this.config = config;
     this.loadStatus();
-    this.loadConfig();
+    this.configReady = this.loadConfig();
   }
 
   private loadStatus(): void {
@@ -68,7 +69,7 @@ export class CloudSyncService {
     }
   }
 
-  private loadConfig(): void {
+  private async loadConfig(): Promise<void> {
     try {
       const saved = localStorage.getItem(SYNC_CONFIG_KEY);
       if (saved) {
@@ -81,9 +82,13 @@ export class CloudSyncService {
             url: typeof parsed.url === 'string' ? parsed.url : undefined,
           };
           if (config.apiKey && keyManager.isReady()) {
-            keyManager.decryptApiKey(config.apiKey).then(decrypted => {
+            try {
+              const decrypted = await keyManager.decryptApiKey(config.apiKey);
               if (decrypted) this.config = { ...config, apiKey: decrypted };
-            }).catch(() => { this.config = config; });
+              else this.config = config;
+            } catch {
+              this.config = config;
+            }
           } else {
             this.config = config;
           }
@@ -174,6 +179,7 @@ export class CloudSyncService {
   }
 
   async syncToCloud(projects: Project[], memoryEntries: MemoryEntry[]): Promise<boolean> {
+    await this.configReady;
     this.status = { ...this.status, status: 'syncing', error: undefined };
     this.saveStatus();
 

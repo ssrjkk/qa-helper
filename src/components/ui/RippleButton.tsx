@@ -39,7 +39,7 @@ export function RippleButton({
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    const id = Date.now();
+    const id = Date.now() + Math.random();
     setRipples((prev) => [...prev, { x, y, id }]);
     const timer = setTimeout(() => {
       timersRef.current.delete(id);

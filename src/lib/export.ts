@@ -183,7 +183,7 @@ export const exportUtils = {
     }
     
     return new Blob(
-      [JSON.stringify(options.pretty ? data : options.output, null, options.pretty ? 2 : 0)], 
+      [JSON.stringify(data, null, 2)], 
       { type: 'application/json;charset=utf-8' }
     );
   },
@@ -245,7 +245,7 @@ export const exportUtils = {
     } catch {
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
   },
 

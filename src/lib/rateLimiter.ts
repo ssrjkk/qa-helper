@@ -31,7 +31,8 @@ function loadState(): RateLimitState {
       const parsed = JSON.parse(saved);
       if (parsed && typeof parsed === 'object' && Array.isArray(parsed.requests)) {
         const now = Date.now();
-        parsed.requests = parsed.requests.filter((t: number) => now - t < config.windowMs);
+        const savedWindow = parsed.config?.windowMs ?? config.windowMs;
+        parsed.requests = parsed.requests.filter((t: number) => now - t < savedWindow);
         return parsed;
       }
     }

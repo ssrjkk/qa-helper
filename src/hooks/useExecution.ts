@@ -78,7 +78,6 @@ export function useExecution(
           });
 
           if (result.output) {
-            setOutput(result.output);
             saveResult(result.output);
           }
         } catch (err) {

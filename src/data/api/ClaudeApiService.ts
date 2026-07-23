@@ -227,15 +227,15 @@ export class ClaudeApiService {
 
         options.onRetryAttempt?.(attempt + 1, delay, lastError);
         await new Promise<void>((resolve, reject) => {
-          const timer = setTimeout(resolve, delay);
           const onAbort = () => {
             clearTimeout(timer);
             reject(new DOMException('Aborted', 'AbortError'));
           };
           options.signal?.addEventListener('abort', onAbort, { once: true });
-          const cleanup = () => options.signal?.removeEventListener('abort', onAbort);
-          const origResolve = resolve;
-          resolve = (() => { cleanup(); origResolve(); }) as () => void;
+          const timer = setTimeout(() => {
+            options.signal?.removeEventListener('abort', onAbort);
+            resolve();
+          }, delay);
         });
       }
     }

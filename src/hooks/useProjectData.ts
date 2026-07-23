@@ -58,19 +58,28 @@ export function useProjectData(db: UseDatabaseReturn) {
   }, [selectedProject, getMemoryEntries, setMemoryEntries]);
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSaveRef = useRef<{ projectId: number; memory: string } | null>(null);
 
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
+      if (pendingSaveRef.current) {
+        updateProjectMemoryRef.current(pendingSaveRef.current.projectId, pendingSaveRef.current.memory);
+        pendingSaveRef.current = null;
+      }
     };
   }, []);
 
   const debouncedSave = useCallback((projectId: number, memory: string) => {
+    pendingSaveRef.current = { projectId, memory };
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
-      updateProjectMemoryRef.current(projectId, memory);
+      if (pendingSaveRef.current) {
+        updateProjectMemoryRef.current(pendingSaveRef.current.projectId, pendingSaveRef.current.memory);
+        pendingSaveRef.current = null;
+      }
     }, 1000);
   }, []);
 
