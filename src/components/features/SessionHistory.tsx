@@ -129,7 +129,8 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const session = filteredSessions[virtualRow.index]!;
               const taskInfo = getTaskInfo(session.task_type);
-              const isExpanded = expandedId === session.created_at;
+              const sessionKey = `${virtualRow.index}-${session.created_at}`;
+              const isExpanded = expandedId === sessionKey;
               
               return (
                 <div
@@ -147,7 +148,7 @@ export function SessionHistory({ sessions, onLoadSession, onClearHistory }: Sess
                   >
                     <div
                       className="p-3 cursor-pointer"
-                      onClick={() => setExpandedId(isExpanded ? null : session.created_at)}
+                      onClick={() => setExpandedId(isExpanded ? null : sessionKey)}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">

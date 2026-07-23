@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '../ui/GlassCard';
 import { metricsCollector } from '../../lib/metrics';
@@ -8,10 +8,20 @@ interface MetricsDashboardProps {
 }
 
 export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
-  const metrics = useMemo(() => metricsCollector.getMetrics(), []);
-  const successRate = useMemo(() => metricsCollector.getSuccessRate(), []);
-  const topTasks = useMemo(() => metricsCollector.getTopTaskTypes(5), []);
-  const last7Days = useMemo(() => metricsCollector.getLast7DaysRequests(), []);
+  const [metrics, setMetrics] = useState(() => metricsCollector.getMetrics());
+  const [successRate, setSuccessRate] = useState(() => metricsCollector.getSuccessRate());
+  const [topTasks, setTopTasks] = useState(() => metricsCollector.getTopTaskTypes(5));
+  const [last7Days, setLast7Days] = useState(() => metricsCollector.getLast7DaysRequests());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMetrics(metricsCollector.getMetrics());
+      setSuccessRate(metricsCollector.getSuccessRate());
+      setTopTasks(metricsCollector.getTopTaskTypes(5));
+      setLast7Days(metricsCollector.getLast7DaysRequests());
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   const maxDayCount = Math.max(...last7Days.map(d => d.count), 1);
 
