@@ -167,7 +167,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       id: 'gpt-4-turbo',
       name: 'GPT-4 Turbo',
       provider: 'openai',
-      maxTokens: 128000,
+      maxTokens: 4096,
       supportsVision: true,
       free: false,
     },
@@ -249,7 +249,7 @@ export const PROVIDER_MODELS: Record<AiProvider, AiModel[]> = {
       provider: 'openrouter',
       maxTokens: 8192,
       supportsVision: true,
-      free: true,
+      free: false,
     },
     {
       id: 'openai/gpt-4o-mini',

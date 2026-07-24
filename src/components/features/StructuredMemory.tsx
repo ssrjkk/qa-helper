@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MEMORY_CATEGORIES, type MemoryCategory, type MemoryEntry } from '../../types/memory';
 import { entriesToMemory, getMemorySummary } from '../../lib/memory';
@@ -27,8 +27,8 @@ export function StructuredMemory({ projectId, entries, onAddEntry, onDeleteEntry
   const [newValue, setNewValue] = useState('');
   const reduced = useReducedMotion();
 
-  const memory = entriesToMemory(entries);
-  const summary = getMemorySummary(memory);
+  const memory = useMemo(() => entriesToMemory(entries), [entries]);
+  const summary = useMemo(() => getMemorySummary(memory), [memory]);
 
   const handleAddEntry = () => {
     if (!selectedCategory || !newValue.trim()) return;
@@ -49,9 +49,9 @@ export function StructuredMemory({ projectId, entries, onAddEntry, onDeleteEntry
     ? entries.filter(e => e.category === selectedCategory)
     : entries;
 
-  const groupedEntries = Object.fromEntries(
+  const groupedEntries = useMemo(() => Object.fromEntries(
     MEMORY_CATEGORIES.map(cat => [cat.id, entries.filter(e => e.category === cat.id)])
-  ) as Record<MemoryCategory, MemoryEntry[]>;
+  ) as Record<MemoryCategory, MemoryEntry[]>, [entries]);
 
   return (
     <Accordion

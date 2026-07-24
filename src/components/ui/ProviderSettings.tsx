@@ -53,6 +53,8 @@ export function ProviderSettings({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
           currentProvider === 'groq'
             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'

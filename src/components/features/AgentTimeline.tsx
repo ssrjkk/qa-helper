@@ -55,6 +55,8 @@ function StepDetail({ step }: { step: AgentStep }) {
           {step.toolInput && (
             <button
               onClick={() => setExpanded(!expanded)}
+              aria-expanded={expanded}
+              aria-label="Toggle tool input details"
               className="text-gray-500 hover:text-gray-300 transition-colors"
             >
               {expanded ? '▾' : '▸'}
@@ -85,6 +87,8 @@ function StepDetail({ step }: { step: AgentStep }) {
           <span className="font-medium">{step.toolName}</span>
           <button
             onClick={() => setExpanded(!expanded)}
+            aria-expanded={expanded}
+            aria-label="Toggle tool output"
             className="text-gray-500 hover:text-gray-300 transition-colors"
           >
             {expanded ? '▾' : '▸'} output
@@ -138,7 +142,7 @@ export function AgentTimeline({ steps, isRunning }: AgentTimelineProps) {
 
       <div className="space-y-1.5 max-h-60 overflow-y-auto">
         <AnimatePresence>
-          {steps.map((step, i) => (
+          {steps.map((step) => (
             <motion.div
               key={step.id}
               initial={{ opacity: 0, x: -10 }}
@@ -146,7 +150,7 @@ export function AgentTimeline({ steps, isRunning }: AgentTimelineProps) {
               transition={{ duration: 0.2 }}
               className="pl-3 border-l border-white/10"
             >
-              <StepDetail step={step} key={`${step.id}-${i}`} />
+              <StepDetail step={step} />
             </motion.div>
           ))}
         </AnimatePresence>

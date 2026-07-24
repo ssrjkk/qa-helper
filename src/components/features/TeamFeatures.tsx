@@ -85,8 +85,10 @@ export function TeamFeatures({
     const a = document.createElement('a');
     a.href = url;
     a.download = `${currentProject?.name.replace(/\s+/g, '_') || 'project'}_export.json`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   const handleImport = async () => {

@@ -45,6 +45,7 @@ export class CloudSyncService {
     entriesCount: 0,
   };
   private configReady: Promise<void>;
+  private configManuallySet = false;
 
   constructor(config: CloudConfig = { provider: 'local' }) {
     this.config = config;
@@ -57,7 +58,8 @@ export class CloudSyncService {
       const saved = localStorage.getItem(SYNC_STATUS_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object' && typeof parsed.status === 'string') {
+        const VALID_STATUSES = ['idle', 'syncing', 'synced', 'error'];
+        if (parsed && typeof parsed === 'object' && VALID_STATUSES.includes(parsed.status)) {
           this.status = parsed;
         }
       }
@@ -76,6 +78,7 @@ export class CloudSyncService {
   }
 
   private async loadConfig(): Promise<void> {
+    if (this.configManuallySet) return;
     try {
       const saved = localStorage.getItem(SYNC_CONFIG_KEY);
       if (saved) {
@@ -121,6 +124,7 @@ export class CloudSyncService {
 
   async configure(config: CloudConfig): Promise<void> {
     this.config = config;
+    this.configManuallySet = true;
     try {
       const toStore = { ...config };
       if (toStore.apiKey && keyManager.isReady()) {
@@ -216,9 +220,16 @@ export class CloudSyncService {
     }
   }
 
-  private async syncToLocal(projects: Project[], memoryEntries: MemoryEntry[]): Promise<boolean> {
+  async syncToLocal(projects: Project[], memoryEntries: MemoryEntry[]): Promise<boolean> {
     const data = await this.exportData(projects, memoryEntries);
-    localStorage.setItem(SYNC_BACKUP_KEY, JSON.stringify(data, null, 2));
+    try {
+      localStorage.setItem(SYNC_BACKUP_KEY, JSON.stringify(data, null, 2));
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'QuotaExceededError') {
+        throw new Error('Local storage quota exceeded — reduce data size or clear storage');
+      }
+      throw err;
+    }
     this.status = {
       lastSync: new Date().toISOString(),
       status: 'synced',
@@ -281,6 +292,7 @@ export class CloudSyncService {
   }
 
   async syncFromCloud(): Promise<{ projects: Project[]; memoryEntries: MemoryEntry[] } | null> {
+    await this.configReady;
     try {
       let data: { projects: Project[]; memoryEntries: MemoryEntry[] } | null = null;
       
@@ -316,6 +328,7 @@ export class CloudSyncService {
           }));
           if (!response.ok) return null;
           const { data: jsonData } = await response.json();
+          if (jsonData === undefined || jsonData === null) return null;
           const raw = typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData);
           data = await this.importData(raw);
           break;

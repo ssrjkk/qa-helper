@@ -140,6 +140,10 @@ export function ScreenshotUploader({
         className="relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors"
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
+        aria-label="Upload screenshot by clicking or dragging"
       >
         {preview ? (
           <div className="relative inline-block">
@@ -153,6 +157,7 @@ export function ScreenshotUploader({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg"
+              aria-label="Remove screenshot"
             >
               ×
             </motion.button>
@@ -184,6 +189,7 @@ export function ScreenshotUploader({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="text-red-400 text-xs mt-2"
+          role="alert"
         >
           ⚠️ {localError || error}
         </motion.p>

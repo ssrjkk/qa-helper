@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import type { KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CONTEXT_PRESETS, searchPresets, type ContextPreset } from '../../config';
@@ -30,7 +30,7 @@ export function ContextPresets({ onSelect, currentContext }: ContextPresetsProps
     return () => document.removeEventListener('pointerdown', handleClickOutside);
   }, []);
 
-  const filteredPresets = search ? searchPresets(search) : CONTEXT_PRESETS;
+  const filteredPresets = useMemo(() => search ? searchPresets(search) : CONTEXT_PRESETS, [search]);
 
   const handleSelect = (preset: ContextPreset) => {
     const newContext = currentContext
@@ -41,7 +41,7 @@ export function ContextPresets({ onSelect, currentContext }: ContextPresetsProps
     setSearch('');
   };
 
-  const categories = [
+  const categories = useMemo(() => [
     { id: 'e2e', label: 'E2E', presets: filteredPresets.filter(p => p.tags.includes('e2e')) },
     { id: 'unit', label: 'Unit', presets: filteredPresets.filter(p => p.tags.includes('unit')) },
     { id: 'api', label: 'API', presets: filteredPresets.filter(p => p.tags.includes('api')) },
@@ -49,7 +49,7 @@ export function ContextPresets({ onSelect, currentContext }: ContextPresetsProps
     { id: 'other', label: 'Other', presets: filteredPresets.filter(p =>
       !p.tags.includes('e2e') && !p.tags.includes('unit') && !p.tags.includes('api') && !p.tags.includes('mobile')
     ) },
-  ];
+  ], [filteredPresets]);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -74,7 +74,7 @@ export function ContextPresets({ onSelect, currentContext }: ContextPresetsProps
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Escape') setIsOpen(false); }}
-            role="listbox"
+            role="menu"
             className="absolute left-0 top-full mt-2 z-50 w-80 bg-slate-800 border border-white/10 rounded-xl shadow-xl overflow-hidden"
           >
             <div className="p-3 border-b border-white/10">
@@ -122,6 +122,8 @@ function PresetItem({ preset, onSelect }: { preset: ContextPreset; onSelect: () 
   return (
     <button
       onClick={onSelect}
+      role="menuitem"
+      aria-label={`${preset.name}: ${preset.description}`}
       className="w-full flex items-start gap-3 p-3 rounded-lg text-left hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
     >
       <span className="text-xl">{preset.icon}</span>
