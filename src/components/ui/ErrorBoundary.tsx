@@ -1,4 +1,5 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react';
+import { ErrorService } from '../../lib/errorService';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -82,6 +83,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     persistCrashReport(report).catch(() => {
       // IndexedDB unavailable — crash report lost, but app continues
     });
+
+    ErrorService.report('REACT_CRASH', error.message, {
+      componentStack: errorInfo.componentStack,
+      errorId: this.state.errorId,
+    }, false);
 
     this.props.onError?.(error, errorInfo);
   }

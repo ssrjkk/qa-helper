@@ -3,6 +3,7 @@ import initSqlJs from 'sql.js';
 import type { Database } from 'sql.js';
 import { DatabaseService } from '../lib/database';
 import { createStorageProvider } from '../lib/storage';
+import { ErrorService } from '../lib/errorService';
 import type { Project } from '../types';
 import type { MemoryEntry } from '../types/memory';
 
@@ -16,13 +17,15 @@ export function useDatabase() {
 
   const saveDb = useCallback(async () => {
     if (!db) return;
-    try {
-      const exported = db.export();
-      const storage = await createStorageProvider();
-      await storage.save(exported);
-    } catch (err) {
-      setError(`Failed to save database: ${err instanceof Error ? err.message : String(err)}`);
-    }
+      try {
+        const exported = db.export();
+        const storage = await createStorageProvider();
+        await storage.save(exported);
+      } catch (err) {
+        const msg = `Failed to save database: ${err instanceof Error ? err.message : String(err)}`;
+        setError(msg);
+        ErrorService.reportAsync('DB_SAVE', err);
+      }
   }, [db]);
 
   useEffect(() => {
@@ -31,6 +34,7 @@ export function useDatabase() {
 
     const initDb = async () => {
       try {
+        performance.mark('db:init:start');
         const SQL = await initSqlJs({ locateFile: () => '/sql-wasm.wasm' });
         const storage = await createStorageProvider();
         
@@ -82,9 +86,15 @@ export function useDatabase() {
         setDbService(service);
         setProjects(service.getProjects());
         setIsDbReady(true);
-      } catch {
-        if (mounted) setError('Failed to initialize database');
+        performance.mark('db:init:end');
+        performance.measure('db:init', 'db:init:start', 'db:init:end');
+    } catch (err) {
+      if (mounted) {
+        const msg = err instanceof Error ? err.message : 'Unknown database error';
+        setError(msg);
+        ErrorService.report('DB_INIT', msg, undefined, false);
       }
+    }
     };
     
     initDb();

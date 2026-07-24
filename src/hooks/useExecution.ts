@@ -3,6 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import { QA_SYSTEM_PROMPT, SCREENSHOT_SYSTEM_PROMPT, buildPrompt } from '../config';
 import { useClaudeApi, useUseCases } from '../presentation';
 import { QaAgent } from '../data/agent';
+import { ErrorService } from '../lib/errorService';
 import type { CodebaseProvider } from '../data/codebase/CodebaseProvider';
 import type { useDatabase } from './useDatabase';
 
@@ -57,6 +58,7 @@ export function useExecution(
     if (s.mode === 'agent' && !codebaseProvider) return;
 
     isExecutingRef.current = true;
+    performance.mark('execute:start');
     try {
       if (s.mode === 'agent' && codebaseProvider) {
         setIsLoading(true);
@@ -81,7 +83,9 @@ export function useExecution(
             saveResult(result.output);
           }
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'Unknown error');
+          const msg = err instanceof Error ? err.message : 'Unknown error';
+          setError(msg);
+          ErrorService.report('AGENT_EXECUTION', msg, { mode: 'agent' });
         } finally {
           setIsLoading(false);
           isExecutingRef.current = false;
@@ -117,10 +121,14 @@ export function useExecution(
         saveResult(result.output);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setError(msg);
+      ErrorService.report('API_EXECUTION', msg, { task: s.selectedTask });
     } finally {
       setIsLoading(false);
       isExecutingRef.current = false;
+      performance.mark('execute:end');
+      performance.measure('execute', 'execute:start', 'execute:end');
     }
   }, [selectedProject, executeApi, getProject, codebaseProvider, aiService, setIsLoading, setError, setOutput, setAgentSteps, addAgentStep, saveResult]);
 

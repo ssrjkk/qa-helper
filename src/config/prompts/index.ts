@@ -19,14 +19,20 @@ export const STRUCTURED_PROMPTS: Record<string, StructuredPrompt> = {
 
 const DEFAULT_SYSTEM = 'You are a world-class Senior QA Engineer and Test Architect.';
 
+const buildPromptCache = new Map<string, { system: string; user: string }>();
+
 export function buildPrompt(taskId: string, context: string, projectMemory?: string): { system: string; user: string } {
+  const cacheKey = `${taskId}\0${context}\0${projectMemory ?? ''}`;
+  const cached = buildPromptCache.get(cacheKey);
+  if (cached) return cached;
+
   const prompt = STRUCTURED_PROMPTS[taskId];
 
   if (!prompt) {
-    return {
-      system: DEFAULT_SYSTEM,
-      user: context,
-    };
+    const result = { system: DEFAULT_SYSTEM, user: context };
+    if (buildPromptCache.size > 100) buildPromptCache.clear();
+    buildPromptCache.set(cacheKey, result);
+    return result;
   }
 
   let userPrompt = prompt.userTemplate.replace(/\{context\}/g, context);
@@ -43,8 +49,8 @@ export function buildPrompt(taskId: string, context: string, projectMemory?: str
     userPrompt = `${userPrompt}\n\n## Quality Criteria\n${prompt.qualityCriteria.map(c => `- ${c}`).join('\n')}`;
   }
 
-  return {
-    system: prompt.system,
-    user: userPrompt,
-  };
+  const result = { system: prompt.system, user: userPrompt };
+  if (buildPromptCache.size > 100) buildPromptCache.clear();
+  buildPromptCache.set(cacheKey, result);
+  return result;
 }
