@@ -196,9 +196,12 @@ export const exportUtils = {
       ...rows.map(row => 
         allHeaders.map(header => {
           const value = row[header] ?? '';
-          const stringValue = String(value);
+          let stringValue = String(value);
           if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-            return `"${stringValue.replace(/"/g, '""')}"`;
+            stringValue = `"${stringValue.replace(/"/g, '""')}"`;
+          }
+          if (/^[=+\-@\t\r]/.test(stringValue)) {
+            stringValue = `\t${stringValue}`;
           }
           return stringValue;
         }).join(',')

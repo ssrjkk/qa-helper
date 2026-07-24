@@ -62,10 +62,12 @@ export function UseCasesProvider({ children, db, saveDb }: UseCasesProviderProps
     aiService.setModel(model);
   }, [aiService]);
 
+  useEffect(() => {
+    if (db) RateLimiter.init(SECURITY_CONFIG);
+  }, [db]);
+
   const useCases = useMemo(() => {
     if (!db) return null;
-
-    RateLimiter.init(SECURITY_CONFIG);
 
     const projectRepo = new ProjectRepository(db, saveDb);
     const taskRepo = new TaskRepository(db, saveDb);
