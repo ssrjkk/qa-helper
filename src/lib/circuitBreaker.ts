@@ -6,6 +6,7 @@
  * - OPEN: Service is failing. All calls are rejected immediately for `resetTimeout` ms.
  * - HALF_OPEN: Testing if service recovered. One probe call is allowed through.
  *
+ * @author ssrjkk
  * @example
  * ```ts
  * const breaker = new CircuitBreaker({ failureThreshold: 3, resetTimeout: 60000 });

@@ -1,3 +1,9 @@
+/**
+ * Sliding window rate limiter with localStorage persistence
+ * @module rateLimiter
+ * @author ssrjkk
+ */
+
 const RATE_LIMIT_KEY = 'qa-rate-limit';
 const DEFAULT_WINDOW_MS = 60000;
 const DEFAULT_MAX_REQUESTS = 10;

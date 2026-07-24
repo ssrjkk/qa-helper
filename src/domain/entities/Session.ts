@@ -1,3 +1,15 @@
+/**
+ * Session entity
+ * @module Session
+ * @author ssrjkk
+ */
+
+/**
+ * Session entity
+ * @module Session
+ * @author ssrjkk
+ */
+
 export interface Session {
   task_type: string;
   context: string;

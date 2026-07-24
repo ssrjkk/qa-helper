@@ -1,3 +1,15 @@
+/**
+ * Codebase analysis constants
+ * @module constants
+ * @author ssrjkk
+ */
+
+/**
+ * Codebase analysis constants
+ * @module constants
+ * @author ssrjkk
+ */
+
 export const IGNORED_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', '.next', '.nuxt',
   'coverage', '.cache', '__pycache__', '.venv', 'vendor',

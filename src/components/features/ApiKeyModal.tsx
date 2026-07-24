@@ -1,3 +1,9 @@
+/**
+ * API key configuration modal
+ * @module ApiKeyModal
+ * @author ssrjkk
+ */
+
 import { useState } from 'react';
 import { saveApiKey } from '../../lib';
 import { useAppStore } from '../../store/useAppStore';

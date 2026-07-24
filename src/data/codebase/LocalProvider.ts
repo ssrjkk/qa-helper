@@ -1,3 +1,9 @@
+/**
+ * Local filesystem codebase provider
+ * @module LocalProvider
+ * @author ssrjkk
+ */
+
 import type { CodebaseFile, CodebaseProvider, CodebaseSearchResult } from './CodebaseProvider';
 import type { ZipFileEntry } from '../../workers/zipParser.worker';
 import { IGNORED_DIRS, IGNORED_FILES, CODE_EXTENSIONS } from './constants';

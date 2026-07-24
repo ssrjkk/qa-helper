@@ -1,3 +1,9 @@
+/**
+ * Centralized error reporting service with pub/sub pattern
+ * @module errorService
+ * @author ssrjkk
+ */
+
 export interface AppError {
   code: string;
   message: string;

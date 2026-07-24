@@ -1,3 +1,9 @@
+/**
+ * Database initialization and CRUD hook
+ * @module useDatabase
+ * @author ssrjkk
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import initSqlJs from 'sql.js';
 import type { Database } from 'sql.js';

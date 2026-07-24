@@ -1,3 +1,15 @@
+/**
+ * Toast notification system with aria-live
+ * @module Toast
+ * @author ssrjkk
+ */
+
+/**
+ * Toast notification system with aria-live
+ * @module Toast
+ * @author ssrjkk
+ */
+
 import { useState, useCallback, useMemo, useRef, useEffect, createContext, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '../../hooks/useReducedMotion';

@@ -1,3 +1,9 @@
+/**
+ * General utility functions
+ * @module utils
+ * @author ssrjkk
+ */
+
 import { type AiProvider, PROVIDER_KEY_PATTERNS } from '../config/security';
 
 export interface ValidationResult {

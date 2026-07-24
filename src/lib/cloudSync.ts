@@ -1,3 +1,9 @@
+/**
+ * Cloud synchronization service
+ * @module cloudSync
+ * @author ssrjkk
+ */
+
 import type { Project } from '../types';
 import type { MemoryEntry } from '../types/memory';
 import { keyManager } from './keyManagement';

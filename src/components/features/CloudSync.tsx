@@ -1,3 +1,9 @@
+/**
+ * Cloud synchronization panel
+ * @module CloudSync
+ * @author ssrjkk
+ */
+
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cloudSync, type SyncStatus, type CloudConfig } from '../../lib/cloudSync';

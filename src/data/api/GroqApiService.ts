@@ -1,3 +1,9 @@
+/**
+ * Groq API service with streaming SSE
+ * @module GroqApiService
+ * @author ssrjkk
+ */
+
 import type { ApiResult } from './types';
 import { metricsCollector } from '../../lib/metrics';
 

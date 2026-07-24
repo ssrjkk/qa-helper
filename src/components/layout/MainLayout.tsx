@@ -1,3 +1,9 @@
+/**
+ * Main layout with sidebar
+ * @module MainLayout
+ * @author ssrjkk
+ */
+
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 

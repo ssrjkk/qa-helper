@@ -1,3 +1,9 @@
+/**
+ * Auto-save indicator
+ * @module SaveIndicator
+ * @author ssrjkk
+ */
+
 import { motion } from 'framer-motion';
 
 interface SaveIndicatorProps {

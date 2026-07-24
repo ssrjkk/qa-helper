@@ -1,3 +1,15 @@
+/**
+ * Zustand application state store
+ * @module useAppStore
+ * @author ssrjkk
+ */
+
+/**
+ * Zustand application state store
+ * @module useAppStore
+ * @author ssrjkk
+ */
+
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { MemoryEntry } from '../types/memory';

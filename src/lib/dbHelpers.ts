@@ -1,3 +1,9 @@
+/**
+ * Low-level SQL helper functions for sql.js
+ * @module dbHelpers
+ * @author ssrjkk
+ */
+
 import type { Database } from 'sql.js';
 
 export function rowToObject(columns: string[], values: unknown[]): Record<string, unknown> {

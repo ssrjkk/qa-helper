@@ -1,3 +1,9 @@
+/**
+ * Screenshot upload and analysis component
+ * @module ScreenshotUploader
+ * @author ssrjkk
+ */
+
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard, RippleButton, AutoResizeTextarea } from '../ui';

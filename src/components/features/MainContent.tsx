@@ -1,3 +1,9 @@
+/**
+ * Main content area with tabs and lazy loading
+ * @module MainContent
+ * @author ssrjkk
+ */
+
 import { useState, RefObject } from 'react';
 import { TaskSelector } from './TaskSelector';
 import { ScreenshotUploader } from './ScreenshotUploader';

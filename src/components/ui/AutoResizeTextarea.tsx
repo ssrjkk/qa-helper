@@ -1,3 +1,9 @@
+/**
+ * Auto-resizing textarea component
+ * @module AutoResizeTextarea
+ * @author ssrjkk
+ */
+
 import { useRef, useEffect, useId } from 'react';
 
 interface AutoResizeTextareaProps {

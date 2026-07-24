@@ -1,3 +1,9 @@
+/**
+ * Tool registry for QA agent
+ * @module toolRegistry
+ * @author ssrjkk
+ */
+
 import type { CodebaseProvider } from '../codebase/CodebaseProvider';
 import type { ToolCall, ToolResult } from './types';
 

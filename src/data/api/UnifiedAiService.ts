@@ -1,5 +1,11 @@
 import type { AiProvider, ApiResult } from './types';
 import { PROVIDER_MODELS, getDefaultModelForProvider, getVisionProviders } from './types';
+/**
+ * Unified AI service routing to provider-specific implementations
+ * @module UnifiedAiService
+ * @author ssrjkk
+ */
+
 import { ClaudeApiService } from './ClaudeApiService';
 import { GroqApiService } from './GroqApiService';
 import { OpenRouterApiService } from './OpenRouterApiService';

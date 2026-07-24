@@ -1,3 +1,9 @@
+/**
+ * Master password key management with IndexedDB vault
+ * @module keyManagement
+ * @author ssrjkk
+ */
+
 import { arrayBufferToBase64, base64ToArrayBuffer } from './base64';
 
 const DB_NAME = 'qa-copilot-keys';

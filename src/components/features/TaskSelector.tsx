@@ -1,3 +1,9 @@
+/**
+ * Task type selector with search and categories
+ * @module TaskSelector
+ * @author ssrjkk
+ */
+
 import { useState, useMemo } from 'react';
 import type { KeyboardEvent } from 'react';
 import { motion } from 'framer-motion';

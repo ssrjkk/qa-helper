@@ -1,3 +1,9 @@
+/**
+ * Context presets for common testing scenarios
+ * @module presets
+ * @author ssrjkk
+ */
+
 export interface ContextPreset {
   id: string;
   name: string;

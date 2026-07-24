@@ -1,3 +1,9 @@
+/**
+ * IndexedDB storage with LocalStorage fallback and AES-GCM encryption
+ * @module storage
+ * @author ssrjkk
+ */
+
 import { arrayBufferToBase64, base64ToArrayBuffer } from './base64';
 
 const DB_NAME = 'qa-helper-db';

@@ -1,3 +1,9 @@
+/**
+ * Codebase connection panel (GitHub/Local)
+ * @module CodebasePanel
+ * @author ssrjkk
+ */
+
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RippleButton } from '../ui';

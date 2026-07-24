@@ -1,3 +1,9 @@
+/**
+ * Structured memory viewer and editor
+ * @module StructuredMemory
+ * @author ssrjkk
+ */
+
 import { useState, useEffect, memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MEMORY_CATEGORIES, type MemoryCategory, type MemoryEntry } from '../../types/memory';

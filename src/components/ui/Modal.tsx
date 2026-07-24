@@ -1,3 +1,15 @@
+/**
+ * Accessible modal dialog with focus trap
+ * @module Modal
+ * @author ssrjkk
+ */
+
+/**
+ * Accessible modal dialog with focus trap
+ * @module Modal
+ * @author ssrjkk
+ */
+
 import { useEffect, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '../../hooks/useReducedMotion';

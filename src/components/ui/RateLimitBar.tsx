@@ -1,3 +1,9 @@
+/**
+ * Rate limit progress bar
+ * @module RateLimitBar
+ * @author ssrjkk
+ */
+
 import { motion } from 'framer-motion';
 import { SECURITY_CONFIG } from '../../config';
 

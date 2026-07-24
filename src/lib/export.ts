@@ -1,3 +1,9 @@
+/**
+ * Export utilities for Markdown, PDF, JSON, CSV, and Text formats
+ * @module export
+ * @author ssrjkk
+ */
+
 export interface ExportOptions {
   output: string;
   context?: string;

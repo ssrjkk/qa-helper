@@ -1,3 +1,9 @@
+/**
+ * Security configuration and API key validation patterns
+ * @module security
+ * @author ssrjkk
+ */
+
 export const SECURITY_CONFIG = {
   maxInputLength: 50000,
   maxContextLength: 10000,

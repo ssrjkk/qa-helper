@@ -1,3 +1,9 @@
+/**
+ * Agent execution timeline visualization
+ * @module AgentTimeline
+ * @author ssrjkk
+ */
+
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AgentStep } from '../../data/agent/types';

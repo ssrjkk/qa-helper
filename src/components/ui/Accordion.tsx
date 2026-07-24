@@ -1,3 +1,9 @@
+/**
+ * Collapsible accordion component
+ * @module Accordion
+ * @author ssrjkk
+ */
+
 import { useState, useId } from 'react';
 import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';

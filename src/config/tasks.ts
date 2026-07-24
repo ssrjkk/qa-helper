@@ -1,3 +1,9 @@
+/**
+ * Task type definitions and categories
+ * @module tasks
+ * @author ssrjkk
+ */
+
 export const TASK_CATEGORIES = ['all', 'generate', 'analyze', 'review', 'setup'] as const;
 export type TaskCategory = typeof TASK_CATEGORIES[number];
 

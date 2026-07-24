@@ -1,3 +1,9 @@
+/**
+ * Database service wrapping sql.js with CRUD operations
+ * @module database
+ * @author ssrjkk
+ */
+
 import type { Database } from 'sql.js';
 import type { Project, Task, ConversationMessage } from '../types';
 import type { MemoryEntry } from '../types/memory';

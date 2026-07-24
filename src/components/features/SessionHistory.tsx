@@ -1,3 +1,9 @@
+/**
+ * Session history with virtualized list
+ * @module SessionHistory
+ * @author ssrjkk
+ */
+
 import { useState, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';

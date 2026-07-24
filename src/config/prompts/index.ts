@@ -1,3 +1,9 @@
+/**
+ * Prompt builder with memoization cache
+ * @module prompts
+ * @author ssrjkk
+ */
+
 import { GENERATE_PROMPTS } from './generate';
 import { ANALYZE_PROMPTS } from './analyze';
 import { REVIEW_PROMPTS } from './review';

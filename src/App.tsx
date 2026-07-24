@@ -1,3 +1,9 @@
+/**
+ * Root application component
+ * @module App
+ * @author ssrjkk
+ */
+
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ApiKeyModal } from './components/features/ApiKeyModal';

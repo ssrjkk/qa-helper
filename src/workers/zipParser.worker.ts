@@ -1,3 +1,15 @@
+/**
+ * ZIP file parser web worker
+ * @module zipParser.worker
+ * @author ssrjkk
+ */
+
+/**
+ * ZIP file parser web worker
+ * @module zipParser.worker
+ * @author ssrjkk
+ */
+
 import JSZip from 'jszip';
 
 const IGNORED_DIRS = new Set([

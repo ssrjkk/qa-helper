@@ -1,3 +1,9 @@
+/**
+ * Context preset templates
+ * @module ContextPresets
+ * @author ssrjkk
+ */
+
 import { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';

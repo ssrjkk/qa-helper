@@ -1,3 +1,15 @@
+/**
+ * Error boundary with crash reporting
+ * @module ErrorBoundary
+ * @author ssrjkk
+ */
+
+/**
+ * Error boundary with crash reporting
+ * @module ErrorBoundary
+ * @author ssrjkk
+ */
+
 import { Component, type ReactNode, type ErrorInfo } from 'react';
 import { ErrorService } from '../../lib/errorService';
 

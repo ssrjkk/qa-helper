@@ -1,3 +1,9 @@
+/**
+ * Undo/redo history hook for text context
+ * @module useHistory
+ * @author ssrjkk
+ */
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface HistoryState<T> {

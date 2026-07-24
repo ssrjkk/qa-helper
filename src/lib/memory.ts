@@ -1,3 +1,9 @@
+/**
+ * Structured memory management for QA knowledge base
+ * @module memory
+ * @author ssrjkk
+ */
+
 import type { StructuredMemory, MemoryEntry, MemoryCategory } from '../types/memory';
 
 interface CategoryConfig {

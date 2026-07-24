@@ -1,3 +1,9 @@
+/**
+ * Application sidebar with project/memory/sync controls
+ * @module Sidebar
+ * @author ssrjkk
+ */
+
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProjectSelector } from './ProjectSelector';

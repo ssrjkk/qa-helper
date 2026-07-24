@@ -1,5 +1,14 @@
+/**
+ * Application constants
+ * @module constants
+ * @author ssrjkk
+ */
+
 export const APP_NAME = 'QA Copilot';
 export const APP_AUTHOR = 'ssrjkk';
+export const APP_VERSION = '1.0.0';
+export const APP_GITHUB = 'https://github.com/ssrjkk/qa-helper';
+export const APP_WEBSITE = 'https://qa-copilot.ssrjkk.dev';
 export const APP_FOOTER = `${APP_NAME} by ${APP_AUTHOR} | MIT License`;
 export const APP_HEADER_SUBTITLE = 'AI-Powered QA Assistant';
 export const APP_HEADER_BYLINE = `by ${APP_AUTHOR}`;

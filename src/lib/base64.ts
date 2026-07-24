@@ -1,3 +1,9 @@
+/**
+ * Base64 encoding/decoding for ArrayBuffer
+ * @module base64
+ * @author ssrjkk
+ */
+
 export function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   const chunkSize = 8192;

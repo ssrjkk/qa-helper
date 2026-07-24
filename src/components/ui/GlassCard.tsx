@@ -1,3 +1,9 @@
+/**
+ * Glass-morphism card component
+ * @module GlassCard
+ * @author ssrjkk
+ */
+
 import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';

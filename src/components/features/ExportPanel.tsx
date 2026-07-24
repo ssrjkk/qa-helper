@@ -1,3 +1,9 @@
+/**
+ * Export panel with Markdown/PDF/JSON options
+ * @module ExportPanel
+ * @author ssrjkk
+ */
+
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard, RippleButton } from '../ui';

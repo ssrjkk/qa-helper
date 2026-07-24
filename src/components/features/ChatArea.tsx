@@ -1,3 +1,9 @@
+/**
+ * Chat input/output area with undo/redo
+ * @module ChatArea
+ * @author ssrjkk
+ */
+
 import { useState, useEffect, useRef, useMemo, RefObject } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard, RippleButton, AutoResizeTextarea } from '../ui';

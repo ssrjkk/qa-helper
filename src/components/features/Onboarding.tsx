@@ -1,3 +1,9 @@
+/**
+ * First-run onboarding wizard
+ * @module Onboarding
+ * @author ssrjkk
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RippleButton } from '../ui';

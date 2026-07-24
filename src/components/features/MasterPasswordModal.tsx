@@ -1,3 +1,9 @@
+/**
+ * Master password unlock modal
+ * @module MasterPasswordModal
+ * @author ssrjkk
+ */
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { keyManager } from '../../lib/keyManagement';

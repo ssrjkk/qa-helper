@@ -1,3 +1,9 @@
+/**
+ * Framer Motion animation presets
+ * @module animations
+ * @author ssrjkk
+ */
+
 export const SPRING = {
   gentle: { type: 'spring' as const, stiffness: 300, damping: 25 },
   snappy: { type: 'spring' as const, stiffness: 400, damping: 30 },

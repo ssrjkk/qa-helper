@@ -1,3 +1,9 @@
+/**
+ * Project selector with virtualized list
+ * @module ProjectSelector
+ * @author ssrjkk
+ */
+
 import { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';

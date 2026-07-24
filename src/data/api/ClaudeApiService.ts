@@ -1,3 +1,9 @@
+/**
+ * Anthropic Claude API service with streaming SSE
+ * @module ClaudeApiService
+ * @author ssrjkk
+ */
+
 import { ApiConfig, ApiResult, ClaudeContentBlock } from './types';
 import { RateLimiter } from '../../lib/rateLimiter';
 import { metricsCollector } from '../../lib/metrics';

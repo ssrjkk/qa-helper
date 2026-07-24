@@ -1,3 +1,9 @@
+/**
+ * Online/offline status hook
+ * @module useOnlineStatus
+ * @author ssrjkk
+ */
+
 import { useState, useEffect } from 'react';
 
 export function useOnlineStatus() {

@@ -1,3 +1,9 @@
+/**
+ * Memory entries CRUD hook
+ * @module useMemoryEntries
+ * @author ssrjkk
+ */
+
 import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { cloudSync } from '../lib/cloudSync';

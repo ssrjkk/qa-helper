@@ -1,3 +1,9 @@
+/**
+ * Branded types and Result pattern for type-safe error handling
+ * @module branded
+ * @author ssrjkk
+ */
+
 declare const __brand: unique symbol;
 
 type Brand<T, B extends string> = T & { readonly [__brand]: B };

@@ -1,3 +1,9 @@
+/**
+ * API metrics collector and reporter
+ * @module metrics
+ * @author ssrjkk
+ */
+
 export interface ApiMetrics {
   totalRequests: number;
   successfulRequests: number;

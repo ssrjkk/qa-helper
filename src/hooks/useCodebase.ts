@@ -1,3 +1,9 @@
+/**
+ * Codebase provider management hook
+ * @module useCodebase
+ * @author ssrjkk
+ */
+
 import { useState, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import type { CodebaseProvider } from '../data/codebase/CodebaseProvider';

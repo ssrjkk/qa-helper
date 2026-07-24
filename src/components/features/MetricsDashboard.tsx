@@ -1,3 +1,9 @@
+/**
+ * API metrics dashboard with polling
+ * @module MetricsDashboard
+ * @author ssrjkk
+ */
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '../ui/GlassCard';

@@ -1,3 +1,9 @@
+/**
+ * Dark/light theme toggle hook
+ * @module useTheme
+ * @author ssrjkk
+ */
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 type Theme = 'dark' | 'light';

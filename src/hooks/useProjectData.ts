@@ -1,3 +1,9 @@
+/**
+ * Project data management hook
+ * @module useProjectData
+ * @author ssrjkk
+ */
+
 import { useEffect, useCallback, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import type { useDatabase } from './useDatabase';

@@ -1,3 +1,9 @@
+/**
+ * GitHub codebase provider
+ * @module GitHubProvider
+ * @author ssrjkk
+ */
+
 import type { CodebaseFile, CodebaseProvider, CodebaseSearchResult } from './CodebaseProvider';
 import { IGNORED_DIRS, IGNORED_FILES, CODE_EXTENSIONS } from './constants';
 

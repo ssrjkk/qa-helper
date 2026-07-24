@@ -1,3 +1,15 @@
+/**
+ * AI provider settings panel
+ * @module ProviderSettings
+ * @author ssrjkk
+ */
+
+/**
+ * AI provider settings panel
+ * @module ProviderSettings
+ * @author ssrjkk
+ */
+
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard, RippleButton, Input, Select } from './index';

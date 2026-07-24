@@ -1,3 +1,9 @@
+/**
+ * Main application content orchestrator
+ * @module AppContent
+ * @author ssrjkk
+ */
+
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Sidebar } from './Sidebar';

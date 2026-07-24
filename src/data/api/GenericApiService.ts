@@ -1,3 +1,9 @@
+/**
+ * Generic OpenAI-compatible API service with retry logic
+ * @module GenericApiService
+ * @author ssrjkk
+ */
+
 import type { ApiResult } from './types';
 
 const RETRYABLE_ERRORS = ['network', 'timeout', '429', '500', '502', '503', '504'];

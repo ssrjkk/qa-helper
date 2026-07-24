@@ -1,3 +1,9 @@
+/**
+ * Tab navigation component
+ * @module Tabs
+ * @author ssrjkk
+ */
+
 import { useId, createContext, useContext, useCallback } from 'react';
 import type { ReactNode, KeyboardEvent } from 'react';
 

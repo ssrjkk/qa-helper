@@ -1,3 +1,9 @@
+/**
+ * Task execution hook with agent and prompt modes
+ * @module useExecution
+ * @author ssrjkk
+ */
+
 import { useCallback, useRef, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { QA_SYSTEM_PROMPT, SCREENSHOT_SYSTEM_PROMPT, buildPrompt } from '../config';

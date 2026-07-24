@@ -1,3 +1,9 @@
+/**
+ * Loading skeleton placeholders
+ * @module Skeleton
+ * @author ssrjkk
+ */
+
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 

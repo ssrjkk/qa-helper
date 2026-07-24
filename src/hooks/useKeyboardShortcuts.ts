@@ -1,3 +1,9 @@
+/**
+ * Global keyboard shortcuts handler
+ * @module useKeyboardShortcuts
+ * @author ssrjkk
+ */
+
 import { useEffect, useRef } from 'react';
 
 interface Shortcut {

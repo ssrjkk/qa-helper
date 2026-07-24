@@ -1,3 +1,9 @@
+/**
+ * Team collaboration features
+ * @module TeamFeatures
+ * @author ssrjkk
+ */
+
 import { useState } from 'react';
 import { GlassCard, Accordion, Tabs, TabPanel, useToast } from '../ui';
 import type { Project } from '../../types';

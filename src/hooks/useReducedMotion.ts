@@ -1,3 +1,9 @@
+/**
+ * Reduced motion preference hook
+ * @module useReducedMotion
+ * @author ssrjkk
+ */
+
 import { useEffect, useState } from 'react';
 
 const QUERY = '(prefers-reduced-motion: reduce)';

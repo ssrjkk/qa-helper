@@ -1,3 +1,9 @@
+/**
+ * QA Agent with tool-calling capabilities
+ * @module QaAgent
+ * @author ssrjkk
+ */
+
 import type { UnifiedAiService } from '../api/UnifiedAiService';
 import type { CodebaseProvider } from '../codebase/CodebaseProvider';
 import type { AgentStep, AgentResult } from './types';

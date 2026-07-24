@@ -1,3 +1,9 @@
+/**
+ * AES-GCM encryption/decryption for API keys
+ * @module encryption
+ * @author ssrjkk
+ */
+
 import { keyManager } from './keyManagement';
 import { arrayBufferToBase64, base64ToArrayBuffer } from './base64';
 
