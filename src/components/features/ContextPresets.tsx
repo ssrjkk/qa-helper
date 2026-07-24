@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, memo } from 'react';
 import type { KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CONTEXT_PRESETS, searchPresets, type ContextPreset } from '../../config';
@@ -118,7 +118,7 @@ export function ContextPresets({ onSelect, currentContext }: ContextPresetsProps
   );
 }
 
-function PresetItem({ preset, onSelect }: { preset: ContextPreset; onSelect: () => void }) {
+const PresetItem = memo(function PresetItem({ preset, onSelect }: { preset: ContextPreset; onSelect: () => void }) {
   return (
     <button
       onClick={onSelect}
@@ -145,4 +145,4 @@ function PresetItem({ preset, onSelect }: { preset: ContextPreset; onSelect: () 
       </div>
     </button>
   );
-}
+}, (prev, next) => prev.preset.id === next.preset.id);

@@ -4,13 +4,7 @@
  * @author ssrjkk
  */
 
-/**
- * Toast notification system with aria-live
- * @module Toast
- * @author ssrjkk
- */
-
-import { useState, useCallback, useMemo, useRef, useEffect, createContext, useContext } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect, createContext, useContext, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { SLIDE_UP, SPRING } from '../../lib/animations';
@@ -99,7 +93,7 @@ const typeStyles: Record<Toast['type'], string> = {
   info: 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300',
 };
 
-function ToastItem({
+const ToastItem = memo(function ToastItem({
   toast,
   onDismiss,
   reduced,
@@ -125,4 +119,4 @@ function ToastItem({
       </button>
     </motion.div>
   );
-}
+}, (prev, next) => prev.toast.id === next.toast.id && prev.toast.message === next.toast.message && prev.toast.type === next.toast.type && prev.reduced === next.reduced);

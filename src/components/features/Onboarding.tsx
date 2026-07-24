@@ -145,13 +145,21 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               transition={{ duration: 0.2 }}
               className="flex flex-col items-center text-center"
             >
-              <div className="text-5xl mb-4">{steps[currentStep]!.icon}</div>
-              <h3 className="text-lg font-semibold text-gray-200 mb-2">
-                {steps[currentStep]!.title}
-              </h3>
-              <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
-                {steps[currentStep]!.description}
-              </p>
+              {(() => {
+                const step = steps[currentStep];
+                if (!step) return null;
+                return (
+                  <>
+                    <div className="text-5xl mb-4">{step.icon}</div>
+                    <h3 className="text-lg font-semibold text-gray-200 mb-2">
+                      {step.title}
+                    </h3>
+                    <p className="text-sm text-gray-400 leading-relaxed max-w-xs">
+                      {step.description}
+                    </p>
+                  </>
+                );
+              })()}
             </motion.div>
           </AnimatePresence>
         </div>

@@ -4,12 +4,6 @@
  * @author ssrjkk
  */
 
-/**
- * Project repository
- * @module ProjectRepository
- * @author ssrjkk
- */
-
 import { Project, CreateProjectDTO, UpdateProjectDTO, mapRowToProject } from '../../domain/entities';
 import type { Database } from 'sql.js';
 import { queryAll, queryOne, insertAndReturnId, buildUpdateQuery, safeRun, execTransaction } from '../../lib/dbHelpers';

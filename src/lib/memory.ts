@@ -6,6 +6,12 @@
 
 import type { StructuredMemory, MemoryEntry, MemoryCategory } from '../types/memory';
 
+const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function safeObjectEntries(obj: Record<string, unknown>): [string, unknown][] {
+  return Object.entries(obj).filter(([k]) => !DANGEROUS_KEYS.has(k));
+}
+
 interface CategoryConfig {
   category: MemoryCategory;
   type: 'array' | 'record' | 'keyed_array';
@@ -48,19 +54,19 @@ function validateStructuredMemory(raw: Record<string, unknown>): StructuredMemor
 
   if (raw.tech_stack && typeof raw.tech_stack === 'object' && raw.tech_stack !== null) {
     result.tech_stack = Object.fromEntries(
-      Object.entries(raw.tech_stack).map(([k, v]) => [k, Array.isArray(v) ? v.map(String) : []])
+      safeObjectEntries(raw.tech_stack as Record<string, unknown>).map(([k, v]) => [k, Array.isArray(v) ? v.map(String) : []])
     );
   }
 
   if (raw.conventions && typeof raw.conventions === 'object' && raw.conventions !== null) {
     result.conventions = Object.fromEntries(
-      Object.entries(raw.conventions).map(([k, v]) => [k, String(v)])
+      safeObjectEntries(raw.conventions as Record<string, unknown>).map(([k, v]) => [k, String(v)])
     );
   }
 
   if (raw.custom && typeof raw.custom === 'object' && raw.custom !== null) {
     result.custom = Object.fromEntries(
-      Object.entries(raw.custom).map(([k, v]) => [k, String(v)])
+      safeObjectEntries(raw.custom as Record<string, unknown>).map(([k, v]) => [k, String(v)])
     );
   }
 
@@ -205,7 +211,10 @@ export function mergeMemories(existing: StructuredMemory, newMemory: Partial<Str
         bucket[k] = merged_arr;
       }
     } else if (cfg.type === 'record' && typeof raw === 'object' && raw !== null) {
-      Object.assign(merged[cfg.category], raw);
+      const target = merged[cfg.category] as Record<string, unknown>;
+      for (const [k, v] of safeObjectEntries(raw as Record<string, unknown>)) {
+        target[k] = v;
+      }
     } else if (cfg.type === 'array' && Array.isArray(raw)) {
       const bucket = merged[cfg.category] as string[];
       for (const item of raw) {

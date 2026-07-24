@@ -4,12 +4,6 @@
  * @author ssrjkk
  */
 
-/**
- * Dependency injection context for use cases
- * @module UseCasesContext
- * @author ssrjkk
- */
-
 import React, { createContext, useContext, useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import type { Database } from 'sql.js';
 import { ProjectRepository, TaskRepository, MemoryRepository } from '../../data/repositories';

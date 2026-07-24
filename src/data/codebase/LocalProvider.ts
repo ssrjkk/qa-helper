@@ -179,6 +179,9 @@ export class LocalProvider implements CodebaseProvider {
   async searchCode(pattern: string, fileGlob?: string): Promise<CodebaseSearchResult[]> {
     let regex: RegExp;
     try {
+      if (pattern.length > 200) {
+        return [{ path: '', line: 0, content: 'Error: regex pattern too long (max 200 chars)' }];
+      }
       regex = new RegExp(pattern, 'gi');
     } catch {
       return [{ path: '', line: 0, content: `Error: invalid regex pattern "${pattern}"` }];

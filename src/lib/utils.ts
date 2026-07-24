@@ -199,6 +199,29 @@ export function isValidUrl(url: string): boolean {
   }
 }
 
+const SENSITIVE_PATTERNS = [
+  /api[_-]?key[:\s=]+\S+/gi,
+  /bearer\s+\S+/gi,
+  /password[:\s=]+\S+/gi,
+  /secret[:\s=]+\S+/gi,
+  /token[:\s=]+\S+/gi,
+];
+
+export function sanitizeErrorForDisplay(message: string): string {
+  let sanitized = message;
+  for (const pattern of SENSITIVE_PATTERNS) {
+    sanitized = sanitized.replace(pattern, (match) => {
+      const eqIndex = match.search(/[:\s=]/);
+      if (eqIndex === -1) return match.slice(0, 6) + '***';
+      return match.slice(0, eqIndex + 1) + ' ***';
+    });
+  }
+  if (sanitized.length > 200) {
+    sanitized = sanitized.slice(0, 200) + '...';
+  }
+  return sanitized;
+}
+
 export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }

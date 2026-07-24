@@ -67,11 +67,12 @@ export class GenericApiService {
       this.abortController.abort();
     }
     this.abortController = new AbortController();
-    let combinedSignal = this.abortController.signal;
+    const currentController = this.abortController;
+    let combinedSignal = currentController.signal;
     if (signal) {
       const mergedController = new AbortController();
       signal.addEventListener('abort', () => mergedController.abort(signal.reason), { once: true });
-      this.abortController.signal.addEventListener('abort', () => mergedController.abort(this.abortController!.signal.reason), { once: true });
+      currentController.signal.addEventListener('abort', () => mergedController.abort(currentController.signal.reason), { once: true });
       combinedSignal = mergedController.signal;
     }
 

@@ -4,6 +4,7 @@
  * @author ssrjkk
  */
 
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { SECURITY_CONFIG } from '../../config';
 
@@ -11,7 +12,7 @@ interface RateLimitBarProps {
   remaining: number;
 }
 
-export function RateLimitBar({ remaining }: RateLimitBarProps) {
+export const RateLimitBar = memo(function RateLimitBar({ remaining }: RateLimitBarProps) {
   const max = SECURITY_CONFIG.maxRequestsPerWindow;
   const percentage = (remaining / max) * 100;
   
@@ -45,4 +46,4 @@ export function RateLimitBar({ remaining }: RateLimitBarProps) {
       </div>
     </div>
   );
-}
+});

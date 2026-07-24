@@ -7,6 +7,13 @@
 import type { Project } from '../types';
 import type { MemoryEntry } from '../types/memory';
 import { keyManager } from './keyManagement';
+import { isValidUrl } from './utils';
+
+const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function hasDangerousKeys(obj: Record<string, unknown>): boolean {
+  return Object.keys(obj).some(k => DANGEROUS_KEYS.has(k));
+}
 
 export interface CloudConfig {
   provider: 'local' | 'firebase' | 'supabase';
@@ -153,6 +160,7 @@ export class CloudSyncService {
     try {
       const data = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
       if (!data || typeof data !== 'object') return null;
+      if (hasDangerousKeys(data as Record<string, unknown>)) return null;
       if (!Array.isArray(data.projects)) return null;
       if (data.projects.length > 0 && typeof data.projects[0] !== 'object') return null;
       if (data.projects.length > 0 && typeof data.projects[0].name !== 'string') return null;
@@ -243,6 +251,9 @@ export class CloudSyncService {
     if (!this.config.apiKey || !this.config.url) {
       throw new Error('Firebase config missing');
     }
+    if (!isValidUrl(this.config.url)) {
+      throw new Error('Invalid Firebase URL');
+    }
     
     const data = await this.exportData(projects, memoryEntries);
     const response = await fetch(`${this.config.url}/sync.json`, {
@@ -267,6 +278,9 @@ export class CloudSyncService {
   private async syncToSupabase(projects: Project[], memoryEntries: MemoryEntry[]): Promise<boolean> {
     if (!this.config.url || !this.config.apiKey) {
       throw new Error('Supabase config missing');
+    }
+    if (!isValidUrl(this.config.url)) {
+      throw new Error('Invalid Supabase URL');
     }
 
     const data = await this.exportData(projects, memoryEntries);
@@ -305,6 +319,7 @@ export class CloudSyncService {
         }
         case 'firebase': {
           if (!this.config.apiKey || !this.config.url) return null;
+          if (!isValidUrl(this.config.url)) return null;
           const response = await this.withRetry(() => 
             fetch(`${this.config.url}/sync.json`, {
               headers: new Headers({
@@ -320,6 +335,7 @@ export class CloudSyncService {
         }
         case 'supabase': {
           if (!this.config.url || !this.config.apiKey) return null;
+          if (!isValidUrl(this.config.url)) return null;
           const response = await this.withRetry(() => fetch(`${this.config.url}/sync`, {
             headers: new Headers({
               'apikey': this.config.apiKey || '',
@@ -364,6 +380,7 @@ export class CloudSyncService {
       if (!share) return null;
       const decoded = JSON.parse(decodeURIComponent(atob(share)));
       if (!decoded || typeof decoded !== 'object') return null;
+      if (hasDangerousKeys(decoded as Record<string, unknown>)) return null;
       if (!Array.isArray(decoded.projects)) return null;
       if (decoded.projects.length > 0 && typeof decoded.projects[0].name !== 'string') return null;
       const validEntries = Array.isArray(decoded.memoryEntries)

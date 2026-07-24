@@ -10,18 +10,6 @@ export interface MemoryEntry {
   updated_at: string;
 }
 
-/**
- * Memory type definitions
- * @module memory
- * @author ssrjkk
- */
-
-/**
- * Memory type definitions
- * @module memory
- * @author ssrjkk
- */
-
 export type MemoryCategory = 
   | 'tech_stack'
   | 'test_requirements'

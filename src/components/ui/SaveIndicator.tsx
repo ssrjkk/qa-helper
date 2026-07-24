@@ -4,13 +4,14 @@
  * @author ssrjkk
  */
 
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 
 interface SaveIndicatorProps {
   saving: boolean;
 }
 
-export function SaveIndicator({ saving }: SaveIndicatorProps) {
+export const SaveIndicator = memo(function SaveIndicator({ saving }: SaveIndicatorProps) {
   return (
     <motion.div
       key={saving ? "saving" : "saved"}
@@ -45,4 +46,4 @@ export function SaveIndicator({ saving }: SaveIndicatorProps) {
       )}
     </motion.div>
   );
-}
+});

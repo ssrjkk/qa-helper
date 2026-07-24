@@ -16,6 +16,7 @@ import { useDatabase } from './hooks/useDatabase';
 import { loadApiKey } from './lib';
 import { ErrorService } from './lib/errorService';
 import { keyManager } from './lib/keyManagement';
+import { sanitizeErrorForDisplay } from './lib/utils';
 import { UseCasesProvider } from './presentation';
 import { useAppStore } from './store/useAppStore';
 import { APP_NAME, APP_HEADER_SUBTITLE, APP_HEADER_BYLINE, APP_FOOTER } from './lib/constants';
@@ -41,7 +42,7 @@ function AppInner() {
   useEffect(() => {
     const unsub = ErrorService.subscribe((error) => {
       if (!error.recoverable) {
-        addToast(`${error.code}: ${error.message}`, 'error');
+        addToast(`${error.code}: ${sanitizeErrorForDisplay(error.message)}`, 'error');
       }
     });
     return unsub;

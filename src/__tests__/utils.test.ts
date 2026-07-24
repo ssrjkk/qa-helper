@@ -4,7 +4,7 @@ import {
   debounce, throttle, retry, chunk, groupBy, unique, deepClone,
   generateId, parseQueryParams, buildQueryParams, isValidUrl,
   capitalize, slugify, escapeRegex, parseJSON, clamp, randomInt,
-  pick, omit,
+  pick, omit, sanitizeErrorForDisplay,
 } from '../lib/utils';
 
 describe('validateApiKey', () => {
@@ -398,5 +398,34 @@ describe('pick', () => {
 describe('omit', () => {
   it('should omit specified keys', () => {
     expect(omit({ a: 1, b: 2, c: 3 }, ['b'])).toEqual({ a: 1, c: 3 });
+  });
+});
+
+describe('sanitizeErrorForDisplay', () => {
+  it('should redact API key patterns', () => {
+    expect(sanitizeErrorForDisplay('api_key=sk-abc123xyz')).toContain('***');
+    expect(sanitizeErrorForDisplay('api_key=sk-abc123xyz')).not.toContain('sk-abc123xyz');
+  });
+
+  it('should redact Bearer tokens', () => {
+    expect(sanitizeErrorForDisplay('Bearer token123secret')).toContain('***');
+  });
+
+  it('should redact password patterns', () => {
+    expect(sanitizeErrorForDisplay('password: mysecret123')).toContain('***');
+  });
+
+  it('should truncate long messages', () => {
+    const long = 'x'.repeat(300);
+    expect(sanitizeErrorForDisplay(long).length).toBeLessThanOrEqual(204);
+    expect(sanitizeErrorForDisplay(long)).toContain('...');
+  });
+
+  it('should leave normal messages unchanged', () => {
+    expect(sanitizeErrorForDisplay('Network error')).toBe('Network error');
+  });
+
+  it('should leave normal messages with numbers unchanged', () => {
+    expect(sanitizeErrorForDisplay('HTTP 404 not found')).toBe('HTTP 404 not found');
   });
 });

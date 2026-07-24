@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AgentStep } from '../../data/agent/types';
 
@@ -13,14 +13,14 @@ interface AgentTimelineProps {
   isRunning: boolean;
 }
 
-function ToolIcon({ name }: { name?: string }) {
+const ToolIcon = memo(function ToolIcon({ name }: { name?: string }) {
   const icons: Record<string, string> = {
     list_directory: '📁',
     read_file: '📄',
     search_code: '🔍',
   };
   return <span>{icons[name || ''] || '🔧'}</span>;
-}
+});
 
 function StepDetail({ step }: { step: AgentStep }) {
   const [expanded, setExpanded] = useState(false);
@@ -158,7 +158,12 @@ export function AgentTimeline({ steps, isRunning }: AgentTimelineProps) {
 
       {!isRunning && toolCalls.length > 0 && (
         <div className="text-xs text-gray-500 pt-1 border-t border-white/5">
-          Completed {toolCalls.length} tool calls in {steps[steps.length - 1] && steps[0] ? Math.round((steps[steps.length - 1]!.timestamp - steps[0]!.timestamp) / 1000) : 0}s
+          {(() => {
+            const last = steps[steps.length - 1];
+            const first = steps[0];
+            const duration = last && first ? Math.round((last.timestamp - first.timestamp) / 1000) : 0;
+            return `Completed ${toolCalls.length} tool calls in ${duration}s`;
+          })()}
         </div>
       )}
     </div>

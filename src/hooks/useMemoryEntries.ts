@@ -11,6 +11,8 @@ import type { Project } from '../types';
 import type { MemoryEntry } from '../types/memory';
 import type { useDatabase } from './useDatabase';
 
+const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 type UseDatabaseReturn = ReturnType<typeof useDatabase>;
 
 interface ImportData {
@@ -77,6 +79,8 @@ export function useMemoryEntries(selectedProject: number | null, db: UseDatabase
     async (data: string) => {
       try {
         const parsed: ImportData = JSON.parse(data);
+        if (!parsed || typeof parsed !== 'object') return false;
+        if (Object.keys(parsed).some(k => DANGEROUS_KEYS.has(k))) return false;
         if (!parsed.project) return false;
         const project = parsed.project;
 
