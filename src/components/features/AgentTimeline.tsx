@@ -110,10 +110,6 @@ function StepDetail({ step }: { step: AgentStep }) {
     );
   }
 
-  if (step.type === 'text') {
-    return null;
-  }
-
   return null;
 }
 

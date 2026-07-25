@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RippleButton } from '../ui';
 
@@ -62,21 +62,25 @@ interface OnboardingProps {
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(1);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   const handleSkip = useCallback(() => {
     markOnboardingSeen();
-    onComplete();
-  }, [onComplete]);
+    onCompleteRef.current();
+  }, []);
 
   const handleNext = useCallback(() => {
-    if (currentStep < steps.length - 1) {
-      setDirection(1);
-      setCurrentStep(s => s + 1);
-    } else {
+    setCurrentStep(s => {
+      if (s < steps.length - 1) {
+        setDirection(1);
+        return s + 1;
+      }
       markOnboardingSeen();
-      onComplete();
-    }
-  }, [currentStep, onComplete]);
+      onCompleteRef.current();
+      return s;
+    });
+  }, []);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
