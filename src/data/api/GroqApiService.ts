@@ -142,31 +142,35 @@ export class GroqApiService {
       const decoder = new TextDecoder();
       let lineBuffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done || currentRequestId !== this.requestId) break;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done || currentRequestId !== this.requestId) break;
 
-        lineBuffer += decoder.decode(value, { stream: true });
-        const lines = lineBuffer.split('\n');
-        lineBuffer = lines.pop() || '';
+          lineBuffer += decoder.decode(value, { stream: true });
+          const lines = lineBuffer.split('\n');
+          lineBuffer = lines.pop() || '';
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
 
-          try {
-            const parsed: GroqStreamChunk = JSON.parse(data);
-            if (parsed.choices?.[0]?.delta?.content) {
-              fullResponse += parsed.choices[0].delta.content;
-              onChunk?.(parsed.choices[0].delta.content);
-            }
-            if (parsed.usage) {
-              inputTokens = parsed.usage.prompt_tokens;
-              outputTokens = parsed.usage.completion_tokens;
-            }
-          } catch { /* malformed SSE chunk, skip */ }
+            try {
+              const parsed: GroqStreamChunk = JSON.parse(data);
+              if (parsed.choices?.[0]?.delta?.content) {
+                fullResponse += parsed.choices[0].delta.content;
+                onChunk?.(parsed.choices[0].delta.content);
+              }
+              if (parsed.usage) {
+                inputTokens = parsed.usage.prompt_tokens;
+                outputTokens = parsed.usage.completion_tokens;
+              }
+            } catch { /* malformed SSE chunk, skip */ }
+          }
         }
+      } finally {
+        reader.releaseLock();
       }
 
       const responseTime = Date.now() - startTime;

@@ -11,7 +11,6 @@ import { metricsCollector } from '../../lib/metrics';
 export interface ClaudeApiServiceOptions {
   config: ApiConfig;
   onChunk?: (text: string) => void;
-  onComplete?: (output: string, usage?: { outputTokens: number }) => void;
   onError?: (error: string) => void;
   signal?: AbortSignal;
 }
@@ -95,6 +94,7 @@ export class ClaudeApiService {
 
     let fullResponse = '';
     let outputTokens = 0;
+    let inputTokens = 0;
 
     try {
       const messages: { role: 'user' | 'assistant'; content: string | ClaudeContentBlock[] }[] = [
@@ -142,30 +142,35 @@ export class ClaudeApiService {
       const decoder = new TextDecoder();
       let lineBuffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done || currentRequestId !== this.requestId) break;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done || currentRequestId !== this.requestId) break;
 
-        lineBuffer += decoder.decode(value, { stream: true });
-        const lines = lineBuffer.split('\n');
-        lineBuffer = lines.pop() || '';
+          lineBuffer += decoder.decode(value, { stream: true });
+          const lines = lineBuffer.split('\n');
+          lineBuffer = lines.pop() || '';
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
 
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-              fullResponse += parsed.delta.text;
-              onChunk?.(parsed.delta.text);
-            }
-            if (parsed.type === 'message_delta' && parsed.usage?.output_tokens) {
-              outputTokens = parsed.usage.output_tokens;
-            }
-          } catch { /* malformed SSE chunk, skip */ }
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                fullResponse += parsed.delta.text;
+                onChunk?.(parsed.delta.text);
+              }
+              if (parsed.type === 'message_delta') {
+                if (parsed.usage?.output_tokens) outputTokens = parsed.usage.output_tokens;
+                if (parsed.usage?.input_tokens) inputTokens = parsed.usage.input_tokens;
+              }
+            } catch { /* malformed SSE chunk, skip */ }
+          }
         }
+      } finally {
+        reader.releaseLock();
       }
 
       const responseTime = Date.now() - startTime;
@@ -174,7 +179,7 @@ export class ClaudeApiService {
       return {
         success: true,
         output: fullResponse,
-        usage: { outputTokens }
+        usage: { outputTokens, inputTokens }
       };
 
     } catch (err) {

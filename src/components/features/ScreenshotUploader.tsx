@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GlassCard, RippleButton, AutoResizeTextarea } from '../ui';
 import { SECURITY_CONFIG } from '../../config';
@@ -30,11 +30,17 @@ export function ScreenshotUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const unmountedRef = useRef(false);
+
+  useEffect(() => {
+    return () => { unmountedRef.current = true; };
+  }, []);
 
   const compressImage = (dataUrl: string, maxWidth: number = 1920, quality: number = 0.8): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
+        if (unmountedRef.current) { resolve(dataUrl); return; }
         const canvas = document.createElement('canvas');
         let { width, height } = img;
         
@@ -82,6 +88,7 @@ export function ScreenshotUploader({
     
     const reader = new FileReader();
     reader.onload = async (e) => {
+      if (unmountedRef.current) return;
       const result = e.target?.result as string;
       let processed = result;
       
@@ -89,6 +96,7 @@ export function ScreenshotUploader({
         processed = await compressImage(result);
       }
       
+      if (unmountedRef.current) return;
       const b64 = processed.split(',')[1] ?? '';
       setPreview(processed);
       onScreenshotChange(b64);

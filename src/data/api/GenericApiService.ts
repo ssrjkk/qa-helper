@@ -5,12 +5,11 @@
  */
 
 import type { ApiResult } from './types';
+import { metricsCollector } from '../../lib/metrics';
 
-const RETRYABLE_ERRORS = ['network', 'timeout', '429', '500', '502', '503', '504'];
-
-export function isRetryableError(error: string): boolean {
+function isRetryableError(error: string): boolean {
   const lower = error.toLowerCase();
-  return RETRYABLE_ERRORS.some((e) => lower.includes(e));
+  return /\b(429|5\d{2})\b/.test(lower) || ['network', 'timeout', 'econnreset', 'econnrefused'].some(e => lower.includes(e));
 }
 
 interface GenericApiConfig {
@@ -59,9 +58,11 @@ export class GenericApiService {
     userMessage: string;
     signal?: AbortSignal;
     maxRetries?: number;
+    taskType?: string;
     onRetryAttempt?: (attempt: number, delay: number, error: string) => void;
   }): Promise<ApiResult> {
-    const { systemPrompt, userMessage, signal, maxRetries = 3 } = options;
+    const { systemPrompt, userMessage, signal, maxRetries = 3, taskType } = options;
+    const startTime = Date.now();
 
     if (this.abortController) {
       this.abortController.abort();
@@ -76,8 +77,17 @@ export class GenericApiService {
       combinedSignal = mergedController.signal;
     }
 
+    let lastError = '';
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
+        if (!this.config.apiKey) {
+          return { success: false, error: 'API key is required' };
+        }
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          return { success: false, error: 'No internet connection' };
+        }
+
         const body: Record<string, unknown> = {
           model: this.config.model,
           messages: [
@@ -106,14 +116,16 @@ export class GenericApiService {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.error?.message || `${this.config.providerName} API error: ${response.status}`,
-          );
+          const msg = errorData.error?.message || `${this.config.providerName} API error: ${response.status}`;
+          throw Object.assign(new Error(msg), { status: response.status });
         }
 
         const data = await response.json();
 
         if (data.choices?.[0]) {
+          const responseTime = Date.now() - startTime;
+          const outputTokens = data.usage?.completion_tokens;
+          metricsCollector.recordRequest(taskType || this.config.providerName, true, outputTokens, responseTime);
           return {
             success: true,
             output: data.choices[0].message.content,
@@ -127,13 +139,16 @@ export class GenericApiService {
         return { success: false, error: 'No response from model' };
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
+        lastError = error.message;
 
         if (error.name === 'AbortError') {
           return { success: false, error: 'Request aborted' };
         }
 
         if (attempt < maxRetries && isRetryableError(error.message)) {
-          const delay = Math.pow(2, attempt) * 1000;
+          const baseDelay = Math.min(Math.pow(2, attempt) * 1000, 30000);
+          const jitter = baseDelay * 0.1 * (Math.random() * 2 - 1);
+          const delay = Math.round(baseDelay + jitter);
           options.onRetryAttempt?.(attempt + 1, delay, error.message);
           await new Promise<void>((resolve, reject) => {
             const onAbort = () => {
@@ -149,10 +164,12 @@ export class GenericApiService {
           continue;
         }
 
+        const responseTime = Date.now() - startTime;
+        metricsCollector.recordRequest(taskType || this.config.providerName, false, undefined, responseTime);
         return { success: false, error: error.message };
       }
     }
 
-    return { success: false, error: 'Max retries exceeded' };
+    return { success: false, error: `Max retries exceeded. Last error: ${lastError}` };
   }
 }

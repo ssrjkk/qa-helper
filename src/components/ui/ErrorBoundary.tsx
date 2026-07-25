@@ -37,6 +37,22 @@ function generateCrashId(): string {
   return `crash_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+async function pruneOldCrashReports(db: IDBDatabase): Promise<void> {
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const tx = db.transaction(CRASH_STORE_NAME, 'readwrite');
+  const store = tx.objectStore(CRASH_STORE_NAME);
+  const index = store.index('timestamp');
+  const range = IDBKeyRange.upperBound(thirtyDaysAgo);
+  const request = index.openCursor(range);
+  request.onsuccess = (event) => {
+    const cursor = (event.target as IDBRequest<IDBCursorWithValue | null>).result;
+    if (cursor) {
+      cursor.delete();
+      cursor.continue();
+    }
+  };
+}
+
 async function persistCrashReport(report: CrashReport): Promise<void> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(CRASH_DB_NAME, DB_VERSION);
@@ -53,7 +69,9 @@ async function persistCrashReport(report: CrashReport): Promise<void> {
       const db = (event.target as IDBOpenDBRequest).result;
       const tx = db.transaction(CRASH_STORE_NAME, 'readwrite');
       tx.objectStore(CRASH_STORE_NAME).put(report);
-      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.oncomplete = () => {
+        pruneOldCrashReports(db).catch(() => {}).finally(() => { db.close(); resolve(); });
+      };
       tx.onerror = () => { db.close(); reject(tx.error); };
     };
 

@@ -235,6 +235,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     screenshotBase64?: string | null;
     taskType?: string;
     maxRetries?: number;
+    signal?: AbortSignal;
     onRetryAttempt?: (attempt: number, delay: number, error: string) => void;
     onChunk?: (text: string) => void;
   }): Promise<ApiResult> {

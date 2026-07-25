@@ -1,7 +1,6 @@
 export type { AiProvider, AiModel, ApiResult } from './types';
 export { PROVIDER_MODELS, PROVIDER_INFO, getDefaultModelForProvider, getVisionProviders } from './types';
 export type { UnifiedAiService } from './UnifiedAiService';
-export { isRetryableError } from './GenericApiService';
 export { ClaudeApiService } from './ClaudeApiService';
 export { GroqApiService } from './GroqApiService';
 export { DeepSeekApiService } from './DeepSeekApiService';
