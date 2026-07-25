@@ -9,6 +9,8 @@ import { saveApiKey } from '../../lib';
 import { useAppStore } from '../../store/useAppStore';
 import { PROVIDER_INFO, type AiProvider } from '../../data/api/types';
 import { Modal } from '../ui';
+import { ErrorService } from '../../lib/errorService';
+import { ErrorCode } from '../../lib/constants';
 
 interface ApiKeyModalProps {
   onClose: () => void;
@@ -28,7 +30,8 @@ export function ApiKeyModal({ onClose, provider = 'claude' }: ApiKeyModalProps) 
       store.setApiKey(key);
       await saveApiKey(key);
       store.setShowApiKeyInput(false);
-    } catch {
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.API_KEY_INVALID, err);
       store.setError('Failed to save API key');
     } finally {
       setSaving(false);

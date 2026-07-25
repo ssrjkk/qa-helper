@@ -5,6 +5,8 @@
  */
 
 import { arrayBufferToBase64, base64ToArrayBuffer } from './base64';
+import { ErrorService } from './errorService';
+import { ErrorCode } from './constants';
 
 const DB_NAME = 'qa-helper-db';
 const DB_VERSION = 1;
@@ -104,8 +106,8 @@ export class IndexedDBStorage implements StorageProvider {
         request.onerror = () => reject(new Error('Failed to load from IndexedDB'));
         request.onsuccess = () => resolve(request.result || null);
       });
-    } catch {
-      if (import.meta.env.DEV) console.warn('[storage] IndexedDB load failed');
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.STORAGE_LOAD, err);
       return null;
     }
   }
@@ -121,8 +123,8 @@ export class IndexedDBStorage implements StorageProvider {
         request.onerror = () => reject(new Error('Failed to clear IndexedDB'));
         request.onsuccess = () => resolve();
       });
-    } catch {
-      if (import.meta.env.DEV) console.warn('[storage] IndexedDB clear failed');
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.STORAGE_CLEAR, err);
     }
   }
 
@@ -180,8 +182,8 @@ export class LocalStorageFallback implements StorageProvider {
         ciphertext,
       );
       return new Uint8Array(decrypted);
-    } catch {
-      if (import.meta.env.DEV) console.warn('[storage] Decryption failed — data may be corrupted');
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.DECRYPT, err);
       return null;
     }
   }

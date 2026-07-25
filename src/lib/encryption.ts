@@ -6,6 +6,8 @@
 
 import { keyManager } from './keyManagement';
 import { arrayBufferToBase64, base64ToArrayBuffer } from './base64';
+import { ErrorService } from './errorService';
+import { ErrorCode } from './constants';
 
 const STORAGE_KEY_SALT = 'qa-helper-salt';
 const STORAGE_KEY_API_KEY = 'qa-api-key';
@@ -95,8 +97,8 @@ async function legacyDecrypt(encryptedData: string): Promise<string | null> {
     );
 
     return new TextDecoder().decode(decrypted);
-  } catch {
-    if (import.meta.env.DEV) console.warn('[encryption] Legacy decryption failed');
+  } catch (err) {
+    ErrorService.reportAsync(ErrorCode.DECRYPT, err);
     return null;
   }
 }

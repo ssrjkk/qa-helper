@@ -10,6 +10,7 @@ import type { Database } from 'sql.js';
 import { DatabaseService } from '../lib/database';
 import { createStorageProvider } from '../lib/storage';
 import { ErrorService } from '../lib/errorService';
+import { ErrorCode } from '../lib/constants';
 import type { Project } from '../types';
 import type { MemoryEntry } from '../types/memory';
 
@@ -79,8 +80,8 @@ export function useDatabase() {
             try {
               const exported = database.export();
               await storage.save(exported);
-            } catch {
-              // Save failed — non-critical, will retry on next change
+            } catch (err) {
+              ErrorService.reportAsync(ErrorCode.DB_SAVE, err);
             }
           }, 500);
         });

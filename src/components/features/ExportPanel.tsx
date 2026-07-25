@@ -8,6 +8,8 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard, RippleButton } from '../ui';
 import { copyToClipboard } from '../../lib';
+import { ErrorService } from '../../lib/errorService';
+import { ErrorCode } from '../../lib/constants';
 
 interface ExportPanelProps {
   output: string;
@@ -53,8 +55,8 @@ export function ExportPanel({ output, context, taskType, projectName, onClose }:
 
       const { blob, filename } = await handlers[format]();
       await exportUtils.downloadFile(blob, filename);
-    } catch {
-      // Export failed — user notified via UI state
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.EXPORT, err);
     } finally {
       setExporting(false);
     }

@@ -5,6 +5,8 @@
  */
 
 import type { Database } from 'sql.js';
+import { ErrorService } from './errorService';
+import { ErrorCode } from './constants';
 
 export function rowToObject(columns: string[], values: unknown[]): Record<string, unknown> {
   const obj: Record<string, unknown> = {};
@@ -88,7 +90,8 @@ export function insertAndReturnId(db: Database, saveDb: () => void | Promise<voi
     const result = db.exec("SELECT last_insert_rowid() as id");
     const firstRow = result[0]?.values[0]?.[0];
     return firstRow != null ? Number(firstRow) : -1;
-  } catch {
+  } catch (err) {
+    ErrorService.reportAsync(ErrorCode.DB_INSERT, err, { sql });
     return -1;
   }
 }
