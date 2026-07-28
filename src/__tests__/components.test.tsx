@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { RippleButton } from '../components/ui/RippleButton';
-import { TaskSelector } from '../components/features/TaskSelector';
+import { TaskSelector } from '../components/selectors/TaskSelector';
 
 describe('GlassCard', () => {
   it('renders children correctly', () => {

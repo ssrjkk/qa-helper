@@ -5,11 +5,11 @@
  */
 
 import type { StructuredMemory, MemoryEntry, MemoryCategory } from '../types/memory';
-
-const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+import { PROTOTYPE_POLLUTION_KEYS, ErrorCode } from './constants';
+import { ErrorService } from './errorService';
 
 function safeObjectEntries(obj: Record<string, unknown>): [string, unknown][] {
-  return Object.entries(obj).filter(([k]) => !DANGEROUS_KEYS.has(k));
+  return Object.entries(obj).filter(([k]) => !PROTOTYPE_POLLUTION_KEYS.has(k));
 }
 
 interface CategoryConfig {
@@ -85,7 +85,8 @@ export function parseMemoryExtraction(response: string): Partial<StructuredMemor
     const parsed = JSON.parse(cleaned);
     if (!parsed || typeof parsed !== 'object') return {};
     return validateStructuredMemory(parsed);
-  } catch {
+  } catch (err) {
+    ErrorService.reportAsync(ErrorCode.EXPORT, err instanceof Error ? err : new Error(String(err)), { operation: 'parseMemoryExtraction' });
     return {};
   }
 }
@@ -254,7 +255,8 @@ export function importMemoryFromJson(json: string): StructuredMemory | null {
     const parsed = JSON.parse(json);
     if (!parsed || typeof parsed !== 'object') return null;
     return validateStructuredMemory(parsed);
-  } catch {
+  } catch (err) {
+    ErrorService.reportAsync(ErrorCode.CLOUD_IMPORT, err instanceof Error ? err : new Error(String(err)), { operation: 'importMemoryFromJson' });
     return null;
   }
 }

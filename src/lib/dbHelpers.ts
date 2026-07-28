@@ -28,6 +28,8 @@ export function queryAll<T>(db: Database, sql: string, params?: (string | number
   } catch (err) {
     if (import.meta.env.DEV) {
       console.warn('[dbHelpers] queryAll failed:', sql, err);
+    } else {
+      ErrorService.reportAsync(ErrorCode.DB_QUERY, err, { operation: 'queryAll' });
     }
     return [];
   } finally {
@@ -48,6 +50,8 @@ export function queryOne<T>(db: Database, sql: string, params?: (string | number
   } catch (err) {
     if (import.meta.env.DEV) {
       console.warn('[dbHelpers] queryOne failed:', sql, err);
+    } else {
+      ErrorService.reportAsync(ErrorCode.DB_QUERY, err, { operation: 'queryOne' });
     }
     return undefined;
   } finally {
@@ -64,20 +68,22 @@ export function safeRun(db: Database, sql: string, params?: (string | number | n
   }
 }
 
-export function execTransaction(db: Database, saveDb: () => void | Promise<void>, operations: (() => void)[]): string | null {
+export async function execTransaction(db: Database, saveDb: () => void | Promise<void>, operations: (() => void)[]): Promise<string | null> {
   try {
     db.run("BEGIN TRANSACTION");
     for (const op of operations) {
       op();
     }
     db.run("COMMIT");
-    saveDb();
+    await saveDb();
     return null;
   } catch (err) {
     try { db.run("ROLLBACK"); } catch { /* best-effort */ }
     const msg = err instanceof Error ? err.message : String(err);
     if (import.meta.env.DEV) {
       console.warn('[dbHelpers] transaction failed:', msg);
+    } else {
+      ErrorService.reportAsync(ErrorCode.DB_TRANSACTION, err, { operation: 'transaction' });
     }
     return msg;
   }

@@ -1,17 +1,12 @@
-import type { AiProvider, ApiResult } from './types';
-import { PROVIDER_MODELS, getDefaultModelForProvider, getVisionProviders } from './types';
 /**
  * Unified AI service routing to provider-specific implementations
+ * Services are lazily imported via dynamic import() for code splitting
  * @module UnifiedAiService
  * @author ssrjkk
  */
 
-import { ClaudeApiService } from './ClaudeApiService';
-import { GroqApiService } from './GroqApiService';
-import { OpenRouterApiService } from './OpenRouterApiService';
-import { DeepSeekApiService } from './DeepSeekApiService';
-import { TogetherApiService } from './TogetherApiService';
-import { NovitaApiService } from './NovitaApiService';
+import type { AiProvider, ApiResult } from './types';
+import { PROVIDER_MODELS, getDefaultModelForProvider, getVisionProviders, getDefaultApiUrl } from './types';
 import { CircuitBreaker } from '../../lib/circuitBreaker';
 
 export interface UnifiedAiService {
@@ -43,6 +38,35 @@ export interface UnifiedAiService {
   supportsVision(): boolean;
 }
 
+interface LazyService {
+  setApiKey?(apiKey: string): void;
+  setModel(model: string): void;
+  abort(): void;
+  execute(options: {
+    systemPrompt: string;
+    userMessage: string;
+    screenshotBase64?: string | null;
+    signal?: AbortSignal;
+    taskType?: string;
+    onChunk?: (text: string) => void;
+    apiKey?: string;
+    baseUrl?: string;
+    model?: string;
+    maxTokens?: number;
+  }): Promise<ApiResult>;
+  executeWithRetry(options: {
+    systemPrompt: string;
+    userMessage: string;
+    screenshotBase64?: string | null;
+    signal?: AbortSignal;
+    taskType?: string;
+    maxRetries?: number;
+    onRetryAttempt?: (attempt: number, delay: number, error: string) => void;
+    onChunk?: (text: string) => void;
+    apiKey?: string;
+  }): Promise<ApiResult>;
+}
+
 const VISION_PROVIDERS = getVisionProviders();
 
 function makeDefaultModels(): Map<AiProvider, string> {
@@ -53,34 +77,53 @@ function makeDefaultModels(): Map<AiProvider, string> {
   return map;
 }
 
-export class UnifiedAiServiceImpl implements UnifiedAiService {
-  private claudeService: ClaudeApiService;
-  private groqService: GroqApiService;
-  private openRouterService: OpenRouterApiService;
-  private deepSeekService: DeepSeekApiService;
-  private togetherService: TogetherApiService;
-  private novitaService: NovitaApiService;
+async function importService(provider: AiProvider): Promise<LazyService> {
+  const d = makeDefaultModels();
+  const m = (p: AiProvider): string => d.get(p) ?? getDefaultModelForProvider(p).id;
+
+  switch (provider) {
+    case 'claude': {
+      const { ClaudeApiService } = await import('./ClaudeApiService');
+      return new ClaudeApiService({
+        baseUrl: getDefaultApiUrl('claude'),
+        model: m('claude'),
+        maxTokens: 8192,
+        anthropicVersion: '2023-06-01',
+        provider: 'claude',
+      });
+    }
+    case 'groq': {
+      const { GroqApiService } = await import('./GroqApiService');
+      return new GroqApiService({ apiKey: '', model: m('groq'), maxTokens: 8192 });
+    }
+    case 'openrouter': {
+      const { OpenRouterApiService } = await import('./OpenRouterApiService');
+      return new OpenRouterApiService({ apiKey: '', model: m('openrouter'), maxTokens: 8192 });
+    }
+    case 'deepseek': {
+      const { DeepSeekApiService } = await import('./DeepSeekApiService');
+      return new DeepSeekApiService({ apiKey: '', model: m('deepseek'), maxTokens: 8192 });
+    }
+    case 'together': {
+      const { TogetherApiService } = await import('./TogetherApiService');
+      return new TogetherApiService({ apiKey: '', model: m('together'), maxTokens: 32768 });
+    }
+    case 'novita': {
+      const { NovitaApiService } = await import('./NovitaApiService');
+      return new NovitaApiService({ apiKey: '', model: m('novita'), maxTokens: 8192 });
+    }
+    default:
+      throw new Error(`Provider ${provider} not implemented`);
+  }
+}
+
+class UnifiedAiServiceImpl implements UnifiedAiService {
+  private services = new Map<AiProvider, LazyService>();
   private currentProvider: AiProvider = 'claude';
   private currentApiKey = '';
   private circuitBreakers: Map<AiProvider, CircuitBreaker> = new Map();
 
   constructor() {
-    const d = makeDefaultModels();
-    const m = (p: AiProvider): string => d.get(p) ?? getDefaultModelForProvider(p).id;
-
-    this.claudeService = new ClaudeApiService({
-      baseUrl: 'https://api.anthropic.com/v1/messages',
-      model: m('claude'),
-      maxTokens: 8192,
-      anthropicVersion: '2023-06-01',
-      provider: 'claude',
-    });
-    this.groqService = new GroqApiService({ apiKey: '', model: m('groq'), maxTokens: 8192 });
-    this.openRouterService = new OpenRouterApiService({ apiKey: '', model: m('openrouter'), maxTokens: 8192 });
-    this.deepSeekService = new DeepSeekApiService({ apiKey: '', model: m('deepseek'), maxTokens: 8192 });
-    this.togetherService = new TogetherApiService({ apiKey: '', model: m('together'), maxTokens: 32768 });
-    this.novitaService = new NovitaApiService({ apiKey: '', model: m('novita'), maxTokens: 8192 });
-
     for (const p of Object.keys(PROVIDER_MODELS) as AiProvider[]) {
       this.circuitBreakers.set(p, new CircuitBreaker({
         failureThreshold: 3,
@@ -94,21 +137,33 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     return this.circuitBreakers.get(provider);
   }
 
-  private setServiceModel(provider: AiProvider, model: string): void {
-    switch (provider) {
-      case 'claude': this.claudeService.setModel(model); break;
-      case 'groq': this.groqService.setModel(model); break;
-      case 'openrouter': this.openRouterService.setModel(model); break;
-      case 'deepseek': this.deepSeekService.setModel(model); break;
-      case 'together': this.togetherService.setModel(model); break;
-      case 'novita': this.novitaService.setModel(model); break;
+  private async ensureService(provider: AiProvider): Promise<LazyService> {
+    const existing = this.services.get(provider);
+    if (existing) return existing;
+    const service = await importService(provider);
+    this.services.set(provider, service);
+    return service;
+  }
+
+  private async syncServiceConfig(provider: AiProvider): Promise<void> {
+    const svc = this.services.get(provider);
+    if (!svc) return;
+    if (typeof svc.setApiKey === 'function') {
+      svc.setApiKey(this.currentApiKey);
     }
   }
 
   setProvider(provider: AiProvider, apiKey?: string, model?: string): void {
     this.currentProvider = provider;
     if (apiKey) this.currentApiKey = apiKey;
-    this.setServiceModel(provider, model ?? getDefaultModelForProvider(provider).id);
+    const resolvedModel = model ?? getDefaultModelForProvider(provider).id;
+    const svc = this.services.get(provider);
+    if (svc) {
+      if (typeof svc.setApiKey === 'function' && apiKey) {
+        svc.setApiKey(apiKey);
+      }
+      svc.setModel(resolvedModel);
+    }
   }
 
   getProvider(): AiProvider {
@@ -117,10 +172,17 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
 
   setApiKey(apiKey: string): void {
     this.currentApiKey = apiKey;
+    const svc = this.services.get(this.currentProvider);
+    if (svc && typeof svc.setApiKey === 'function') {
+      svc.setApiKey(apiKey);
+    }
   }
 
   setModel(model: string): void {
-    this.setServiceModel(this.currentProvider, model);
+    const svc = this.services.get(this.currentProvider);
+    if (svc) {
+      svc.setModel(model);
+    }
   }
 
   supportsVision(): boolean {
@@ -157,17 +219,6 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     return err ? { success: false, error: err } : null;
   }
 
-  private setProviderApiKey(): void {
-    if (this.currentProvider === 'claude') return;
-    switch (this.currentProvider) {
-      case 'groq': this.groqService.setApiKey(this.currentApiKey); break;
-      case 'openrouter': this.openRouterService.setApiKey(this.currentApiKey); break;
-      case 'deepseek': this.deepSeekService.setApiKey(this.currentApiKey); break;
-      case 'together': this.togetherService.setApiKey(this.currentApiKey); break;
-      case 'novita': this.novitaService.setApiKey(this.currentApiKey); break;
-    }
-  }
-
   private buildExecuteOpts(options: {
     systemPrompt: string;
     userMessage: string;
@@ -175,23 +226,16 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     signal?: AbortSignal;
     taskType?: string;
     onChunk?: (text: string) => void;
-  }): Record<string, unknown> {
+  }): Parameters<LazyService['execute']>[0] {
     return this.currentProvider === 'claude'
       ? { apiKey: this.currentApiKey, ...options }
       : { ...options };
   }
 
-  private async dispatchExecute(method: 'execute' | 'executeWithRetry', opts: Record<string, unknown>): Promise<ApiResult> {
+  private async dispatchExecute(method: 'execute' | 'executeWithRetry', opts: Parameters<LazyService[typeof method]>[0]): Promise<ApiResult> {
+    const service = await this.ensureService(this.currentProvider);
     try {
-      switch (this.currentProvider) {
-        case 'claude': return this.claudeService[method](opts as Parameters<ClaudeApiService['execute']>[0]);
-        case 'groq': return this.groqService[method](opts as Parameters<GroqApiService['execute']>[0]);
-        case 'openrouter': return this.openRouterService[method](opts as Parameters<OpenRouterApiService['execute']>[0]);
-        case 'deepseek': return this.deepSeekService[method](opts as Parameters<DeepSeekApiService['execute']>[0]);
-        case 'together': return this.togetherService[method](opts as Parameters<TogetherApiService['execute']>[0]);
-        case 'novita': return this.novitaService[method](opts as Parameters<NovitaApiService['execute']>[0]);
-        default: return { success: false, error: `Provider ${this.currentProvider} not implemented` };
-      }
+      return await service[method](opts);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       return { success: false, error: msg };
@@ -212,7 +256,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     const keyErr = this.ensureApiKey();
     if (keyErr) return keyErr;
 
-    this.setProviderApiKey();
+    await this.syncServiceConfig(this.currentProvider);
     const cb = this.circuitBreakers.get(this.currentProvider);
     const opts = this.buildExecuteOpts(options);
 
@@ -245,7 +289,7 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
     const keyErr = this.ensureApiKey();
     if (keyErr) return keyErr;
 
-    this.setProviderApiKey();
+    await this.syncServiceConfig(this.currentProvider);
     const cb = this.circuitBreakers.get(this.currentProvider);
     const opts = this.buildExecuteOpts(options);
 
@@ -263,14 +307,8 @@ export class UnifiedAiServiceImpl implements UnifiedAiService {
   }
 
   abort(): void {
-    switch (this.currentProvider) {
-      case 'claude': this.claudeService.abort(); break;
-      case 'groq': this.groqService.abort(); break;
-      case 'openrouter': this.openRouterService.abort(); break;
-      case 'deepseek': this.deepSeekService.abort(); break;
-      case 'together': this.togetherService.abort(); break;
-      case 'novita': this.novitaService.abort(); break;
-    }
+    const svc = this.services.get(this.currentProvider);
+    if (svc) svc.abort();
   }
 }
 

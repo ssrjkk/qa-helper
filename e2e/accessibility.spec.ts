@@ -9,7 +9,7 @@ test.describe('Accessibility', () => {
     await page.goto('/');
     await unlockApp(page);
     await page.waitForTimeout(1000);
-    expect(errors.filter(e => !e.includes('favicon') && !e.includes('ArrayBuffer') && !e.includes('sql') && !e.includes('wasm') && !e.includes('WebAssembly') && !e.includes('CompileError') && !e.includes('Content Security'))).toHaveLength(0);
+    expect(errors.filter(e => !e.includes('favicon') && !e.includes('ArrayBuffer') && !e.includes('sql') && !e.includes('wasm') && !e.includes('WebAssembly') && !e.includes('CompileError'))).toHaveLength(0);
   });
 
   test('interactive elements are keyboard accessible', async ({ page }) => {
@@ -21,9 +21,7 @@ test.describe('Accessibility', () => {
     await page.keyboard.press('Tab');
 
     const focused = page.locator(':focus');
-    if (await focused.count() > 0) {
-      await expect(focused).toBeVisible();
-    }
+    await expect(focused).toBeVisible({ timeout: 3000 });
   });
 
   test('heading hierarchy is correct', async ({ page }) => {
@@ -32,10 +30,9 @@ test.describe('Accessibility', () => {
     await page.waitForTimeout(1000);
 
     const h1 = page.locator('h1');
-    if (await h1.isVisible({ timeout: 3000 }).catch(() => false)) {
-      const h1Count = await h1.count();
-      expect(h1Count).toBe(1);
-    }
+    await expect(h1).toBeVisible({ timeout: 5000 });
+    const h1Count = await h1.count();
+    expect(h1Count).toBe(1);
   });
 });
 

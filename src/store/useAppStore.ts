@@ -6,6 +6,7 @@
 
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import { LIMITS } from '../lib/constants';
 import type { MemoryEntry } from '../types/memory';
 import type { AgentStep } from '../data/agent/types';
 import type { Session } from '../domain/entities/Session';
@@ -104,7 +105,7 @@ export const useAppStore = create<AppState>()(
     setSessions: (sessions) => set((state) => { state.sessions = sessions; }),
     addSession: (session) => set((state) => {
       state.sessions.unshift(session);
-      if (state.sessions.length > 50) state.sessions.length = 50;
+      if (state.sessions.length > LIMITS.maxSessions) state.sessions.length = LIMITS.maxSessions;
     }),
 
     showApiKeyInput: false,
@@ -126,7 +127,12 @@ export const useAppStore = create<AppState>()(
     setAgentSteps: (steps) => set((state) => {
       state.agentSteps = typeof steps === 'function' ? steps(state.agentSteps) : steps;
     }),
-    addAgentStep: (step) => set((state) => { state.agentSteps.push(step); }),
+    addAgentStep: (step) => set((state) => {
+      state.agentSteps.push(step);
+      if (state.agentSteps.length > LIMITS.maxAgentSteps) {
+        state.agentSteps = state.agentSteps.slice(-LIMITS.maxAgentSteps);
+      }
+    }),
 
     mode: 'prompt',
     setMode: (mode) => set((state) => { state.mode = mode; }),

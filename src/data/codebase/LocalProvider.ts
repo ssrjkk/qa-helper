@@ -139,6 +139,7 @@ export class LocalProvider implements CodebaseProvider {
 
   async listTree(path = ''): Promise<CodebaseFile[]> {
     const results: CodebaseFile[] = [];
+    const seenDirs = new Set<string>();
     const prefix = path ? `${path}/` : '';
 
     for (const [key, entry] of this.files) {
@@ -152,7 +153,8 @@ export class LocalProvider implements CodebaseProvider {
       if (depth > 0 && entry.type === 'directory') {
         const nextSlash = relative.indexOf('/');
         const dirName = nextSlash === -1 ? relative : relative.slice(0, nextSlash);
-        if (results.some(r => r.name === dirName && r.type === 'directory')) continue;
+        if (seenDirs.has(dirName)) continue;
+        seenDirs.add(dirName);
       }
 
       if (entry.type === 'file' && depth === 0) {
@@ -208,21 +210,22 @@ export class LocalProvider implements CodebaseProvider {
 
   async getStructureSummary(): Promise<string> {
     const lines: string[] = [this.name, ''];
+    const childrenMap = new Map<string, FileEntry[]>();
+
+    for (const [, entry] of this.files) {
+      const parent = entry.path.substring(0, entry.path.lastIndexOf('/'));
+      const siblings = childrenMap.get(parent);
+      if (siblings) {
+        siblings.push(entry);
+      } else {
+        childrenMap.set(parent, [entry]);
+      }
+    }
 
     const renderPath = (prefix: string, currentPath: string): void => {
-      const dirs: FileEntry[] = [];
-      const files: FileEntry[] = [];
-
-      for (const [, entry] of this.files) {
-        const parent = entry.path.substring(0, entry.path.lastIndexOf('/'));
-        if (parent === currentPath) {
-          if (entry.type === 'directory') dirs.push(entry);
-          else files.push(entry);
-        }
-      }
-
-      dirs.sort((a, b) => a.name.localeCompare(b.name));
-      files.sort((a, b) => a.name.localeCompare(b.name));
+      const children = childrenMap.get(currentPath) ?? [];
+      const dirs = children.filter(e => e.type === 'directory').sort((a, b) => a.name.localeCompare(b.name));
+      const files = children.filter(e => e.type === 'file').sort((a, b) => a.name.localeCompare(b.name));
 
       for (const dir of dirs) {
         lines.push(`${prefix}${dir.name}/`);

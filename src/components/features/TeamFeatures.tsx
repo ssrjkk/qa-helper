@@ -8,19 +8,12 @@ import { useState } from 'react';
 import { GlassCard, Accordion, Tabs, TabPanel, useToast } from '../ui';
 import type { Project } from '../../types';
 
-export interface TeamMember {
+interface TeamMember {
   id: string;
   name: string;
   email: string;
   role: 'owner' | 'editor' | 'viewer';
   avatar?: string;
-}
-
-export interface SharedProject {
-  project: Project;
-  sharedWith: TeamMember[];
-  inviteLink?: string;
-  permissions: 'private' | 'team' | 'public';
 }
 
 interface TeamFeaturesProps {

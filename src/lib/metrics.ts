@@ -15,12 +15,15 @@ export interface ApiMetrics {
   responseTimes: number[];
 }
 
+import { STORAGE_KEYS, ErrorCode } from './constants';
+import { ErrorService } from './errorService';
+
 const MAX_DAYS_RETAINED = 30;
 const MAX_TASK_TYPES = 50;
-const STORAGE_KEY = 'qa-metrics';
 
 class MetricsCollector {
   private metrics: ApiMetrics;
+  private saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.metrics = this.loadMetrics();
@@ -28,7 +31,7 @@ class MetricsCollector {
 
   private loadMetrics(): ApiMetrics {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(STORAGE_KEYS.metrics);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object' && typeof parsed.totalRequests === 'number') {
@@ -37,6 +40,7 @@ class MetricsCollector {
       }
     } catch {
       if (import.meta.env.DEV) console.warn('[metrics] Failed to load metrics from localStorage');
+      ErrorService.reportAsync(ErrorCode.METRICS_LOAD, new Error('Failed to load metrics'));
     }
     return this.getEmptyMetrics();
   }
@@ -58,9 +62,10 @@ class MetricsCollector {
     this.pruneOldDays();
     this.pruneTaskTypes();
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.metrics));
+      localStorage.setItem(STORAGE_KEYS.metrics, JSON.stringify(this.metrics));
     } catch {
       if (import.meta.env.DEV) console.warn('[metrics] Failed to save metrics to localStorage');
+      ErrorService.reportAsync(ErrorCode.METRICS_SAVE, new Error('Failed to save metrics'));
     }
   }
 
@@ -110,11 +115,17 @@ class MetricsCollector {
       );
     }
 
-    this.saveMetrics();
+    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    this.saveTimeout = setTimeout(() => this.saveMetrics(), 1000);
   }
 
   getMetrics(): ApiMetrics {
-    return { ...this.metrics, responseTimes: [...this.metrics.responseTimes] };
+    return {
+      ...this.metrics,
+      requestsByTaskType: { ...this.metrics.requestsByTaskType },
+      requestsByDay: { ...this.metrics.requestsByDay },
+      responseTimes: [...this.metrics.responseTimes],
+    };
   }
 
   getSuccessRate(): number {

@@ -6,22 +6,21 @@
 
 import { arrayBufferToBase64, base64ToArrayBuffer } from './base64';
 import { ErrorService } from './errorService';
-import { ErrorCode } from './constants';
+import { ErrorCode, STORAGE_KEYS } from './constants';
 
 const DB_NAME = 'qa-helper-db';
 const DB_VERSION = 1;
 const STORE_NAME = 'database';
 const DB_KEY = 'app-state';
-const LS_PASSPHRASE_KEY = 'qa-helper-ls-key';
 
 async function getLsCryptoKey(): Promise<CryptoKey> {
-  const stored = localStorage.getItem(LS_PASSPHRASE_KEY);
+  const stored = localStorage.getItem(STORAGE_KEYS.lsPassphrase);
   if (stored) {
     const raw = base64ToArrayBuffer(stored);
     return crypto.subtle.importKey('raw', raw, 'PBKDF2', false, ['deriveKey']);
   }
   const passphrase = crypto.getRandomValues(new Uint8Array(32));
-  localStorage.setItem(LS_PASSPHRASE_KEY, arrayBufferToBase64(passphrase.buffer));
+  localStorage.setItem(STORAGE_KEYS.lsPassphrase, arrayBufferToBase64(passphrase.buffer));
   return crypto.subtle.importKey('raw', passphrase, 'PBKDF2', false, ['deriveKey']);
 }
 

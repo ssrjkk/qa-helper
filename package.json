@@ -17,13 +17,12 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "clean": "rm -rf dist node_modules",
+    "clean": "node -e \"import('fs').then(fs=>{fs.rmSync('dist',{recursive:true,force:true});fs.rmSync('node_modules',{recursive:true,force:true})})\"",
     "prepare": "husky",
     "lint-staged": "lint-staged"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.23",
-    "framer-motion": "^11.3.0",
     "immer": "^11.1.15",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",

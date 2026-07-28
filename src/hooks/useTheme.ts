@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { STORAGE_KEYS } from '../lib/constants';
 
 type Theme = 'dark' | 'light';
 
@@ -19,7 +20,7 @@ export function useTheme(): UseThemeReturn {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'dark';
     
-    const saved = localStorage.getItem('qa-helper-theme');
+    const saved = localStorage.getItem(STORAGE_KEYS.theme);
     if (saved === 'dark' || saved === 'light') return saved;
     
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -31,7 +32,7 @@ export function useTheme(): UseThemeReturn {
   const applyTheme = useCallback((newTheme: Theme) => {
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(newTheme);
-    localStorage.setItem('qa-helper-theme', newTheme);
+    localStorage.setItem(STORAGE_KEYS.theme, newTheme);
     setThemeState(newTheme);
   }, []);
 

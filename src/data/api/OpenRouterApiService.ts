@@ -1,6 +1,6 @@
 import { GenericApiService } from './GenericApiService';
-
-const DEFAULT_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+import { getDefaultApiUrl } from './types';
+import { APP_WEBSITE, APP_NAME, APP_AUTHOR } from '../../lib/constants';
 
 interface OpenRouterConfig {
   apiKey: string;
@@ -13,11 +13,11 @@ export class OpenRouterApiService extends GenericApiService {
   constructor(config: OpenRouterConfig) {
     super({
       ...config,
-      apiUrl: config.apiUrl || DEFAULT_API_URL,
+      apiUrl: config.apiUrl || getDefaultApiUrl('openrouter'),
       providerName: 'OpenRouter',
       extraHeaders: {
-        'HTTP-Referer': 'https://qa-copilot.ssrjkk.dev',
-        'X-Title': 'QA Copilot BY ssrjkk',
+        'HTTP-Referer': APP_WEBSITE,
+        'X-Title': `${APP_NAME} by ${APP_AUTHOR}`,
       },
     });
   }

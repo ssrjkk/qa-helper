@@ -27,16 +27,15 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    target: 'esnext',
+    target: 'es2020',
     minify: 'esbuild',
     esbuild: {
-      drop: ['console', 'debugger'],
-      pure: ['console.info', 'console.debug'],
+      drop: ['debugger'],
     },
     rollupOptions: {
       output: {
         manualChunks: {
-          'ui-vendor': ['react', 'react-dom', 'framer-motion'],
+          'ui-vendor': ['react', 'react-dom'],
           'db-vendor': ['sql.js'],
           'state-vendor': ['zustand', 'immer'],
           'utils-vendor': ['jspdf'],

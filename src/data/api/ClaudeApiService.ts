@@ -7,6 +7,7 @@
 import { ApiConfig, ApiResult, ClaudeContentBlock } from './types';
 import { RateLimiter } from '../../lib/rateLimiter';
 import { metricsCollector } from '../../lib/metrics';
+import { LIMITS } from '../../lib/constants';
 
 export interface ClaudeApiServiceOptions {
   config: ApiConfig;
@@ -34,15 +35,15 @@ export class ClaudeApiService {
   }
 
   private getRetryableError(error: Error): RetryableError {
-    if (!navigator.onLine) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
       return { type: 'network', message: 'No internet connection' };
     }
 
     const msg = error.message;
     const statusMatch = msg.match(/(?:failed|error).*?:\s*(\d{3})/i) || msg.match(/\b(429|5\d{2})\b/);
 
-    if (statusMatch) {
-      const status = parseInt(statusMatch[1]!);
+    if (statusMatch?.[1]) {
+      const status = parseInt(statusMatch[1]);
       if (status === 429) {
         const resetAfter = msg.match(/retry-after:\s*(\d+)/i)?.[1];
         return { type: 'rate_limit', message: 'API rate limit exceeded', retryAfter: resetAfter ? parseInt(resetAfter) : 5 };
@@ -60,8 +61,10 @@ export class ClaudeApiService {
   }
 
   private calculateBackoff(attempt: number): number {
-    const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
-    const jitter = delay * 0.1 * (Math.random() * 2 - 1);
+    const delay = Math.min(LIMITS.retryBaseDelayMs * Math.pow(2, attempt), LIMITS.retryMaxDelayMs);
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const jitter = delay * LIMITS.retryJitterFactor * ((array[0]! / 0xFFFFFFFF) * 2 - 1);
     return Math.round(delay + jitter);
   }
 
@@ -81,7 +84,7 @@ export class ClaudeApiService {
       return { success: false, error: 'API key is required' };
     }
 
-    if (!navigator.onLine) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
       return { success: false, error: 'No internet connection' };
     }
 
@@ -145,7 +148,12 @@ export class ClaudeApiService {
       try {
         while (true) {
           const { done, value } = await reader.read();
-          if (done || currentRequestId !== this.requestId) break;
+          if (done || currentRequestId !== this.requestId) {
+            if (!done && currentRequestId !== this.requestId) {
+              await reader.cancel().catch(() => {});
+            }
+            break;
+          }
 
           lineBuffer += decoder.decode(value, { stream: true });
           const lines = lineBuffer.split('\n');
@@ -162,9 +170,11 @@ export class ClaudeApiService {
                 fullResponse += parsed.delta.text;
                 onChunk?.(parsed.delta.text);
               }
+              if (parsed.type === 'message_start' && parsed.message?.usage) {
+                inputTokens = parsed.message.usage.input_tokens ?? 0;
+              }
               if (parsed.type === 'message_delta') {
                 if (parsed.usage?.output_tokens) outputTokens = parsed.usage.output_tokens;
-                if (parsed.usage?.input_tokens) inputTokens = parsed.usage.input_tokens;
               }
             } catch { /* malformed SSE chunk, skip */ }
           }

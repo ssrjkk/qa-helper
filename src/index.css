@@ -3,11 +3,6 @@
  * @author ssrjkk
  */
 
-/**
- * Global styles
- * @author ssrjkk
- */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,18 +11,6 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
   min-height: 100vh;
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.glass-dark {
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 ::-webkit-scrollbar {

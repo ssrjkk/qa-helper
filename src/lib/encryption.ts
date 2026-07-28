@@ -7,34 +7,31 @@
 import { keyManager } from './keyManagement';
 import { arrayBufferToBase64, base64ToArrayBuffer } from './base64';
 import { ErrorService } from './errorService';
-import { ErrorCode } from './constants';
+import { ErrorCode, STORAGE_KEYS } from './constants';
 
-const STORAGE_KEY_SALT = 'qa-helper-salt';
-const STORAGE_KEY_API_KEY = 'qa-api-key';
 const PBKDF2_ITERATIONS = 100000;
 const ENCRYPTION_ALGORITHM = 'AES-GCM';
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12;
 const SALT_LENGTH = 16;
-const LEGACY_KEY_STORAGE = 'qa-helper-legacy-key';
 const LEGACY_KEY_LENGTH = 32;
 
 async function getOrCreateSalt(): Promise<Uint8Array> {
-  const storedSalt = localStorage.getItem(STORAGE_KEY_SALT);
+  const storedSalt = localStorage.getItem(STORAGE_KEYS.salt);
   if (storedSalt) {
     return base64ToArrayBuffer(storedSalt);
   }
   const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-  localStorage.setItem(STORAGE_KEY_SALT, arrayBufferToBase64(salt.buffer));
+  localStorage.setItem(STORAGE_KEYS.salt, arrayBufferToBase64(salt.buffer));
   return salt;
 }
 
 async function getOrCreateLegacyKey(): Promise<string> {
-  const stored = localStorage.getItem(LEGACY_KEY_STORAGE);
+  const stored = localStorage.getItem(STORAGE_KEYS.legacyKey);
   if (stored) return stored;
   const randomBytes = crypto.getRandomValues(new Uint8Array(LEGACY_KEY_LENGTH));
   const key = arrayBufferToBase64(randomBytes.buffer);
-  localStorage.setItem(LEGACY_KEY_STORAGE, key);
+  localStorage.setItem(STORAGE_KEYS.legacyKey, key);
   return key;
 }
 
@@ -123,16 +120,17 @@ export async function decryptApiKey(encryptedData: string): Promise<string | nul
 
 export async function saveApiKey(apiKey: string): Promise<void> {
   const encrypted = await encryptApiKey(apiKey);
-  localStorage.setItem(STORAGE_KEY_API_KEY, encrypted);
+  localStorage.setItem(STORAGE_KEYS.apiKey, encrypted);
 }
 
 export async function loadApiKey(): Promise<string | null> {
-  const encrypted = localStorage.getItem(STORAGE_KEY_API_KEY);
+  const encrypted = localStorage.getItem(STORAGE_KEYS.apiKey);
   if (!encrypted) return null;
   return decryptApiKey(encrypted);
 }
 
 export function clearApiKey(): void {
-  localStorage.removeItem(STORAGE_KEY_API_KEY);
-  localStorage.removeItem(STORAGE_KEY_SALT);
+  localStorage.removeItem(STORAGE_KEYS.apiKey);
+  localStorage.removeItem(STORAGE_KEYS.salt);
+  localStorage.removeItem(STORAGE_KEYS.legacyKey);
 }

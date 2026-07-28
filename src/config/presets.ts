@@ -185,10 +185,6 @@ Tools: Burp Suite, OWASP ZAP`,
   }
 ];
 
-export function getPresetById(id: string): ContextPreset | undefined {
-  return CONTEXT_PRESETS.find(preset => preset.id === id);
-}
-
 export function searchPresets(query: string): ContextPreset[] {
   const lowerQuery = query.toLowerCase();
   return CONTEXT_PRESETS.filter(preset => 

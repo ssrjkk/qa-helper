@@ -4,11 +4,10 @@
  * @author ssrjkk
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { MainContent } from './MainContent';
-import { Onboarding, hasSeenOnboarding } from './Onboarding';
+import { Onboarding, hasSeenOnboarding } from '../modals/Onboarding';
 import { MainLayout } from '../layout/MainLayout';
 import { useTheme, useKeyboardShortcuts } from '../../hooks';
 import { useDatabase } from '../../hooks/useDatabase';
@@ -62,6 +61,7 @@ export function AppContent({ db }: AppContentProps) {
   const isOnline = useOnlineStatus();
   const [contextError, setContextError] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
+  const handleCopy = useCallback(() => copyToClipboard(output), [output]);
 
   const {
     projects,
@@ -175,7 +175,7 @@ export function AppContent({ db }: AppContentProps) {
       apiKeyValid={apiKeyValid}
       onExecute={handleExecute}
       onReset={handleReset}
-      onCopy={() => copyToClipboard(output)}
+      onCopy={handleCopy}
       contextError={contextError}
       onContextError={setContextError}
       outputRef={outputRef}
@@ -195,11 +195,9 @@ export function AppContent({ db }: AppContentProps) {
   return (
     <>
       <MainLayout sidebar={sidebar} main={main} />
-      <AnimatePresence>
-        {showOnboarding && (
-          <Onboarding onComplete={() => setShowOnboarding(false)} />
-        )}
-      </AnimatePresence>
+      {showOnboarding && (
+        <Onboarding onComplete={() => setShowOnboarding(false)} />
+      )}
     </>
   );
 }

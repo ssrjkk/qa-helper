@@ -1,4 +1,5 @@
 import { GenericApiService } from './GenericApiService';
+import { getDefaultApiUrl } from './types';
 
 interface TogetherConfig {
   apiKey: string;
@@ -8,6 +9,6 @@ interface TogetherConfig {
 
 export class TogetherApiService extends GenericApiService {
   constructor(config: TogetherConfig) {
-    super({ ...config, apiUrl: 'https://api.together.xyz/v1/chat/completions', providerName: 'Together AI', temperature: 0.7 });
+    super({ ...config, apiUrl: getDefaultApiUrl('together'), providerName: 'Together AI', temperature: 0.7 });
   }
 }

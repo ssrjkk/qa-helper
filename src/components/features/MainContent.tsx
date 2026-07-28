@@ -5,9 +5,8 @@
  */
 
 import { useState, RefObject } from 'react';
-import { TaskSelector } from './TaskSelector';
-import { ScreenshotUploader } from './ScreenshotUploader';
-import { LazyChatArea, LazyCodebasePanel, LazySessionHistory, LazySuspense } from './LazyComponents';
+import { TaskSelector } from '../selectors/TaskSelector';
+import { LazyChatArea, LazyCodebasePanel, LazySessionHistory, LazyScreenshotUploader, LazySuspense } from './LazyComponents';
 import { Tabs } from '../ui';
 import type { TabType } from '../../types';
 import type { AgentStep } from '../../data/agent/types';
@@ -84,14 +83,16 @@ export function MainContent({
   if (selectedTask === 'screenshot_analysis') {
     return (
       <div className="space-y-6">
-        <ScreenshotUploader
-          context={context}
-          onContextChange={onContextChange}
-          maxContextLength={maxContextLength}
-          onError={onContextError}
-          error={error}
-          onScreenshotChange={() => {}}
-        />
+        <LazySuspense>
+          <LazyScreenshotUploader
+            context={context}
+            onContextChange={onContextChange}
+            maxContextLength={maxContextLength}
+            onError={onContextError}
+            error={error}
+            onScreenshotChange={() => {}}
+          />
+        </LazySuspense>
 
         <LazySuspense>
           <LazyChatArea

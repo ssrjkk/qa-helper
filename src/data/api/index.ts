@@ -1,10 +1,4 @@
-export type { AiProvider, AiModel, ApiResult } from './types';
+export type { AiProvider, ApiResult } from './types';
 export { PROVIDER_MODELS, PROVIDER_INFO, getDefaultModelForProvider, getVisionProviders } from './types';
 export type { UnifiedAiService } from './UnifiedAiService';
-export { ClaudeApiService } from './ClaudeApiService';
-export { GroqApiService } from './GroqApiService';
-export { DeepSeekApiService } from './DeepSeekApiService';
-export { OpenRouterApiService } from './OpenRouterApiService';
-export { TogetherApiService } from './TogetherApiService';
-export { NovitaApiService } from './NovitaApiService';
-export { UnifiedAiServiceImpl, createUnifiedAiService } from './UnifiedAiService';
+export { createUnifiedAiService } from './UnifiedAiService';

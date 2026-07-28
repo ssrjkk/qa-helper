@@ -5,9 +5,8 @@
  */
 
 import { useState, useCallback, useMemo, useRef, useEffect, createContext, useContext, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { SLIDE_UP, SPRING } from '../../lib/animations';
+import { SlideUp } from './Transitions';
+import { LIMITS } from '../../lib/constants';
 
 interface Toast {
   id: string;
@@ -29,7 +28,6 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const reduced = useReducedMotion();
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   useEffect(() => {
@@ -56,7 +54,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const timer = setTimeout(() => {
         timersRef.current.delete(id);
         setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, 4000);
+      }, LIMITS.toastDurationMs);
       timersRef.current.set(id, timer);
     },
     [],
@@ -72,16 +70,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         aria-label="Notifications"
         className="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 pointer-events-none"
       >
-        <AnimatePresence>
-          {toasts.map((toast) => (
-            <ToastItem
-              key={toast.id}
-              toast={toast}
-              onDismiss={() => dismiss(toast.id)}
-              reduced={reduced}
-            />
-          ))}
-        </AnimatePresence>
+        {toasts.map((toast) => (
+          <ToastItem
+            key={toast.id}
+            toast={toast}
+            onDismiss={() => dismiss(toast.id)}
+          />
+        ))}
       </div>
     </ToastContext.Provider>
   );
@@ -96,27 +91,25 @@ const typeStyles: Record<Toast['type'], string> = {
 const ToastItem = memo(function ToastItem({
   toast,
   onDismiss,
-  reduced,
 }: {
   toast: Toast;
   onDismiss: () => void;
-  reduced: boolean;
 }) {
   return (
-    <motion.div
-      {...(reduced ? {} : SLIDE_UP)}
-      transition={SPRING.snappy}
-      className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-xl ${typeStyles[toast.type]}`}
-      role="status"
-    >
-      <span className="text-sm">{toast.message}</span>
-      <button
-        onClick={onDismiss}
-        className="ml-2 text-current opacity-60 hover:opacity-100 transition-opacity"
-        aria-label="Dismiss notification"
+    <SlideUp>
+      <div
+        className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-xl ${typeStyles[toast.type]}`}
+        role="status"
       >
-        ×
-      </button>
-    </motion.div>
+        <span className="text-sm">{toast.message}</span>
+        <button
+          onClick={onDismiss}
+          className="ml-2 text-current opacity-60 hover:opacity-100 transition-opacity"
+          aria-label="Dismiss notification"
+        >
+          ×
+        </button>
+      </div>
+    </SlideUp>
   );
-}, (prev, next) => prev.toast.id === next.toast.id && prev.toast.message === next.toast.message && prev.toast.type === next.toast.type && prev.reduced === next.reduced);
+}, (prev, next) => prev.toast.id === next.toast.id && prev.toast.message === next.toast.message && prev.toast.type === next.toast.type);

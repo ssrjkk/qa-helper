@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+.git
+.github
+*.md
+.vscode
+.env*
+coverage
+e2e
+playwright-report
+test-results

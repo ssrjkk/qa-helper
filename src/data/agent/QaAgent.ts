@@ -198,6 +198,8 @@ Remember: Start by listing directories and reading relevant files. Only produce 
           };
         }
 
+        if (this.isAborted) break;
+
         const truncatedContent = toolResult.content.length > 15000
           ? `${toolResult.content.slice(0, 15_000)}\n... (truncated, ${toolResult.content.length - 15000} chars omitted)`
           : toolResult.content;

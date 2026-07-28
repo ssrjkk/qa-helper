@@ -4,7 +4,9 @@
  * @author ssrjkk
  */
 
-const RATE_LIMIT_KEY = 'qa-rate-limit';
+import { STORAGE_KEYS, ErrorCode } from './constants';
+import { ErrorService } from './errorService';
+
 const DEFAULT_WINDOW_MS = 60000;
 const DEFAULT_MAX_REQUESTS = 10;
 
@@ -32,7 +34,7 @@ function loadState(): RateLimitState {
     return { requests: [], config };
   }
   try {
-    const saved = localStorage.getItem(RATE_LIMIT_KEY);
+    const saved = localStorage.getItem(STORAGE_KEYS.rateLimit);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed && typeof parsed === 'object' && Array.isArray(parsed.requests)) {
@@ -44,6 +46,7 @@ function loadState(): RateLimitState {
     }
   } catch {
     if (import.meta.env.DEV) console.warn('[rateLimiter] Failed to load state from localStorage');
+    ErrorService.reportAsync(ErrorCode.RATE_LIMIT, new Error('Failed to load rate limit state'));
   }
   return { requests: [], config };
 }
@@ -51,9 +54,10 @@ function loadState(): RateLimitState {
 function saveState(state: RateLimitState): void {
   if (typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEYS.rateLimit, JSON.stringify(state));
   } catch {
     if (import.meta.env.DEV) console.warn('[rateLimiter] Failed to save state to localStorage');
+    ErrorService.reportAsync(ErrorCode.RATE_LIMIT, new Error('Failed to save rate limit state'));
   }
 }
 

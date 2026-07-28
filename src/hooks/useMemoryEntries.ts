@@ -7,11 +7,11 @@
 import { useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { cloudSync } from '../lib/cloudSync';
+import { ErrorService } from '../lib/errorService';
+import { PROTOTYPE_POLLUTION_KEYS } from '../lib/constants';
 import type { Project } from '../types';
 import type { MemoryEntry } from '../types/memory';
 import type { useDatabase } from './useDatabase';
-
-const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 type UseDatabaseReturn = ReturnType<typeof useDatabase>;
 
@@ -80,7 +80,7 @@ export function useMemoryEntries(selectedProject: number | null, db: UseDatabase
       try {
         const parsed: ImportData = JSON.parse(data);
         if (!parsed || typeof parsed !== 'object') return false;
-        if (Object.keys(parsed).some(k => DANGEROUS_KEYS.has(k))) return false;
+        if (Object.keys(parsed).some(k => PROTOTYPE_POLLUTION_KEYS.has(k))) return false;
         if (!parsed.project) return false;
         const project = parsed.project;
 
@@ -105,8 +105,8 @@ export function useMemoryEntries(selectedProject: number | null, db: UseDatabase
         setMemoryEntries(updatedEntries);
         setSelectedProject(projectId);
         return true;
-      } catch {
-        if (import.meta.env.DEV) console.warn('[useMemoryEntries] Failed to import project');
+      } catch (err) {
+        ErrorService.report('STORAGE_READ', `import: ${err instanceof Error ? err.message : String(err)}`);
         return false;
       }
     },

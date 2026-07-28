@@ -6,6 +6,7 @@
 
 import type { ApiResult } from './types';
 import { metricsCollector } from '../../lib/metrics';
+import { LIMITS } from '../../lib/constants';
 
 function isRetryableError(error: string): boolean {
   const lower = error.toLowerCase();
@@ -146,8 +147,10 @@ export class GenericApiService {
         }
 
         if (attempt < maxRetries && isRetryableError(error.message)) {
-          const baseDelay = Math.min(Math.pow(2, attempt) * 1000, 30000);
-          const jitter = baseDelay * 0.1 * (Math.random() * 2 - 1);
+          const baseDelay = Math.min(Math.pow(2, attempt) * LIMITS.retryBaseDelayMs, LIMITS.retryMaxDelayMs);
+          const jitterArray = new Uint32Array(1);
+          crypto.getRandomValues(jitterArray);
+          const jitter = baseDelay * LIMITS.retryJitterFactor * ((jitterArray[0]! / 0xFFFFFFFF) * 2 - 1);
           const delay = Math.round(baseDelay + jitter);
           options.onRetryAttempt?.(attempt + 1, delay, error.message);
           await new Promise<void>((resolve, reject) => {

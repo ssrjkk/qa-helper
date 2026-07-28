@@ -445,3 +445,7 @@ export const PROVIDER_INFO: Record<AiProvider, { name: string; apiUrl: string; d
     authType: 'bearer',
   },
 };
+
+export function getDefaultApiUrl(provider: AiProvider): string {
+  return PROVIDER_INFO[provider].apiUrl;
+}

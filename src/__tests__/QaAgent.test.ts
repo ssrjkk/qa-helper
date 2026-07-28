@@ -1,7 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { QaAgent } from '../data/agent/QaAgent';
+import type { CodebaseProvider } from '../data/codebase/CodebaseProvider';
+import type { UnifiedAiService } from '../data/api/UnifiedAiService';
 
-const mockCodebase = {
+type MockedCodebase = {
+  [K in keyof CodebaseProvider]: CodebaseProvider[K] extends (...args: infer A) => infer R
+    ? Mock<(...args: A) => R>
+    : CodebaseProvider[K];
+};
+
+type MockedAiService = {
+  [K in keyof UnifiedAiService]: UnifiedAiService[K] extends (...args: infer A) => infer R
+    ? Mock<(...args: A) => R>
+    : UnifiedAiService[K];
+};
+
+const mockCodebase: MockedCodebase = {
   name: 'test-project',
   isReady: true,
   listTree: vi.fn().mockResolvedValue([
@@ -15,7 +29,7 @@ const mockCodebase = {
   getStructureSummary: vi.fn().mockResolvedValue('test-project/\n  src/\n    utils.ts'),
 };
 
-const mockAiService = {
+const mockAiService: MockedAiService = {
   executeWithRetry: vi.fn(),
   execute: vi.fn(),
   abort: vi.fn(),
@@ -32,7 +46,7 @@ describe('QaAgent', () => {
   });
 
   it('executes a tool call and returns final answer', async () => {
-    const agent = new QaAgent(mockCodebase as never, mockAiService as never);
+    const agent = new QaAgent(mockCodebase , mockAiService );
 
     mockAiService.executeWithRetry
       .mockResolvedValueOnce({
@@ -55,7 +69,7 @@ describe('QaAgent', () => {
   });
 
   it('returns text response when no tool is needed', async () => {
-    const agent = new QaAgent(mockCodebase as never, mockAiService as never);
+    const agent = new QaAgent(mockCodebase , mockAiService );
 
     mockAiService.executeWithRetry.mockResolvedValueOnce({
       success: true,
@@ -70,7 +84,7 @@ describe('QaAgent', () => {
   });
 
   it('returns gracefully on max iterations exceeded', async () => {
-    const agent = new QaAgent(mockCodebase as never, mockAiService as never);
+    const agent = new QaAgent(mockCodebase , mockAiService );
 
     mockAiService.executeWithRetry.mockResolvedValue({
       success: true,
@@ -85,7 +99,7 @@ describe('QaAgent', () => {
   });
 
   it('handles tool execution errors gracefully', async () => {
-    const agent = new QaAgent(mockCodebase as never, mockAiService as never);
+    const agent = new QaAgent(mockCodebase , mockAiService );
     mockCodebase.readFile.mockRejectedValueOnce(new Error('File not found'));
 
     mockAiService.executeWithRetry
@@ -104,7 +118,7 @@ describe('QaAgent', () => {
   });
 
   it('handles API failures', async () => {
-    const agent = new QaAgent(mockCodebase as never, mockAiService as never);
+    const agent = new QaAgent(mockCodebase , mockAiService );
 
     mockAiService.executeWithRetry.mockResolvedValueOnce({
       success: false,
@@ -117,7 +131,7 @@ describe('QaAgent', () => {
   });
 
   it('abort stops execution', async () => {
-    const agent = new QaAgent(mockCodebase as never, mockAiService as never);
+    const agent = new QaAgent(mockCodebase , mockAiService );
 
     mockAiService.executeWithRetry.mockImplementation(() => {
       agent.abort();

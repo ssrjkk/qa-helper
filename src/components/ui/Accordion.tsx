@@ -6,9 +6,7 @@
 
 import { useState, useId } from 'react';
 import type { ReactNode } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { HEIGHT, SPRING } from '../../lib/animations';
+import { Collapse } from './Transitions';
 
 interface AccordionProps {
   icon: string;
@@ -29,7 +27,6 @@ export function Accordion({
 }: AccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const contentId = useId();
-  const reduced = useReducedMotion();
 
   return (
     <div className="space-y-3">
@@ -52,32 +49,20 @@ export function Accordion({
           {badge !== undefined && (
             <span className="text-xs text-gray-400">{badge}</span>
           )}
-          <motion.span
-            animate={reduced ? {} : { rotate: isOpen ? 180 : 0 }}
-            transition={SPRING.gentle}
-            className="text-gray-400"
+          <span
+            className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
             aria-hidden="true"
           >
             ▼
-          </motion.span>
+          </span>
         </div>
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            id={contentId}
-            role="region"
-            initial={reduced ? undefined : HEIGHT.initial}
-            animate={reduced ? {} : HEIGHT.animate}
-            exit={reduced ? {} : HEIGHT.exit}
-            transition={SPRING.gentle}
-            className="overflow-hidden"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Collapse show={isOpen}>
+        <div id={contentId} role="region">
+          {children}
+        </div>
+      </Collapse>
     </div>
   );
 }

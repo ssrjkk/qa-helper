@@ -1,4 +1,5 @@
 import { GenericApiService } from './GenericApiService';
+import { getDefaultApiUrl } from './types';
 
 interface DeepSeekConfig {
   apiKey: string;
@@ -8,6 +9,6 @@ interface DeepSeekConfig {
 
 export class DeepSeekApiService extends GenericApiService {
   constructor(config: DeepSeekConfig) {
-    super({ ...config, apiUrl: 'https://api.deepseek.com/v1/chat/completions', providerName: 'DeepSeek' });
+    super({ ...config, apiUrl: getDefaultApiUrl('deepseek'), providerName: 'DeepSeek' });
   }
 }

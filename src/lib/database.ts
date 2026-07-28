@@ -8,6 +8,8 @@ import type { Database } from 'sql.js';
 import type { Project, Task, ConversationMessage } from '../types';
 import type { MemoryEntry } from '../types/memory';
 import { queryAll, queryOne, safeRun, execTransaction, buildUpdateQuery } from './dbHelpers';
+import { ErrorService } from './errorService';
+import { ErrorCode } from './constants';
 
 export class DatabaseService {
   private lastError: string | null = null;
@@ -31,8 +33,8 @@ export class DatabaseService {
     this.isInitialized = value;
   }
 
-  execTransaction(operations: (() => void)[]): boolean {
-    const error = execTransaction(this.db, this.saveDb, operations);
+  async execTransaction(operations: (() => void)[]): Promise<boolean> {
+    const error = await execTransaction(this.db, this.saveDb, operations);
     if (error) {
       this.lastError = error;
       return false;
@@ -67,7 +69,8 @@ export class DatabaseService {
       const result = this.db.exec("SELECT last_insert_rowid() as id");
       const firstRow = result[0]?.values[0]?.[0];
       return firstRow != null ? Number(firstRow) : -1;
-    } catch {
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.DB_INSERT, err, { sql: sql.slice(0, 100) });
       return -1;
     }
   }
@@ -100,7 +103,7 @@ export class DatabaseService {
     this.saveDb();
   }
 
-  deleteProject(id: number): boolean {
+  async deleteProject(id: number): Promise<boolean> {
     return this.execTransaction([
       () => this.db.run("DELETE FROM screenshots WHERE task_id IN (SELECT id FROM tasks WHERE project_id = ?)", [id]),
       () => this.db.run("DELETE FROM tasks WHERE project_id = ?", [id]),
@@ -124,7 +127,7 @@ export class DatabaseService {
     );
   }
 
-  batchCreateTasks(tasks: Array<{ projectId: number; taskType: string; context: string; output: string }>): number[] {
+  async batchCreateTasks(tasks: Array<{ projectId: number; taskType: string; context: string; output: string }>): Promise<number[]> {
     const results: number[] = [];
     const operations: (() => void)[] = tasks.map(task => () => {
       this.db.run(
@@ -135,7 +138,7 @@ export class DatabaseService {
       const firstRow = result[0]?.values[0]?.[0];
       results.push(firstRow != null ? Number(firstRow) : -1);
     });
-    this.execTransaction(operations);
+    await this.execTransaction(operations);
     return results;
   }
 
@@ -183,7 +186,7 @@ export class DatabaseService {
     );
   }
 
-  batchCreateMemoryEntries(entries: Array<Omit<MemoryEntry, 'id' | 'created_at' | 'updated_at'>>): number[] {
+  async batchCreateMemoryEntries(entries: Array<Omit<MemoryEntry, 'id' | 'created_at' | 'updated_at'>>): Promise<number[]> {
     const results: number[] = [];
     const operations: (() => void)[] = entries.map(entry => () => {
       this.db.run(
@@ -194,7 +197,7 @@ export class DatabaseService {
       const firstRow = result[0]?.values[0]?.[0];
       results.push(firstRow != null ? Number(firstRow) : -1);
     });
-    this.execTransaction(operations);
+    await this.execTransaction(operations);
     return results;
   }
 

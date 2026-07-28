@@ -1,4 +1,5 @@
 import { GenericApiService } from './GenericApiService';
+import { getDefaultApiUrl } from './types';
 
 interface NovitaConfig {
   apiKey: string;
@@ -8,6 +9,6 @@ interface NovitaConfig {
 
 export class NovitaApiService extends GenericApiService {
   constructor(config: NovitaConfig) {
-    super({ ...config, apiUrl: 'https://api.novita.ai/v3/openai/chat/completions', providerName: 'Novita AI', temperature: 0.7 });
+    super({ ...config, apiUrl: getDefaultApiUrl('novita'), providerName: 'Novita AI', temperature: 0.7 });
   }
 }

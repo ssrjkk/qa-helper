@@ -123,7 +123,7 @@ export function useHistory<T>(initialPresent: T, options?: {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         const target = e.target as HTMLElement;
-        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable;
         if (isInput) return;
         e.preventDefault();
         if (e.shiftKey) {

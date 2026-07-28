@@ -6,30 +6,31 @@ test.describe('Project management', () => {
     await unlockApp(page);
 
     const newBtn = page.locator('button', { hasText: /new/i }).first();
-    if (!(await newBtn.isVisible({ timeout: 3000 }).catch(() => false))) {
-      test.skip();
-      return;
-    }
+    await expect(newBtn).toBeVisible({ timeout: 5000 });
+
     await newBtn.click();
 
     const nameInput = page.locator('input[placeholder*="project" i], input[placeholder*="name" i]').first();
-    if (await nameInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await nameInput.fill('E2E Test Project');
-      await page.keyboard.press('Enter');
-      await page.waitForTimeout(500);
-      await expect(page.locator('text=E2E Test Project')).toBeVisible();
-    }
+    await expect(nameInput).toBeVisible({ timeout: 3000 });
+
+    await nameInput.fill('E2E Test Project');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+    await expect(page.locator('text=E2E Test Project')).toBeVisible();
   });
 
   test('select an existing project', async ({ page }) => {
     await page.goto('/');
     await unlockApp(page);
 
-    const projectCard = page.locator('[class*="glass"]').first();
-    if (await projectCard.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await projectCard.click();
-      await page.waitForTimeout(300);
-    }
+    const projectCard = page.locator('[role="button"][aria-label*="Select project"], [role="button"][aria-label*="select project"]').first();
+    await expect(projectCard).toBeVisible({ timeout: 5000 });
+
+    await projectCard.click();
+    await page.waitForTimeout(500);
+
+    const chatArea = page.locator('textarea').first();
+    await expect(chatArea).toBeVisible({ timeout: 5000 });
   });
 
   test('shows API key button when not configured', async ({ page }) => {
@@ -37,8 +38,6 @@ test.describe('Project management', () => {
     await unlockApp(page);
 
     const apiKeyBtn = page.locator('button', { hasText: /api key|set api/i }).first();
-    if (await apiKeyBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await expect(apiKeyBtn).toBeVisible();
-    }
+    await expect(apiKeyBtn).toBeVisible({ timeout: 5000 });
   });
 });

@@ -6,20 +6,10 @@
 
 export const APP_NAME = 'QA Copilot';
 export const APP_AUTHOR = 'ssrjkk';
-export const APP_VERSION = '1.0.0';
-export const APP_GITHUB = 'https://github.com/ssrjkk/qa-helper';
 export const APP_WEBSITE = 'https://qa-copilot.ssrjkk.dev';
 export const APP_FOOTER = `${APP_NAME} by ${APP_AUTHOR} | MIT License`;
 export const APP_HEADER_SUBTITLE = 'AI-Powered QA Assistant';
 export const APP_HEADER_BYLINE = `by ${APP_AUTHOR}`;
-
-export const DB_TABLES = {
-  projects: 'projects',
-  tasks: 'tasks',
-  screenshots: 'screenshots',
-  conversationHistory: 'conversation_history',
-  memoryEntries: 'memory_entries',
-} as const;
 
 export const STORAGE_KEYS = {
   onboarding: 'qa-copilot-onboarding-seen',
@@ -28,6 +18,17 @@ export const STORAGE_KEYS = {
   rateLimit: 'qa-rate-limit',
   legacyKey: 'qa-helper-legacy-key',
   theme: 'qa-copilot-theme',
+  locale: 'qa-copilot-locale',
+  metrics: 'qa-metrics',
+  dbBackup: 'qa-helper-sync-backup',
+  dbUnsaved: 'qa-helper-unsaved',
+  lsPassphrase: 'qa-helper-ls-key',
+  syncStatus: 'qa-helper-sync-status',
+  syncConfig: 'qa-helper-sync-config',
+  syncBackup: 'qa-helper-sync-backup-data',
+  attempts: 'qa-helper-attempts',
+  backupIndex: 'qa-helper-backup-index',
+  backupPrefix: 'qa-helper-backup-',
 } as const;
 
 export const LIMITS = {
@@ -40,23 +41,17 @@ export const LIMITS = {
   maxToolOutputChars: 2000,
   maxAgentContextMessages: 6,
   maxRetries: 3,
+  toastDurationMs: 4000,
+  retryBaseDelayMs: 1000,
+  retryMaxDelayMs: 30000,
+  retryJitterFactor: 0.1,
+  maxAgentSteps: 100,
+  maxCacheEntries: 100,
+  maxFileContentChars: 100_000,
+  crashReportRetentionMs: 30 * 24 * 60 * 60 * 1000,
 } as const;
 
-export const ANIMATION = {
-  fadeIn: 'fadeIn',
-  fadeOut: 'fadeOut',
-  slideUp: 'slideUp',
-  slideDown: 'slideDown',
-} as const;
-
-export const KEYBOARD = {
-  undo: 'z',
-  redo: 'y',
-  execute: 'Enter',
-  toggleMode: 'm',
-  toggleSidebar: 'b',
-  escape: 'Escape',
-} as const;
+export const PROTOTYPE_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 export const ErrorCode = {
   DB_INIT: 'DB_INIT',
@@ -83,6 +78,7 @@ export const ErrorCode = {
   METRICS_LOAD: 'METRICS_LOAD',
   METRICS_SAVE: 'METRICS_SAVE',
   RATE_LIMIT: 'RATE_LIMIT',
+  AUTH: 'AUTH',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

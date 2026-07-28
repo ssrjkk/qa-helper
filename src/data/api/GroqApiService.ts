@@ -5,7 +5,9 @@
  */
 
 import type { ApiResult } from './types';
+import { getDefaultApiUrl } from './types';
 import { metricsCollector } from '../../lib/metrics';
+import { LIMITS } from '../../lib/constants';
 
 export interface GroqApiServiceOptions {
   apiKey: string;
@@ -44,7 +46,7 @@ export class GroqApiService {
   constructor(options: GroqApiServiceOptions) {
     this.apiKey = options.apiKey;
     this.model = options.model || 'llama-3.3-70b-versatile';
-    this.baseUrl = options.baseUrl || 'https://api.groq.com/openai/v1/chat/completions';
+    this.baseUrl = options.baseUrl || getDefaultApiUrl('groq');
     this.maxTokens = options.maxTokens || 8192;
   }
 
@@ -57,13 +59,13 @@ export class GroqApiService {
   }
 
   private getRetryableError(error: Error): { type: string; retryAfter?: number } {
-    if (!navigator.onLine) return { type: 'network' };
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return { type: 'network' };
 
     const msg = error.message;
     const statusMatch = msg.match(/(?:failed|error).*?:\s*(\d{3})/i) || msg.match(/\b(429|5\d{2})\b/);
 
-    if (statusMatch) {
-      const status = parseInt(statusMatch[1]!);
+    if (statusMatch?.[1]) {
+      const status = parseInt(statusMatch[1]);
       if (status === 429) {
         const resetAfter = msg.match(/retry-after:\s*(\d+)/i)?.[1];
         return { type: 'rate_limit', retryAfter: resetAfter ? parseInt(resetAfter) : 5 };
@@ -77,8 +79,10 @@ export class GroqApiService {
   }
 
   private calculateBackoff(attempt: number): number {
-    const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
-    const jitter = delay * 0.1 * (Math.random() * 2 - 1);
+    const delay = Math.min(LIMITS.retryBaseDelayMs * Math.pow(2, attempt), LIMITS.retryMaxDelayMs);
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const jitter = delay * LIMITS.retryJitterFactor * ((array[0]! / 0xFFFFFFFF) * 2 - 1);
     return Math.round(delay + jitter);
   }
 
@@ -96,7 +100,7 @@ export class GroqApiService {
       return { success: false, error: 'API key is required' };
     }
 
-    if (!navigator.onLine) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
       return { success: false, error: 'No internet connection' };
     }
 
@@ -145,7 +149,12 @@ export class GroqApiService {
       try {
         while (true) {
           const { done, value } = await reader.read();
-          if (done || currentRequestId !== this.requestId) break;
+          if (done || currentRequestId !== this.requestId) {
+            if (!done && currentRequestId !== this.requestId) {
+              await reader.cancel().catch(() => {});
+            }
+            break;
+          }
 
           lineBuffer += decoder.decode(value, { stream: true });
           const lines = lineBuffer.split('\n');

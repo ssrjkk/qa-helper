@@ -6,6 +6,7 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { LIMITS } from '../lib/constants';
 import type { useDatabase } from './useDatabase';
 
 type UseDatabaseReturn = ReturnType<typeof useDatabase>;
@@ -50,7 +51,7 @@ export function useProjectData(db: UseDatabaseReturn) {
       setSessions([]);
       return;
     }
-    const recentSessions = getRecentSessions(selectedProject, 50);
+    const recentSessions = getRecentSessions(selectedProject, LIMITS.maxSessions);
     setSessions(recentSessions);
   }, [selectedProject, getRecentSessions, setSessions]);
 
@@ -86,7 +87,7 @@ export function useProjectData(db: UseDatabaseReturn) {
         updateProjectMemoryRef.current(pendingSaveRef.current.projectId, pendingSaveRef.current.memory);
         pendingSaveRef.current = null;
       }
-    }, 1000);
+    }, LIMITS.autoSaveIntervalMs);
   }, []);
 
   const handleSaveMemory = useCallback(

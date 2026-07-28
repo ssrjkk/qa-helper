@@ -8,11 +8,11 @@ import type { Project } from '../types';
 import type { MemoryEntry } from '../types/memory';
 import { keyManager } from './keyManagement';
 import { isValidUrl } from './utils';
-
-const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+import { ErrorService } from './errorService';
+import { ErrorCode, STORAGE_KEYS, PROTOTYPE_POLLUTION_KEYS } from './constants';
 
 function hasDangerousKeys(obj: Record<string, unknown>): boolean {
-  return Object.keys(obj).some(k => DANGEROUS_KEYS.has(k));
+  return Object.keys(obj).some(k => PROTOTYPE_POLLUTION_KEYS.has(k));
 }
 
 export interface CloudConfig {
@@ -36,10 +36,6 @@ export interface SyncData {
   memoryEntries: MemoryEntry[];
 }
 
-const SYNC_KEY = 'qa-helper-sync';
-const SYNC_STATUS_KEY = `${SYNC_KEY}-status`;
-const SYNC_CONFIG_KEY = `${SYNC_KEY}-config`;
-const SYNC_BACKUP_KEY = `${SYNC_KEY}-backup`;
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1000;
 
@@ -62,7 +58,7 @@ export class CloudSyncService {
 
   private loadStatus(): void {
     try {
-      const saved = localStorage.getItem(SYNC_STATUS_KEY);
+      const saved = localStorage.getItem(STORAGE_KEYS.syncStatus);
       if (saved) {
         const parsed = JSON.parse(saved);
         const VALID_STATUSES = ['idle', 'syncing', 'synced', 'error'];
@@ -72,22 +68,24 @@ export class CloudSyncService {
       }
     } catch {
       if (import.meta.env.DEV) console.warn('[cloudSync] Failed to load sync status');
+      ErrorService.reportAsync(ErrorCode.CLOUD_SYNC, new Error('Failed to load sync status'), { operation: 'loadStatus' });
     }
   }
 
   private saveStatus(): void {
     try {
-      localStorage.setItem(SYNC_STATUS_KEY, JSON.stringify(this.status));
+      localStorage.setItem(STORAGE_KEYS.syncStatus, JSON.stringify(this.status));
       this.notifyListeners();
     } catch {
       if (import.meta.env.DEV) console.warn('[cloudSync] Failed to save sync status');
+      ErrorService.reportAsync(ErrorCode.CLOUD_SYNC, new Error('Failed to save sync status'), { operation: 'saveStatus' });
     }
   }
 
   private async loadConfig(): Promise<void> {
     if (this.configManuallySet) return;
     try {
-      const saved = localStorage.getItem(SYNC_CONFIG_KEY);
+      const saved = localStorage.getItem(STORAGE_KEYS.syncConfig);
       if (saved) {
         const parsed = JSON.parse(saved) as Record<string, unknown>;
         if (parsed && typeof parsed.provider === 'string') {
@@ -112,6 +110,7 @@ export class CloudSyncService {
       }
     } catch {
       if (import.meta.env.DEV) console.warn('[cloudSync] Failed to load config');
+      ErrorService.reportAsync(ErrorCode.CLOUD_CONFIG, new Error('Failed to load config'), { operation: 'loadConfig' });
     }
   }
 
@@ -137,9 +136,10 @@ export class CloudSyncService {
       if (toStore.apiKey && keyManager.isReady()) {
         toStore.apiKey = await keyManager.encryptApiKey(toStore.apiKey);
       }
-      localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(toStore));
+      localStorage.setItem(STORAGE_KEYS.syncConfig, JSON.stringify(toStore));
     } catch {
       if (import.meta.env.DEV) console.warn('[cloudSync] Failed to save config');
+      ErrorService.reportAsync(ErrorCode.CLOUD_CONFIG, new Error('Failed to save config'), { operation: 'configure' });
     }
   }
 
@@ -176,7 +176,8 @@ export class CloudSyncService {
         projects: data.projects as Project[],
         memoryEntries: validEntries,
       };
-    } catch {
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.CLOUD_IMPORT, err, { operation: 'importData' });
       return null;
     }
   }
@@ -231,7 +232,7 @@ export class CloudSyncService {
   async syncToLocal(projects: Project[], memoryEntries: MemoryEntry[]): Promise<boolean> {
     const data = await this.exportData(projects, memoryEntries);
     try {
-      localStorage.setItem(SYNC_BACKUP_KEY, JSON.stringify(data, null, 2));
+      localStorage.setItem(STORAGE_KEYS.syncBackup, JSON.stringify(data, null, 2));
     } catch (err) {
       if (err instanceof DOMException && err.name === 'QuotaExceededError') {
         throw new Error('Local storage quota exceeded — reduce data size or clear storage');
@@ -312,7 +313,7 @@ export class CloudSyncService {
       
       switch (this.config.provider) {
         case 'local': {
-          const stored = localStorage.getItem(SYNC_BACKUP_KEY);
+          const stored = localStorage.getItem(STORAGE_KEYS.syncBackup);
           if (!stored) return null;
           data = await this.importData(stored);
           break;
@@ -363,7 +364,8 @@ export class CloudSyncService {
       }
       
       return data;
-    } catch {
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.CLOUD_SYNC, err, { operation: 'syncFromCloud', provider: this.config.provider });
       return null;
     }
   }
@@ -389,7 +391,8 @@ export class CloudSyncService {
           )
         : [];
       return { projects: decoded.projects as Project[], memoryEntries: validEntries };
-    } catch {
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.CLOUD_IMPORT, err, { operation: 'parseShareLink' });
       return null;
     }
   }
@@ -411,17 +414,18 @@ export class CloudSyncService {
     try {
       const text = await file.text();
       return await this.importData(text);
-    } catch {
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.CLOUD_IMPORT, err, { operation: 'restoreFromFile' });
       return null;
     }
   }
 
   clearLocalBackup(): void {
-    localStorage.removeItem(SYNC_BACKUP_KEY);
+    localStorage.removeItem(STORAGE_KEYS.syncBackup);
   }
 
   hasLocalBackup(): boolean {
-    return localStorage.getItem(SYNC_BACKUP_KEY) !== null;
+    return localStorage.getItem(STORAGE_KEYS.syncBackup) !== null;
   }
 }
 

@@ -23,25 +23,3 @@ export function useReducedMotion(): boolean {
 
   return reduced;
 }
-
-export function motionProps(
-  reduced: boolean,
-  variants: {
-    initial: Record<string, unknown>;
-    animate: Record<string, unknown>;
-    exit?: Record<string, unknown>;
-  },
-) {
-  if (reduced) {
-    return {
-      initial: false,
-      animate: {},
-      exit: {},
-    };
-  }
-  return {
-    initial: variants.initial,
-    animate: variants.animate,
-    exit: variants.exit ?? {},
-  };
-}

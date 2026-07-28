@@ -162,9 +162,10 @@ export function sleep(ms: number): Promise<void> {
 }
 
 export function generateId(prefix?: string): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 9);
-  return prefix ? `${prefix}_${timestamp}_${random}` : `${timestamp}_${random}`;
+  const id = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).substring(2, 11);
+  return prefix ? `${prefix}_${id}` : id;
 }
 
 export function parseQueryParams(url: string): Record<string, string> {
@@ -241,7 +242,10 @@ export function escapeRegex(str: string): string {
 
 export function parseJSON<T>(json: string, fallback: T): T {
   try {
-    return JSON.parse(json) as T;
+    const parsed = JSON.parse(json);
+    if (fallback === null) return parsed as T;
+    if (parsed !== null && typeof parsed === typeof fallback) return parsed as T;
+    return fallback;
   } catch {
     return fallback;
   }
@@ -253,7 +257,17 @@ export function clamp(value: number, min: number, max: number): number {
 
 export function randomInt(min: number, max: number): number {
   if (min > max) return min;
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  const range = max - min + 1;
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return min + (array[0]! % range);
+}
+
+export function secureJitter(baseDelay: number, factor: number): number {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  const normalized = array[0]! / 0xFFFFFFFF;
+  return Math.round(baseDelay + baseDelay * factor * (2 * normalized - 1));
 }
 
 export function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K> {

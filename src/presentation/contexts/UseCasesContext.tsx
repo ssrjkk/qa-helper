@@ -180,7 +180,7 @@ export function useClaudeApi() {
 
     const apiKey = options.apiKey || apiKeys[currentProvider];
     if (!apiKey) {
-      setIsLoading(false);
+      if (abortControllerRef.current === controller) setIsLoading(false);
       return { success: false, error: `${currentProvider} API key is required` };
     }
 
@@ -192,11 +192,14 @@ export function useClaudeApi() {
         ...options,
         signal: controller.signal,
         onRetryAttempt: (attempt, delay, err) => {
-          setRetryInfo({ attempt, delay, error: err, isRetrying: true });
+          if (abortControllerRef.current === controller) {
+            setRetryInfo({ attempt, delay, error: err, isRetrying: true });
+          }
         },
         onChunk: options.onChunk,
       });
     } catch (err) {
+      if (abortControllerRef.current !== controller) return { success: false, error: 'Superseded' };
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMsg);
       setIsLoading(false);
@@ -204,6 +207,7 @@ export function useClaudeApi() {
       return { success: false, error: errorMsg };
     }
 
+    if (abortControllerRef.current !== controller) return { success: false, error: 'Superseded' };
     setIsLoading(false);
     setRetryInfo(null);
 

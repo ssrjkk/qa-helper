@@ -1,87 +1,33 @@
 /**
- * Loading skeleton placeholders
+ * Skeleton loading components
  * @module Skeleton
  * @author ssrjkk
  */
 
-import { motion } from 'framer-motion';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
-
 interface SkeletonProps {
   className?: string;
-  variant?: 'text' | 'circular' | 'rectangular';
-  width?: string;
-  height?: string;
-  lines?: number;
+  count?: number;
 }
 
-export function Skeleton({
-  className = '',
-  variant = 'text',
-  width,
-  height,
-  lines = 1,
-}: SkeletonProps) {
-  const reduced = useReducedMotion();
-
-  const base = 'bg-white/5 rounded';
-  const variants = {
-    text: 'h-4 rounded',
-    circular: 'rounded-full',
-    rectangular: 'rounded-xl',
-  };
-
-  if (variant === 'text' && lines > 1) {
+function Skeleton({ className = '', count = 1 }: SkeletonProps) {
+  if (count > 1) {
     return (
-      <div className={`space-y-2 ${className}`} aria-busy="true" aria-label="Loading">
-        {Array.from({ length: lines }).map((_, i) => (
-          <motion.div
-            key={i}
-            className={`${base} ${variants.text}`}
-            style={{
-              width: i === lines - 1 ? '60%' : '100%',
-              ...(width ? { width } : {}),
-              ...(height ? { height } : {}),
-            }}
-            {...(reduced
-              ? {}
-              : {
-                  animate: { opacity: [0.4, 0.7, 0.4] },
-                  transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
-                })}
-          />
+      <div className="space-y-2">
+        {Array.from({ length: count }, (_, i) => (
+          <div key={i} className={`animate-pulse bg-white/5 rounded ${className}`} />
         ))}
       </div>
     );
   }
-
-  return (
-    <motion.div
-      className={`${base} ${variants[variant]} ${className}`}
-      style={{ width, height }}
-      aria-busy="true"
-      aria-label="Loading"
-      {...(reduced
-        ? {}
-        : {
-            animate: { opacity: [0.4, 0.7, 0.4] },
-            transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
-          })}
-    />
-  );
+  return <div className={`animate-pulse bg-white/5 rounded ${className}`} />;
 }
 
-export function SkeletonCard({ className = '' }: { className?: string }) {
+export function SkeletonCard() {
   return (
-    <div className={`p-4 bg-white/5 border border-white/10 rounded-xl space-y-3 ${className}`} aria-busy="true">
-      <div className="flex items-center gap-3">
-        <Skeleton variant="circular" width="2rem" height="2rem" />
-        <div className="flex-1 space-y-2">
-          <Skeleton width="60%" />
-          <Skeleton width="40%" className="h-3" />
-        </div>
-      </div>
-      <Skeleton lines={2} />
+    <div className="p-4 bg-white/5 rounded-xl border border-white/10 space-y-3">
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-3 w-1/2" />
+      <Skeleton className="h-3 w-2/3" />
     </div>
   );
 }

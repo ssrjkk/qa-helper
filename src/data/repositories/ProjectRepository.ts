@@ -13,7 +13,7 @@ export interface IProjectRepository {
   findById(id: number): Project | undefined;
   create(data: CreateProjectDTO): number;
   update(id: number, data: UpdateProjectDTO): void;
-  delete(id: number): void;
+  delete(id: number): Promise<void>;
 }
 
 export class ProjectRepository implements IProjectRepository {
@@ -47,8 +47,8 @@ export class ProjectRepository implements IProjectRepository {
     }
   }
 
-  delete(id: number): void {
-    execTransaction(this.db, this.saveDb, [
+  async delete(id: number): Promise<void> {
+    await execTransaction(this.db, this.saveDb, [
       () => this.db.run("DELETE FROM screenshots WHERE task_id IN (SELECT id FROM tasks WHERE project_id = ?)", [id]),
       () => this.db.run("DELETE FROM tasks WHERE project_id = ?", [id]),
       () => this.db.run("DELETE FROM conversation_history WHERE project_id = ?", [id]),

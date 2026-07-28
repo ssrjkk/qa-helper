@@ -298,7 +298,7 @@ describe('generateId', () => {
 
   it('should work without prefix', () => {
     const id = generateId();
-    expect(id).toMatch(/_/);
+    expect(id.length).toBeGreaterThan(0);
   });
 });
 
@@ -391,7 +391,7 @@ describe('pick', () => {
   });
 
   it('should ignore non-existent keys', () => {
-    expect(pick({ a: 1 }, ['a', 'z' as never])).toEqual({ a: 1 });
+    expect(pick({ a: 1 }, ['a', 'z' as keyof { a: number }])).toEqual({ a: 1 });
   });
 });
 

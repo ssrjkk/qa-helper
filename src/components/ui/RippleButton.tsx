@@ -5,7 +5,6 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import type { ReactNode, MouseEvent } from 'react';
 
 interface RippleButtonProps {
@@ -62,26 +61,22 @@ export function RippleButton({
   };
 
   return (
-    <motion.button
+    <button
       type={type}
       onClick={handleClick}
       disabled={disabled}
       aria-expanded={ariaExpanded}
       aria-label={ariaLabel}
-      whileHover={{ scale: disabled ? 1 : 1.02 }}
-      whileTap={{ scale: disabled ? 1 : 0.98 }}
-      className={`relative overflow-hidden rounded-xl px-6 py-3 font-semibold transition-shadow disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+      className={`relative overflow-hidden rounded-xl px-6 py-3 font-semibold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${variants[variant]} ${className}`}
     >
       {ripples.map(ripple => (
-        <motion.span
+        <span
           key={ripple.id}
-          className="absolute bg-white/30 rounded-full -translate-x-1/2 -translate-y-1/2"
-          style={{ left: ripple.x, top: ripple.y, width: 0, height: 0 }}
-          animate={{ width: 300, height: 300, opacity: [0.5, 0] }}
-          transition={{ duration: 0.6 }}
+          className="absolute bg-white/30 rounded-full -translate-x-1/2 -translate-y-1/2 animate-ping"
+          style={{ left: ripple.x, top: ripple.y, width: 300, height: 300, animationDuration: '600ms' }}
         />
       ))}
       {children}
-    </motion.button>
+    </button>
   );
 }

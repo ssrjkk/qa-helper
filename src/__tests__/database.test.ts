@@ -76,8 +76,8 @@ describe('DatabaseService', () => {
   });
 
   describe('execTransaction', () => {
-    it('should execute all operations in a transaction', () => {
-      service.execTransaction([
+    it('should execute all operations in a transaction', async () => {
+      await service.execTransaction([
         () => db.run("INSERT INTO projects (name) VALUES (?)", ['Test']),
         () => db.run("INSERT INTO projects (name) VALUES (?)", ['Test 2']),
       ]);
@@ -87,10 +87,10 @@ describe('DatabaseService', () => {
       expect(saveDbMock).toHaveBeenCalled();
     });
 
-    it('should rollback on error', () => {
+    it('should rollback on error', async () => {
       const initialCount = db.exec("SELECT COUNT(*) as count FROM projects");
       
-      service.execTransaction([
+      await service.execTransaction([
         () => db.run("INSERT INTO projects (name) VALUES (?)", ['Test']),
         () => { throw new Error('Intentional error'); },
       ]);
@@ -99,8 +99,8 @@ describe('DatabaseService', () => {
       expect(result[0]!.values[0]![0]).toBe(initialCount[0]!.values[0]![0]);
     });
 
-    it('should return false on error', () => {
-      const result = service.execTransaction([
+    it('should return false on error', async () => {
+      const result = await service.execTransaction([
         () => db.run("INSERT INTO projects (name) VALUES (?)", ['Test']),
         () => { throw new Error('Intentional error'); },
       ]);
@@ -109,8 +109,8 @@ describe('DatabaseService', () => {
       expect(service.getLastError()).toBe('Intentional error');
     });
 
-    it('should return true on success', () => {
-      const result = service.execTransaction([
+    it('should return true on success', async () => {
+      const result = await service.execTransaction([
         () => db.run("INSERT INTO projects (name) VALUES (?)", ['Test']),
       ]);
       
@@ -148,20 +148,20 @@ describe('DatabaseService', () => {
   });
 
   describe('deleteProject', () => {
-    it('should delete project and all related data', () => {
+    it('should delete project and all related data', async () => {
       db.run("INSERT INTO projects (name) VALUES ('Test Project')");
       let result = db.exec("SELECT last_insert_rowid() as id");
       const projectId = result[0]!.values[0]![0] as number;
       
-      db.run("INSERT INTO tasks (project_id, task_type) VALUES (" + projectId + ", 'test')");
+      db.run("INSERT INTO tasks (project_id, task_type) VALUES (?, ?)", [projectId, 'test']);
       result = db.exec("SELECT last_insert_rowid() as id");
       const taskId = result[0]!.values[0]![0] as number;
       
-      db.run("INSERT INTO screenshots (task_id) VALUES (" + taskId + ")");
-      db.run("INSERT INTO conversation_history (project_id, role, content) VALUES (" + projectId + ", 'user', 'hello')");
-      db.run("INSERT INTO memory_entries (project_id, category, key, value) VALUES (" + projectId + ", 'test', 'key', 'value')");
+      db.run("INSERT INTO screenshots (task_id) VALUES (?)", [taskId]);
+      db.run("INSERT INTO conversation_history (project_id, role, content) VALUES (?, ?, ?)", [projectId, 'user', 'hello']);
+      db.run("INSERT INTO memory_entries (project_id, category, key, value) VALUES (?, ?, ?, ?)", [projectId, 'test', 'key', 'value']);
       
-      service.deleteProject(projectId);
+      await service.deleteProject(projectId);
       
       let stmt = db.prepare("SELECT COUNT(*) FROM projects WHERE id = ?");
       stmt.bind([projectId]);

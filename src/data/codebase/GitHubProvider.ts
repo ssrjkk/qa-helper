@@ -6,6 +6,8 @@
 
 import type { CodebaseFile, CodebaseProvider, CodebaseSearchResult } from './CodebaseProvider';
 import { IGNORED_DIRS, IGNORED_FILES, CODE_EXTENSIONS } from './constants';
+import { ErrorService } from '../../lib/errorService';
+import { ErrorCode } from '../../lib/constants';
 
 interface GitHubContentItem {
   name: string;
@@ -93,7 +95,8 @@ export class GitHubProvider implements CodebaseProvider {
       if (this.treeCache.size >= MAX_CACHE_SIZE) this.evictOldestEntry(this.treeCache);
       this.treeCache.set(cacheKey, files);
       return files;
-    } catch {
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.API_REQUEST, err, { provider: 'github', operation: 'listTree', path });
       return [];
     }
   }
@@ -144,7 +147,8 @@ export class GitHubProvider implements CodebaseProvider {
         line: 0,
         content: item.text_matches?.[0]?.fragment || '',
       }));
-    } catch {
+    } catch (err) {
+      ErrorService.reportAsync(ErrorCode.API_REQUEST, err, { provider: 'github', operation: 'searchCode' });
       return [];
     }
   }

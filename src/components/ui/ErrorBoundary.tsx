@@ -34,7 +34,10 @@ const CRASH_STORE_NAME = 'crash-reports';
 const DB_VERSION = 1;
 
 function generateCrashId(): string {
-  return `crash_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  const id = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
+  return `crash_${id}`;
 }
 
 async function pruneOldCrashReports(db: IDBDatabase): Promise<void> {
