@@ -29,19 +29,19 @@ A browser-based QA assistant that turns your task descriptions into structured o
 <div align="center">
 
 ```
-+----------------------------------------------------------+
-|                                                          |
-|   "Login page has form validation for email              |
-|    and password fields, supports OAuth via               |
-|    Google. Write test cases."                            |
-|                                                          |
-|   Task: Test Cases                                       |
-|                                                          |
-|   -> Execute                                             |
-|                                                          |
++--------------------------------------------------------+
+|                                                        |
+|   "Login page has form validation for email            |
+|    and password fields, supports OAuth via             |
+|    Google. Write test cases."                          |
+|                                                        |
+|   Task: Test Cases                                     |
+|                                                        |
+|   -> Execute                                           |
+|                                                        |
 |   +------------------------------------------+           |
 |   | Test Case: TC-LOGIN-001                  |           |
-|   | Title: Valid email + password login       |           |
+|   | Title: Valid email + password login      |           |
 |   | Steps: 1. Navigate to /login             |           |
 |   |   2. Enter valid email                   |           |
 |   |   3. Enter valid password                |           |
