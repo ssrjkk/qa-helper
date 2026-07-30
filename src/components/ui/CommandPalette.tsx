@@ -1,9 +1,3 @@
-/**
- * Command palette (Ctrl+K)
- * @module CommandPalette
- * @author ssrjkk
- */
-
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { KeyboardShortcuts } from '../../lib/keyboardShortcuts';
 
@@ -42,7 +36,7 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
     if (open) {
       setQuery('');
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
 
@@ -85,20 +79,23 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
   };
 
   useEffect(() => {
-    const selected = listRef.current?.children[selectedIndex] as HTMLElement;
-    selected?.scrollIntoView({ block: 'nearest' });
+    const selected = listRef.current?.children[selectedIndex] as HTMLElement | undefined;
+    if (selected) {
+      selected.scrollIntoView({ block: 'nearest' });
+    }
   }, [selectedIndex]);
 
   if (!open) return null;
 
   const categories = [...new Set(filtered.map(c => c.category))];
+  const listboxId = 'cmd-palette-listbox';
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg mx-4 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-scaleIn">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
-          <span className="text-gray-400">🔍</span>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} role="presentation" />
+      <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-scaleIn" role="dialog" aria-label="Command palette" aria-modal="true">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-white/10">
+          <span className="text-gray-400" aria-hidden="true">🔍</span>
           <input
             ref={inputRef}
             type="text"
@@ -106,12 +103,18 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a command..."
-            className="flex-1 bg-transparent text-sm text-gray-200 placeholder-gray-500 outline-none"
+            aria-label="Search commands"
+            role="combobox"
+            aria-expanded="true"
+            aria-haspopup="listbox"
+            aria-controls={listboxId}
+            aria-activedescendant={filtered[selectedIndex] ? `cmd-${filtered[selectedIndex].id}` : undefined}
+            className="flex-1 bg-transparent text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
           />
-          <kbd className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">ESC</kbd>
+          <kbd className="text-xs text-gray-500 dark:text-gray-500 bg-gray-100 dark:bg-white/5 px-1.5 py-0.5 rounded">ESC</kbd>
         </div>
 
-        <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
+        <div ref={listRef} id={listboxId} role="listbox" aria-label="Commands" className="max-h-80 overflow-y-auto py-2">
           {filtered.length === 0 ? (
             <div className="px-4 py-8 text-center text-gray-500 text-sm">
               No commands found
@@ -119,7 +122,7 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
           ) : (
             categories.map(cat => (
               <div key={cat}>
-                <div className="px-4 py-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="px-4 py-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider" role="presentation">
                   {cat}
                 </div>
                 {filtered
@@ -129,15 +132,18 @@ export function CommandPalette({ commands, open, onClose }: CommandPaletteProps)
                     return (
                       <button
                         key={cmd.id}
+                        id={`cmd-${cmd.id}`}
+                        role="option"
+                        aria-selected={globalIdx === selectedIndex}
                         onClick={() => { cmd.action(); onClose(); }}
                         onMouseEnter={() => setSelectedIndex(globalIdx)}
                         className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                           globalIdx === selectedIndex
-                            ? 'bg-indigo-500/20 text-indigo-300'
-                            : 'text-gray-300 hover:bg-white/5'
+                            ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300'
+                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
                         }`}
                       >
-                        {cmd.icon && <span className="text-lg">{cmd.icon}</span>}
+                        {cmd.icon && <span className="text-lg" aria-hidden="true">{cmd.icon}</span>}
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate">{cmd.label}</div>
                           {cmd.description && (

@@ -7,7 +7,7 @@
 import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes, SelectHTMLAttributes, ReactNode } from 'react';
 
-const baseInputClasses = 'w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50';
+const baseInputClasses = 'w-full px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -23,7 +23,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div>
         {label && (
-          <label htmlFor={id} className="block text-xs text-gray-400 mb-1">
+          <label htmlFor={id} className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
             {label}
           </label>
         )}

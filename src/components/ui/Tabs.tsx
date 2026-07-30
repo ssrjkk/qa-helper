@@ -20,6 +20,7 @@ interface TabsProps {
   activeTab: string;
   onChange: (tabId: string) => void;
   className?: string;
+  children?: ReactNode;
 }
 
 const TabsContext = createContext<string>('');
@@ -39,7 +40,7 @@ function getAccentClasses(color?: string) {
   return map ? `${map.active} ${map.border}` : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
 }
 
-export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
+export function Tabs({ tabs, activeTab, onChange, className = '', children }: TabsProps) {
   const groupId = useId();
 
   const handleKeyDown = useCallback(
@@ -71,7 +72,7 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
       <div
         role="tablist"
         onKeyDown={handleKeyDown}
-        className={`flex items-center gap-1 p-1 bg-white/5 rounded-lg ${className}`}
+        className={`flex items-center gap-1 p-1 bg-gray-100 dark:bg-white/5 rounded-lg ${className}`}
       >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -88,13 +89,13 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
               tabIndex={isActive ? 0 : -1}
               onClick={() => onChange(tab.id)}
               className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
-                isActive ? getAccentClasses(tab.accentColor) : 'text-gray-400 hover:text-gray-200'
+                isActive ? getAccentClasses(tab.accentColor) : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               {tab.icon && <span aria-hidden="true">{tab.icon}</span>}
               {tab.label}
               {tab.badge !== undefined && (
-                <span className="px-1.5 py-0.5 text-xs bg-white/10 rounded-full">
+                <span className="px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-white/10 rounded-full">
                   {tab.badge}
                 </span>
               )}
@@ -102,6 +103,7 @@ export function Tabs({ tabs, activeTab, onChange, className = '' }: TabsProps) {
           );
         })}
       </div>
+      {children}
     </TabsContext.Provider>
   );
 }

@@ -90,14 +90,18 @@ export function useMemoryEntries(selectedProject: number | null, db: UseDatabase
 
         if (parsed.memoryEntries?.length) {
           for (const entry of parsed.memoryEntries) {
-            createMemoryEntry({
-              project_id: projectId,
-              category: entry.category,
-              key: entry.key,
-              value: entry.value,
-              confidence: entry.confidence,
-              source_task_id: entry.source_task_id,
-            });
+            try {
+              createMemoryEntry({
+                project_id: projectId,
+                category: entry.category,
+                key: entry.key,
+                value: entry.value,
+                confidence: entry.confidence,
+                source_task_id: entry.source_task_id,
+              });
+            } catch (innerErr) {
+              ErrorService.report('STORAGE_SAVE', `entry import: ${innerErr instanceof Error ? innerErr.message : String(innerErr)}`);
+            }
           }
         }
 

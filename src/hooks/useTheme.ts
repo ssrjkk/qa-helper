@@ -16,11 +16,19 @@ interface UseThemeReturn {
   isDark: boolean;
 }
 
+function safeLsGet(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function safeLsSet(key: string, value: string): void {
+  try { localStorage.setItem(key, value); } catch { /* storage unavailable */ }
+}
+
 export function useTheme(): UseThemeReturn {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'dark';
     
-    const saved = localStorage.getItem(STORAGE_KEYS.theme);
+    const saved = safeLsGet(STORAGE_KEYS.theme);
     if (saved === 'dark' || saved === 'light') return saved;
     
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -32,7 +40,7 @@ export function useTheme(): UseThemeReturn {
   const applyTheme = useCallback((newTheme: Theme) => {
     document.documentElement.classList.remove('light', 'dark');
     document.documentElement.classList.add(newTheme);
-    localStorage.setItem(STORAGE_KEYS.theme, newTheme);
+    safeLsSet(STORAGE_KEYS.theme, newTheme);
     setThemeState(newTheme);
   }, []);
 

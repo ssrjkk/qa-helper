@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { RippleButton } from '../ui';
 import type { CodebaseProvider } from '../../data/codebase/CodebaseProvider';
 
@@ -37,6 +37,13 @@ export function CodebasePanel({ provider, onConnect, onDisconnect }: CodebasePan
   const [isDragOver, setIsDragOver] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const zipParserRef = useRef<Awaited<typeof import('../../lib/workers/zipParser')>['zipParser'] | null>(null);
+
+  useEffect(() => {
+    return () => {
+      zipParserRef.current?.terminate();
+    };
+  }, []);
 
   const handleGithubConnect = useCallback(async () => {
     const parsed = parseGitHubUrl(githubUrl);
@@ -100,8 +107,9 @@ export function CodebasePanel({ provider, onConnect, onDisconnect }: CodebasePan
 
     try {
       const buffer = await file.arrayBuffer();
-      const { zipParser } = await import('../../lib/workers/zipParser');
-      const result = await zipParser.parse(buffer, file.name);
+      const mod = await import('../../lib/workers/zipParser');
+      zipParserRef.current = mod.zipParser;
+      const result = await mod.zipParser.parse(buffer, file.name);
 
       const { LocalProvider } = await import('../../data/codebase/LocalProvider');
       const lp = new LocalProvider(file.name.replace(/\.zip$/, ''));

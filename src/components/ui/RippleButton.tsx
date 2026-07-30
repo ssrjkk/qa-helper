@@ -55,9 +55,9 @@ export function RippleButton({
   };
 
   const variants = {
-    primary: "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-indigo-500/25",
-    secondary: "bg-white/10 border border-white/20 text-white hover:bg-white/20",
-    danger: "bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30",
+    primary: "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-glass hover:shadow-glow",
+    secondary: "bg-gray-100 dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 shadow-glass",
+    danger: "bg-red-100 dark:bg-red-500/20 border border-red-300 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/30",
   };
 
   return (
@@ -67,13 +67,19 @@ export function RippleButton({
       disabled={disabled}
       aria-expanded={ariaExpanded}
       aria-label={ariaLabel}
-      className={`relative overflow-hidden rounded-xl px-6 py-3 font-semibold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${variants[variant]} ${className}`}
+      className={`relative overflow-hidden rounded-xl px-6 py-3 font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${variants[variant]} ${className}`}
     >
       {ripples.map(ripple => (
         <span
           key={ripple.id}
-          className="absolute bg-white/30 rounded-full -translate-x-1/2 -translate-y-1/2 animate-ping"
-          style={{ left: ripple.x, top: ripple.y, width: 300, height: 300, animationDuration: '600ms' }}
+          className="absolute bg-white/25 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{
+            left: ripple.x,
+            top: ripple.y,
+            width: 300,
+            height: 300,
+            animation: 'ripple 600ms ease-out forwards',
+          }}
         />
       ))}
       {children}

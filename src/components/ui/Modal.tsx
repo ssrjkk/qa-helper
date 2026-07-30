@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useEffect, useRef, useId } from 'react';
+import { useEffect, useRef, useId, useCallback } from 'react';
 import { Transition } from './Transitions';
 
 interface ModalProps {
@@ -15,6 +15,18 @@ interface ModalProps {
   maxWidth?: string;
 }
 
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+  ).filter(el => {
+    if (el.getAttribute('disabled') !== null) return false;
+    if (el.offsetParent === null && !el.hasAttribute('tabindex')) return false;
+    return true;
+  });
+}
+
 export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
@@ -23,48 +35,50 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
   useEffect(() => {
     if (isOpen) {
       previousFocus.current = document.activeElement as HTMLElement;
-      const timer = setTimeout(() => {
+      const raf = requestAnimationFrame(() => {
         contentRef.current?.focus();
-      }, 50);
-      return () => clearTimeout(timer);
-    } else {
-      previousFocus.current?.focus();
+      });
+      return () => cancelAnimationFrame(raf);
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) return;
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onClose();
+      return;
+    }
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
+    if (e.key === 'Tab' && contentRef.current) {
+      const focusable = getFocusableElements(contentRef.current);
+      if (focusable.length === 0) {
+        e.preventDefault();
         return;
       }
 
-      if (e.key === 'Tab') {
-        const focusable = contentRef.current?.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        if (!focusable || focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
 
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-
-        if (!first) return;
-
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last?.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
-    };
+    }
+  }, [onClose]);
 
+  useEffect(() => {
+    if (!isOpen) return;
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleKeyDown]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      previousFocus.current?.focus();
+    }
+  }, [isOpen]);
 
   return (
     <Transition
@@ -79,17 +93,21 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         onClick={onClose}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
+        role="button"
+        aria-label="Close modal"
+        tabIndex={-1}
       >
         <div
           ref={contentRef}
           tabIndex={-1}
-          className={`bg-slate-800 border border-white/10 rounded-2xl p-6 ${maxWidth} w-full outline-none animate-scaleIn`}
+          className={`bg-white dark:bg-slate-800/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-glass-lg ${maxWidth} w-full outline-none animate-scaleIn`}
           onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
         >
-          <h3 id={titleId} className="text-lg font-semibold text-white mb-4">
+          <h3 id={titleId} className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
             {title}
           </h3>
           {children}

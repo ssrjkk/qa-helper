@@ -349,7 +349,8 @@ export function getLocale(): Locale {
 
 export function initI18n(): Locale {
   if (typeof window === 'undefined') return 'en';
-  const saved = localStorage.getItem(STORAGE_KEYS.locale);
+  let saved: string | null = null;
+  try { saved = localStorage.getItem(STORAGE_KEYS.locale); } catch { /* storage unavailable */ }
   if (saved && isValidLocale(saved)) {
     setLocale(saved);
     return saved;
@@ -364,7 +365,7 @@ export function initI18n(): Locale {
 
 export function saveLocale(locale: Locale): void {
   setLocale(locale);
-  localStorage.setItem(STORAGE_KEYS.locale, locale);
+  try { localStorage.setItem(STORAGE_KEYS.locale, locale); } catch { /* storage unavailable */ }
 }
 
 function isValidLocale(value: string): value is Locale {

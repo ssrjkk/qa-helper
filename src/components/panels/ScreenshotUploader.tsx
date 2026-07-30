@@ -88,17 +88,24 @@ export function ScreenshotUploader({
     const reader = new FileReader();
     reader.onload = async (e) => {
       if (unmountedRef.current) return;
-      const result = e.target?.result as string;
-      let processed = result;
+      const fileResult = e.target?.result;
+      if (typeof fileResult !== 'string') return;
+      let processed = fileResult;
       
       if (file.size > 500 * 1024) {
-        processed = await compressImage(result);
+        processed = await compressImage(fileResult);
       }
       
       if (unmountedRef.current) return;
       const b64 = processed.split(',')[1] ?? '';
       setPreview(processed);
       onScreenshotChange(b64);
+    };
+    reader.onerror = () => {
+      if (!unmountedRef.current) {
+        setLocalError('Failed to read file');
+        onError('Failed to read file');
+      }
     };
     reader.readAsDataURL(file);
   };

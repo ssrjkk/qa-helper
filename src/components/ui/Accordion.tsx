@@ -30,33 +30,33 @@ export function Accordion({
 
   return (
     <div className="space-y-3">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-        aria-controls={contentId}
-        className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-lg" aria-hidden="true">{icon}</span>
-          <div className="text-left">
-            <p className="text-sm font-medium text-gray-200">{title}</p>
-            {subtitle && (
-              <p className="text-xs text-gray-500">{subtitle}</p>
-            )}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
+          aria-controls={contentId}
+          className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg" aria-hidden="true">{icon}</span>
+            <div className="text-left">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{title}</p>
+              {subtitle && (
+                <p className="text-xs text-gray-500 dark:text-gray-500">{subtitle}</p>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {badge !== undefined && (
-            <span className="text-xs text-gray-400">{badge}</span>
-          )}
-          <span
-            className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-            aria-hidden="true"
-          >
-            ▼
-          </span>
-        </div>
-      </button>
+          <div className="flex items-center gap-2">
+            {badge !== undefined && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">{badge}</span>
+            )}
+            <span
+              className={`text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+              aria-hidden="true"
+            >
+              ▼
+            </span>
+          </div>
+        </button>
 
       <Collapse show={isOpen}>
         <div id={contentId} role="region">

@@ -4,12 +4,12 @@
  * @author ssrjkk
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { memo, useState, useRef, useEffect } from 'react';
 import { ProjectSelector } from '../selectors/ProjectSelector';
 import { StructuredMemory } from '../panels/StructuredMemory';
 import { CloudSync } from '../panels/CloudSync';
 import { TeamFeatures } from './TeamFeatures';
-import { RateLimitBar, SaveIndicator } from '../ui';
+import { ErrorBoundary, RateLimitBar, SaveIndicator } from '../ui';
 import { SECURITY_CONFIG } from '../../config';
 import { LIMITS } from '../../lib/constants';
 import { t } from '../../lib/i18n';
@@ -38,7 +38,7 @@ interface SidebarProps {
   onImportProject: (data: string) => Promise<boolean>;
 }
 
-export function Sidebar({
+export const Sidebar = memo(function Sidebar({
   projects,
   selectedProject,
   onSelectProject,
@@ -86,21 +86,21 @@ export function Sidebar({
   return (
     <div className="space-y-4">
       {!isOnline && (
-        <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm text-center animate-fadeIn">
+        <div className="p-3 bg-red-50 dark:bg-red-500/20 border border-red-200 dark:border-red-500/30 rounded-xl text-red-600 dark:text-red-400 text-sm text-center animate-fadeIn" role="alert">
           {t('errors.networkError')}
         </div>
       )}
 
       {apiKeyValid ? (
-        <div className="flex items-center gap-2 text-xs text-emerald-400">
-          <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+        <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+          <span className="w-2 h-2 bg-emerald-400 rounded-full" />
           API Connected
-          <button onClick={onSetApiKey} className="ml-2 text-gray-500 hover:text-white">{t('common.edit')}</button>
+          <button onClick={onSetApiKey} className="ml-2 text-gray-500 hover:text-gray-800 dark:hover:text-white">{t('common.edit')}</button>
         </div>
       ) : (
         <button
           onClick={onSetApiKey}
-          className="w-full p-3 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-400 text-sm text-center transition-all duration-200"
+          className="w-full p-3 bg-amber-50 dark:bg-amber-500/20 border border-amber-200 dark:border-amber-500/30 rounded-xl text-amber-600 dark:text-amber-400 text-sm text-center transition-all duration-200"
         >
         {t('errors.apiKeyRequired', { provider: 'AI' })}
         </button>
@@ -118,18 +118,18 @@ export function Sidebar({
       />
 
       {deleteConfirmId && (
-        <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-xl animate-fadeIn">
-          <p className="text-red-400 text-xs mb-2 text-center">{t('project.deleteConfirm')}</p>
+        <div className="p-3 bg-red-50 dark:bg-red-500/20 border border-red-200 dark:border-red-500/30 rounded-xl animate-fadeIn" role="alert">
+          <p className="text-red-600 dark:text-red-400 text-xs mb-2 text-center">{t('project.deleteConfirm')}</p>
           <div className="flex gap-2">
             <button
               onClick={() => handleDeleteProject(deleteConfirmId)}
-              className="flex-1 px-3 py-1.5 bg-red-500/30 text-red-400 text-xs rounded-lg hover:bg-red-500/50 transition-colors"
+              className="flex-1 px-3 py-1.5 bg-red-100 dark:bg-red-500/30 text-red-600 dark:text-red-400 text-xs rounded-lg hover:bg-red-200 dark:hover:bg-red-500/50 transition-colors"
             >
               Confirm
             </button>
             <button
               onClick={() => setDeleteConfirmId(null)}
-              className="flex-1 px-3 py-1.5 bg-white/5 text-gray-400 text-xs rounded-lg hover:bg-white/10 transition-colors"
+              className="flex-1 px-3 py-1.5 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 text-xs rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
             >
               {t('common.cancel')}
             </button>
@@ -153,11 +153,13 @@ export function Sidebar({
         memoryEntries={memoryEntries}
       />
 
-      <TeamFeatures
-        currentProject={currentProj || null}
-        onExportForTeam={onExportProject}
-        onImportFromTeam={onImportProject}
-      />
+      <ErrorBoundary>
+        <TeamFeatures
+          currentProject={currentProj || null}
+          onExportForTeam={onExportProject}
+          onImportFromTeam={onImportProject}
+        />
+      </ErrorBoundary>
 
       <RateLimitBar remaining={rateLimitInfo.remaining} />
 
@@ -166,4 +168,4 @@ export function Sidebar({
       )}
     </div>
   );
-}
+});

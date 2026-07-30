@@ -185,6 +185,7 @@ export function ProjectSelector({
               value={localMemory}
               onChange={handleMemoryChange}
               placeholder="Tech stack, conventions, patterns..."
+              aria-label="Project memory notes"
               maxLength={maxMemoryLength}
               className="min-h-24"
             />

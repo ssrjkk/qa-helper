@@ -72,7 +72,7 @@ class MetricsCollector {
   private pruneOldDays(): void {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - MAX_DAYS_RETAINED);
-    const cutoffStr = cutoff.toISOString().split('T')[0]!;
+    const cutoffStr = cutoff.toISOString().split('T')[0] ?? '';
     for (const key of Object.keys(this.metrics.requestsByDay)) {
       if (key < cutoffStr) {
         delete this.metrics.requestsByDay[key];
@@ -88,7 +88,7 @@ class MetricsCollector {
   }
 
   recordRequest(taskType: string, success: boolean, tokens: number = 0, responseTime: number = 0): void {
-    const today = new Date().toISOString().split('T')[0]!;
+    const today = new Date().toISOString().split('T')[0] ?? '';
     
     this.metrics.totalRequests++;
     
@@ -145,7 +145,7 @@ class MetricsCollector {
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0]!;
+      const dateStr = date.toISOString().split('T')[0] ?? '';
       result.push({ date: dateStr, count: this.metrics.requestsByDay[dateStr] ?? 0 });
     }
     return result;

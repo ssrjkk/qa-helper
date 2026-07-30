@@ -89,8 +89,10 @@ export class CloudSyncService {
       if (saved) {
         const parsed = JSON.parse(saved) as Record<string, unknown>;
         if (parsed && typeof parsed.provider === 'string') {
+          const VALID_PROVIDERS: CloudConfig['provider'][] = ['local', 'firebase', 'supabase'];
+          const provider = VALID_PROVIDERS.includes(parsed.provider as CloudConfig['provider']) ? parsed.provider as CloudConfig['provider'] : 'local';
           const config: CloudConfig = {
-            provider: parsed.provider as CloudConfig['provider'],
+            provider,
             apiKey: typeof parsed.apiKey === 'string' ? parsed.apiKey : undefined,
             projectId: typeof parsed.projectId === 'string' ? parsed.projectId : undefined,
             url: typeof parsed.url === 'string' ? parsed.url : undefined,

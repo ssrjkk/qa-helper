@@ -11,7 +11,7 @@ export class ZipParserWorker {
   private requestId = 0;
 
   constructor() {
-    this.initWorker();
+    // Worker initialized lazily on first parse() call
   }
 
   private initWorker(): void {
@@ -46,7 +46,7 @@ export class ZipParserWorker {
 
   async parse(data: ArrayBuffer, filename: string): Promise<ZipParseResult> {
     if (!this.worker) {
-      throw new Error('Worker not initialized');
+      this.initWorker();
     }
 
     const requestId = ++this.requestId;

@@ -74,7 +74,7 @@ export function getDefaultModelForProvider(provider: AiProvider): AiModel {
 }
 
 export function getVisionProviders(): AiProvider[] {
-  return (Object.keys(PROVIDER_MODELS) as AiProvider[]).filter(p =>
+  return (Object.keys(PROVIDER_MODELS).filter((k): k is AiProvider => k in PROVIDER_MODELS)).filter(p =>
     PROVIDER_MODELS[p].some(m => m.supportsVision)
   );
 }

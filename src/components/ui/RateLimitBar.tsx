@@ -17,7 +17,7 @@ export const RateLimitBar = memo(function RateLimitBar({ remaining }: RateLimitB
 
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-xs text-gray-400">
+      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
         <span>Rate Limit</span>
         <span>{remaining}/{max}</span>
       </div>
@@ -27,7 +27,7 @@ export const RateLimitBar = memo(function RateLimitBar({ remaining }: RateLimitB
         aria-valuemin={0}
         aria-valuemax={max}
         aria-label={`Rate limit: ${remaining} of ${max} remaining`}
-        className="h-1.5 bg-white/10 rounded-full overflow-hidden"
+        className="h-1.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden"
       >
         <div
           className="h-full rounded-full transition-all duration-300 ease-out"

@@ -77,7 +77,7 @@ export function truncateText(text: string, maxLength: number): string {
   return text.substring(0, maxLength) + '...';
 }
 
-export function debounce<T extends (...args: Parameters<T>) => void>(
+export function debounce<T extends (...args: any[]) => void>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
@@ -260,13 +260,13 @@ export function randomInt(min: number, max: number): number {
   const range = max - min + 1;
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
-  return min + (array[0]! % range);
+  return min + ((array[0] ?? 0) % range);
 }
 
 export function secureJitter(baseDelay: number, factor: number): number {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
-  const normalized = array[0]! / 0xFFFFFFFF;
+  const normalized = (array[0] ?? 0) / 0xFFFFFFFF;
   return Math.round(baseDelay + baseDelay * factor * (2 * normalized - 1));
 }
 

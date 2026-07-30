@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { MainContent } from './MainContent';
 import { Onboarding, hasSeenOnboarding } from '../modals/Onboarding';
@@ -20,7 +20,6 @@ import { validateApiKey, copyToClipboard } from '../../lib';
 import { SECURITY_CONFIG } from '../../config';
 import { useClaudeApi } from '../../presentation';
 import { useAppStore } from '../../store/useAppStore';
-import { useShallow } from 'zustand/react/shallow';
 
 type UseDatabaseReturn = ReturnType<typeof useDatabase>;
 
@@ -28,34 +27,27 @@ interface AppContentProps {
   db: UseDatabaseReturn;
 }
 
-export function AppContent({ db }: AppContentProps) {
-  const {
-    output, setError, setApiKeyValid, apiKey, showApiKeyInput,
-    setShowApiKeyInput, setSelectedProject, currentMemory, apiKeyValid,
-    memoryEntries, selectedTask, setSelectedTask, context, setContext,
-    isLoading, error, sessions, agentSteps, mode, setMode,
-  } = useAppStore(useShallow((s) => ({
-    output: s.output,
-    setError: s.setError,
-    setApiKeyValid: s.setApiKeyValid,
-    apiKey: s.apiKey,
-    showApiKeyInput: s.showApiKeyInput,
-    setShowApiKeyInput: s.setShowApiKeyInput,
-    setSelectedProject: s.setSelectedProject,
-    currentMemory: s.currentMemory,
-    apiKeyValid: s.apiKeyValid,
-    memoryEntries: s.memoryEntries,
-    selectedTask: s.selectedTask,
-    setSelectedTask: s.setSelectedTask,
-    context: s.context,
-    setContext: s.setContext,
-    isLoading: s.isLoading,
-    error: s.error,
-    sessions: s.sessions,
-    agentSteps: s.agentSteps,
-    mode: s.mode,
-    setMode: s.setMode,
-  })));
+export const AppContent = memo(function AppContent({ db }: AppContentProps) {
+  const output = useAppStore((s) => s.output);
+  const setError = useAppStore((s) => s.setError);
+  const setApiKeyValid = useAppStore((s) => s.setApiKeyValid);
+  const apiKey = useAppStore((s) => s.apiKey);
+  const showApiKeyInput = useAppStore((s) => s.showApiKeyInput);
+  const setShowApiKeyInput = useAppStore((s) => s.setShowApiKeyInput);
+  const setSelectedProject = useAppStore((s) => s.setSelectedProject);
+  const currentMemory = useAppStore((s) => s.currentMemory);
+  const apiKeyValid = useAppStore((s) => s.apiKeyValid);
+  const memoryEntries = useAppStore((s) => s.memoryEntries);
+  const selectedTask = useAppStore((s) => s.selectedTask);
+  const setSelectedTask = useAppStore((s) => s.setSelectedTask);
+  const context = useAppStore((s) => s.context);
+  const setContext = useAppStore((s) => s.setContext);
+  const isLoading = useAppStore((s) => s.isLoading);
+  const error = useAppStore((s) => s.error);
+  const sessions = useAppStore((s) => s.sessions);
+  const agentSteps = useAppStore((s) => s.agentSteps);
+  const mode = useAppStore((s) => s.mode);
+  const setMode = useAppStore((s) => s.setMode);
   const outputRef = useRef<HTMLDivElement>(null);
   const { toggleTheme } = useTheme();
   const isOnline = useOnlineStatus();
@@ -200,4 +192,4 @@ export function AppContent({ db }: AppContentProps) {
       )}
     </>
   );
-}
+});

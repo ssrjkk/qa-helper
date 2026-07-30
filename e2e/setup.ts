@@ -1,6 +1,6 @@
 import { test as base, type Page } from '@playwright/test';
 
-const MASTER_PASSWORD = 'TestPass123!';
+const MASTER_PASSWORD = process.env.TEST_MASTER_PASSWORD || 'TestPass123!';
 
 export async function unlockApp(page: Page) {
   try {

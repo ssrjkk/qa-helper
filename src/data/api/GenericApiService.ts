@@ -129,7 +129,7 @@ export class GenericApiService {
           metricsCollector.recordRequest(taskType || this.config.providerName, true, outputTokens, responseTime);
           return {
             success: true,
-            output: data.choices[0].message.content,
+            output: data.choices?.[0]?.message?.content ?? '',
             usage: {
               outputTokens: data.usage?.completion_tokens,
               inputTokens: data.usage?.prompt_tokens,

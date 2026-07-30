@@ -23,7 +23,11 @@ export function MasterPasswordModal({ onSuccess }: MasterPasswordModalProps) {
   const [attemptsLeft, setAttemptsLeft] = useState(AttemptsLimiter.getRemainingAttempts());
 
   useEffect(() => {
-    keyManager.hasStoredSalt().then(has => setIsNewUser(!has));
+    keyManager.hasStoredSalt()
+      .then(has => setIsNewUser(!has))
+      .catch(() => {
+        setIsNewUser(true);
+      });
   }, []);
 
   useEffect(() => {
@@ -79,11 +83,11 @@ export function MasterPasswordModal({ onSuccess }: MasterPasswordModalProps) {
   if (isNewUser === null) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="master-password-title">
       <div className="w-full max-w-md mx-4 p-6 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl animate-scaleIn">
         <div className="text-center mb-6">
           <div className="text-3xl mb-3">🔐</div>
-          <h2 className="text-xl font-bold text-white">
+          <h2 id="master-password-title" className="text-xl font-bold text-white">
             {isNewUser ? 'Create Master Password' : 'Enter Master Password'}
           </h2>
           <p className="text-sm text-gray-400 mt-2">

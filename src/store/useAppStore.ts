@@ -6,7 +6,7 @@
 
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { LIMITS } from '../lib/constants';
+import { LIMITS, PROTOTYPE_POLLUTION_KEYS } from '../lib/constants';
 import type { MemoryEntry } from '../types/memory';
 import type { AgentStep } from '../data/agent/types';
 import type { Session } from '../domain/entities/Session';
@@ -98,7 +98,13 @@ export const useAppStore = create<AppState>()(
     }),
     updateMemoryEntry: (id, updates) => set((state) => {
       const entry = state.memoryEntries.find((e: MemoryEntry) => e.id === id);
-      if (entry) Object.assign(entry, updates);
+      if (entry) {
+        const safe = Object.keys(updates).reduce((acc, k) => {
+          if (!PROTOTYPE_POLLUTION_KEYS.has(k)) acc[k] = (updates as Record<string, unknown>)[k];
+          return acc;
+        }, {} as Record<string, unknown>);
+        Object.assign(entry, safe);
+      }
     }),
 
     sessions: [],

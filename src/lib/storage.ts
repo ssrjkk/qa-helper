@@ -14,13 +14,21 @@ const STORE_NAME = 'database';
 const DB_KEY = 'app-state';
 
 async function getLsCryptoKey(): Promise<CryptoKey> {
-  const stored = localStorage.getItem(STORAGE_KEYS.lsPassphrase);
-  if (stored) {
-    const raw = base64ToArrayBuffer(stored);
-    return crypto.subtle.importKey('raw', raw, 'PBKDF2', false, ['deriveKey']);
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.lsPassphrase);
+    if (stored) {
+      const raw = base64ToArrayBuffer(stored);
+      return crypto.subtle.importKey('raw', raw, 'PBKDF2', false, ['deriveKey']);
+    }
+  } catch {
+    // localStorage unavailable — generate fresh key
   }
   const passphrase = crypto.getRandomValues(new Uint8Array(32));
-  localStorage.setItem(STORAGE_KEYS.lsPassphrase, arrayBufferToBase64(passphrase.buffer));
+  try {
+    localStorage.setItem(STORAGE_KEYS.lsPassphrase, arrayBufferToBase64(passphrase.buffer));
+  } catch {
+    // localStorage full or unavailable — ephemeral key
+  }
   return crypto.subtle.importKey('raw', passphrase, 'PBKDF2', false, ['deriveKey']);
 }
 
@@ -60,7 +68,14 @@ export class IndexedDBStorage implements StorageProvider {
 
   private initDatabase(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      let request: IDBOpenDBRequest;
+      try {
+        request = indexedDB.open(DB_NAME, DB_VERSION);
+      } catch {
+        this.initPromise = null;
+        reject(new Error('IndexedDB unavailable (Firefox private mode)'));
+        return;
+      }
 
       request.onerror = () => {
         this.initPromise = null;
@@ -161,11 +176,20 @@ export class LocalStorageFallback implements StorageProvider {
     const combined = new Uint8Array(iv.length + new Uint8Array(encrypted).length);
     combined.set(iv, 0);
     combined.set(new Uint8Array(encrypted), iv.length);
-    localStorage.setItem(DB_KEY, arrayBufferToBase64(combined.buffer));
+    try {
+      localStorage.setItem(DB_KEY, arrayBufferToBase64(combined.buffer));
+    } catch {
+      ErrorService.reportAsync(ErrorCode.STORAGE_SAVE, 'LocalStorage write failed');
+    }
   }
 
   async load(): Promise<Uint8Array | null> {
-    const saved = localStorage.getItem(DB_KEY);
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem(DB_KEY);
+    } catch {
+      return null;
+    }
     if (!saved) return null;
     
     try {
@@ -188,12 +212,20 @@ export class LocalStorageFallback implements StorageProvider {
   }
 
   async clear(): Promise<void> {
-    localStorage.removeItem(DB_KEY);
+    try {
+      localStorage.removeItem(DB_KEY);
+    } catch {
+      // localStorage unavailable
+    }
   }
 
   async getSize(): Promise<number> {
-    const data = localStorage.getItem(DB_KEY);
-    return data ? data.length : 0;
+    try {
+      const data = localStorage.getItem(DB_KEY);
+      return data ? data.length : 0;
+    } catch {
+      return 0;
+    }
   }
 }
 

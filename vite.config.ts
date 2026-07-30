@@ -29,8 +29,10 @@ export default defineConfig(({ mode }) => ({
   build: {
     target: 'es2020',
     minify: 'esbuild',
+    sourcemap: false,
+    clean: true,
     esbuild: {
-      drop: ['debugger'],
+      drop: ['debugger', 'console'],
     },
     rollupOptions: {
       output: {
@@ -46,5 +48,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
     chunkSizeWarningLimit: 600,
+    reportCompressedSize: false,
   },
 }))

@@ -14,7 +14,7 @@ export const SaveIndicator = memo(function SaveIndicator({ saving }: SaveIndicat
   return (
     <div
       key={saving ? "saving" : "saved"}
-      className={`flex items-center gap-2 text-sm transition-opacity duration-200 ${saving ? 'text-indigo-400' : 'text-emerald-400'}`}
+      className={`flex items-center gap-2 text-sm transition-opacity duration-200 ${saving ? 'text-indigo-600 dark:text-indigo-400' : 'text-emerald-600 dark:text-emerald-400'}`}
       role="status"
       aria-live="polite"
     >

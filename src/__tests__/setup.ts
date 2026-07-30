@@ -41,6 +41,8 @@ Object.defineProperty(globalThis, 'matchMedia', {
   configurable: true,
 });
 
+Element.prototype.scrollIntoView ??= () => {};
+
 beforeEach(() => {
   storage.clear();
 });

@@ -18,8 +18,8 @@ describe('GlassCard', () => {
   it('has correct base styling', () => {
     const { container } = render(<GlassCard>Content</GlassCard>);
     expect(container.firstChild).toHaveClass('backdrop-blur-xl');
-    expect(container.firstChild).toHaveClass('bg-white/5');
-    expect(container.firstChild).toHaveClass('border-white/10');
+    expect(container.firstChild).toHaveClass('bg-white/80');
+    expect(container.firstChild).toHaveClass('border-gray-200');
   });
 
   it('disables hover effect when hover prop is false', () => {
@@ -60,12 +60,12 @@ describe('RippleButton', () => {
 
   it('applies secondary variant correctly', () => {
     const { container } = render(<RippleButton variant="secondary">Button</RippleButton>);
-    expect(container.querySelector('button')).toHaveClass('bg-white/10');
+    expect(container.querySelector('button')).toHaveClass('bg-gray-100');
   });
 
   it('applies danger variant correctly', () => {
     const { container } = render(<RippleButton variant="danger">Button</RippleButton>);
-    expect(container.querySelector('button')).toHaveClass('bg-red-500/20');
+    expect(container.querySelector('button')).toHaveClass('bg-red-100');
   });
 
   it('has disabled cursor style when disabled', () => {

@@ -7,6 +7,7 @@ export { Modal } from './Modal';
 export { RateLimitBar } from './RateLimitBar';
 export { RippleButton } from './RippleButton';
 export { SaveIndicator } from './SaveIndicator';
-export { SkeletonCard } from './Skeleton';
+export { Skeleton, SkeletonCard } from './Skeleton';
+export { CommandPalette } from './CommandPalette';
 export { Tabs, TabPanel } from './Tabs';
 export { ToastProvider, useToast } from './Toast';

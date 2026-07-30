@@ -5,7 +5,7 @@
  * @author ssrjkk
  */
 
-import { useCallback, useState, RefObject } from 'react';
+import { memo, useCallback, useState, RefObject } from 'react';
 import { GlassCard, AutoResizeTextarea } from '../ui';
 import { ChatHeader } from './ChatHeader';
 import { LazyExportPanel, LazyMetricsDashboard, LazySuspense } from '../features/LazyComponents';
@@ -34,7 +34,7 @@ interface ChatAreaProps {
   codebaseConnected?: boolean;
 }
 
-export function ChatArea({
+export const ChatArea = memo(function ChatArea({
   context,
   onContextChange,
   output,
@@ -93,7 +93,7 @@ export function ChatArea({
               <button
                 key={hint}
                 onClick={() => onContextChange(hint)}
-                className="text-xs px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                className="text-xs px-2.5 py-1 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
               >
                 {hint}
               </button>
@@ -113,7 +113,7 @@ export function ChatArea({
 
       {error && (
         <div
-          className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm animate-slideUp"
+          className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl text-red-600 dark:text-red-400 text-sm animate-slideUp"
           role="alert"
           aria-live="assertive"
         >
@@ -121,7 +121,7 @@ export function ChatArea({
             <span className="text-lg">⚠️</span>
             <div>
               <p className="font-medium">Error</p>
-              <p className="text-red-400/80 mt-1">{error}</p>
+              <p className="mt-1 opacity-80">{error}</p>
             </div>
           </div>
         </div>
@@ -167,4 +167,4 @@ export function ChatArea({
       )}
     </div>
   );
-}
+});

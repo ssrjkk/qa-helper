@@ -68,19 +68,23 @@ describe('ZipParserWorker wrapper', () => {
     vi.unstubAllGlobals();
   });
 
-  it('creates a Worker on construction', () => {
+  it('creates a Worker on first parse', async () => {
     const parser = new ZipParserWorkerClass();
+    expect(MockWorker.instances).toHaveLength(0);
+
+    const promise = parser.parse(new ArrayBuffer(0), 'test.zip').catch(() => {});
     const worker = getLatestWorker();
     expect(worker).toBeInstanceOf(MockWorker);
     parser.terminate();
+    await promise;
   });
 
   it('sends message with requestId and data', () => {
     const parser = new ZipParserWorkerClass();
-    const worker = getLatestWorker();
     const buffer = new ArrayBuffer(8);
 
     const promise = parser.parse(buffer, 'test.zip').catch(() => {});
+    const worker = getLatestWorker();
 
     const posted = worker.lastPostedData as { requestId: number; data: ArrayBuffer; filename: string };
     expect(posted.requestId).toBe(1);
@@ -92,7 +96,6 @@ describe('ZipParserWorker wrapper', () => {
 
   it('resolves with result on success response', async () => {
     const parser = new ZipParserWorkerClass();
-    const worker = getLatestWorker();
     const mockResult: ZipParseResult = {
       files: [{ path: 'a.ts', name: 'a.ts', content: 'code', size: 4, lastModified: new Date() }],
       totalSize: 4,
@@ -101,6 +104,7 @@ describe('ZipParserWorker wrapper', () => {
     };
 
     const promise = parser.parse(new ArrayBuffer(0), 'test.zip');
+    const worker = getLatestWorker();
     worker.simulateResponse({ requestId: 1, success: true, result: mockResult });
 
     const result = await promise;
@@ -110,9 +114,9 @@ describe('ZipParserWorker wrapper', () => {
 
   it('rejects with error on failure response', async () => {
     const parser = new ZipParserWorkerClass();
-    const worker = getLatestWorker();
 
     const promise = parser.parse(new ArrayBuffer(0), 'bad.zip');
+    const worker = getLatestWorker();
     worker.simulateResponse({ requestId: 1, success: false, error: 'Invalid ZIP' });
 
     await expect(promise).rejects.toThrow('Invalid ZIP');
@@ -121,25 +125,32 @@ describe('ZipParserWorker wrapper', () => {
 
   it('rejects with default message when error is missing', async () => {
     const parser = new ZipParserWorkerClass();
-    const worker = getLatestWorker();
 
     const promise = parser.parse(new ArrayBuffer(0), 'bad.zip');
+    const worker = getLatestWorker();
     worker.simulateResponse({ requestId: 1, success: false });
 
     await expect(promise).rejects.toThrow('Worker failed');
     parser.terminate();
   });
 
-  it('rejects when worker not initialized', async () => {
+  it('re-creates worker after terminate', async () => {
     const parser = new ZipParserWorkerClass();
+
+    const promise1 = parser.parse(new ArrayBuffer(0), 'a.zip').catch(() => {});
+    const worker1 = getLatestWorker();
     parser.terminate();
 
-    await expect(parser.parse(new ArrayBuffer(0), 'test.zip')).rejects.toThrow('Worker not initialized');
+    const promise2 = parser.parse(new ArrayBuffer(0), 'b.zip');
+    const worker2 = getLatestWorker();
+
+    expect(worker1).not.toBe(worker2);
+    parser.terminate();
+    await Promise.all([promise1, promise2.catch(() => {})]);
   });
 
   it('handles multiple concurrent requests with correct requestId', async () => {
     const parser = new ZipParserWorkerClass();
-    const worker = getLatestWorker();
     const result1: ZipParseResult = {
       files: [], totalSize: 0, fileCount: 0, parseTimeMs: 1,
     };
@@ -149,6 +160,7 @@ describe('ZipParserWorker wrapper', () => {
 
     const p1 = parser.parse(new ArrayBuffer(0), 'a.zip');
     const p2 = parser.parse(new ArrayBuffer(0), 'b.zip');
+    const worker = getLatestWorker();
 
     worker.simulateResponse({ requestId: 2, success: true, result: result2 });
     worker.simulateResponse({ requestId: 1, success: true, result: result1 });
@@ -161,17 +173,19 @@ describe('ZipParserWorker wrapper', () => {
 
   it('terminates worker and clears pending requests', () => {
     const parser = new ZipParserWorkerClass();
-    const worker = getLatestWorker();
 
     const promise = parser.parse(new ArrayBuffer(0), 'test.zip').catch(() => {});
+    const worker = getLatestWorker();
     parser.terminate();
 
     expect(() => worker.postMessage({})).toThrow('Worker is terminated');
     return promise;
   });
 
-  it('calls onerror handler and terminates worker', () => {
+  it('calls onerror handler and terminates worker', async () => {
     const parser = new ZipParserWorkerClass();
+
+    parser.parse(new ArrayBuffer(0), 'test.zip').catch(() => {});
     const worker = getLatestWorker();
 
     worker.simulateError('Network error');
@@ -182,9 +196,9 @@ describe('ZipParserWorker wrapper', () => {
 
   it('increments requestId for each request', () => {
     const parser = new ZipParserWorkerClass();
-    const worker = getLatestWorker();
 
     const p1 = parser.parse(new ArrayBuffer(0), 'a.zip').catch(() => {});
+    const worker = getLatestWorker();
     const first = worker.lastPostedData as { requestId: number };
 
     const p2 = parser.parse(new ArrayBuffer(0), 'b.zip').catch(() => {});
@@ -197,9 +211,9 @@ describe('ZipParserWorker wrapper', () => {
 
   it('ignores responses for unknown requestId', async () => {
     const parser = new ZipParserWorkerClass();
-    const worker = getLatestWorker();
 
     const promise = parser.parse(new ArrayBuffer(0), 'test.zip');
+    const worker = getLatestWorker();
 
     worker.simulateResponse({ requestId: 999, success: true, result: {
       files: [], totalSize: 0, fileCount: 0, parseTimeMs: 0,

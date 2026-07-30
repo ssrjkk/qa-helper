@@ -184,6 +184,9 @@ export class LocalProvider implements CodebaseProvider {
       if (pattern.length > 200) {
         return [{ path: '', line: 0, content: 'Error: regex pattern too long (max 200 chars)' }];
       }
+      if (/(\(.+?\)[+*]|\[.+?\]\*|\w+[+*]\w+)/.test(pattern)) {
+        return [{ path: '', line: 0, content: 'Error: unsafe regex pattern rejected' }];
+      }
       regex = new RegExp(pattern, 'gi');
     } catch {
       return [{ path: '', line: 0, content: `Error: invalid regex pattern "${pattern}"` }];

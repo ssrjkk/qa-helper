@@ -26,8 +26,10 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[], enabled: boolean = t
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!enabledRef.current) return;
 
-      const target = e.target as HTMLElement;
-      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      const target = e.target;
+      const tagName = target instanceof Element ? target.tagName : '';
+      const isContentEditable = target instanceof HTMLElement ? target.isContentEditable : false;
+      const isInput = tagName === 'INPUT' || tagName === 'TEXTAREA' || isContentEditable;
 
       for (const shortcut of shortcutsRef.current) {
         const modifiers = shortcut.modifiers || [];

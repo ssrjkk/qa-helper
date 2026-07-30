@@ -236,7 +236,11 @@ export function useClaudeApi() {
         resetIn: RateLimiter.getResetTime()
       });
     }, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+    };
   }, []);
 
   return { execute, abort, isLoading, error, setError, rateLimitInfo, retryInfo };

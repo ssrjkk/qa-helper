@@ -71,7 +71,7 @@ const VISION_PROVIDERS = getVisionProviders();
 
 function makeDefaultModels(): Map<AiProvider, string> {
   const map = new Map<AiProvider, string>();
-  for (const p of Object.keys(PROVIDER_MODELS) as AiProvider[]) {
+    for (const p of Object.keys(PROVIDER_MODELS).filter((k): k is AiProvider => k in PROVIDER_MODELS)) {
     map.set(p, getDefaultModelForProvider(p).id);
   }
   return map;
@@ -124,7 +124,7 @@ class UnifiedAiServiceImpl implements UnifiedAiService {
   private circuitBreakers: Map<AiProvider, CircuitBreaker> = new Map();
 
   constructor() {
-    for (const p of Object.keys(PROVIDER_MODELS) as AiProvider[]) {
+  for (const p of Object.keys(PROVIDER_MODELS).filter((k): k is AiProvider => k in PROVIDER_MODELS)) {
       this.circuitBreakers.set(p, new CircuitBreaker({
         failureThreshold: 3,
         resetTimeout: 60000,

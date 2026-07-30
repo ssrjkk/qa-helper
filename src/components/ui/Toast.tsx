@@ -83,9 +83,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 const typeStyles: Record<Toast['type'], string> = {
-  success: 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300',
-  error: 'bg-red-500/20 border-red-500/30 text-red-300',
-  info: 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300',
+  success: 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
+  error: 'bg-red-50 dark:bg-red-500/20 border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300',
+  info: 'bg-indigo-50 dark:bg-indigo-500/20 border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300',
 };
 
 const ToastItem = memo(function ToastItem({
@@ -98,7 +98,7 @@ const ToastItem = memo(function ToastItem({
   return (
     <SlideUp>
       <div
-        className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-xl ${typeStyles[toast.type]}`}
+        className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-xl shadow-glass-lg ${typeStyles[toast.type]}`}
         role="status"
       >
         <span className="text-sm">{toast.message}</span>

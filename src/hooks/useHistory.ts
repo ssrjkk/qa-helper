@@ -122,8 +122,10 @@ export function useHistory<T>(initialPresent: T, options?: {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        const target = e.target as HTMLElement;
-        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable;
+        const target = e.target;
+        const tagName = target instanceof Element ? target.tagName : '';
+        const isContentEditable = target instanceof HTMLElement ? target.isContentEditable : false;
+        const isInput = tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || isContentEditable;
         if (isInput) return;
         e.preventDefault();
         if (e.shiftKey) {

@@ -31,8 +31,10 @@ function matchesShortcut(e: KeyboardEvent, s: Shortcut): boolean {
 
 function handleKeyDown(e: KeyboardEvent): void {
   if (!enabled) return;
-  const target = e.target as HTMLElement;
-  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable) {
+  const target = e.target;
+  const tagName = target instanceof Element ? target.tagName : '';
+  const isContentEditable = target instanceof HTMLElement ? target.isContentEditable : false;
+  if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || isContentEditable) {
     if (!(e.ctrlKey || e.metaKey)) return;
   }
 

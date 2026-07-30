@@ -10,7 +10,7 @@ import { ErrorCode } from './constants';
 
 export function rowToObject(columns: string[], values: unknown[]): Record<string, unknown> {
   const obj: Record<string, unknown> = {};
-  columns.forEach((col, i) => { obj[col] = values[i]; });
+  columns.forEach((col, i) => { obj[col] = i < values.length ? values[i] : null; });
   return obj;
 }
 

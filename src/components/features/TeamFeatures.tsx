@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { GlassCard, Accordion, Tabs, TabPanel, useToast } from '../ui';
 import type { Project } from '../../types';
 
@@ -25,7 +25,7 @@ interface TeamFeaturesProps {
   onRemoveMember?: (memberId: string) => Promise<void>;
 }
 
-export function TeamFeatures({
+export const TeamFeatures = memo(function TeamFeatures({
   currentProject,
   onShare,
   onExportForTeam,
@@ -123,7 +123,7 @@ export function TeamFeatures({
             {currentProject ? (
               <>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Sharing: <span className="text-indigo-400">{currentProject.name}</span></p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sharing: <span className="text-indigo-600 dark:text-indigo-400">{currentProject.name}</span></p>
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -131,13 +131,13 @@ export function TeamFeatures({
                       onChange={e => setEmails(e.target.value)}
                       placeholder="email1@..., email2@..."
                       aria-label="Email addresses to share with"
-                      className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50"
+                      className="flex-1 px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 focus:border-indigo-500/50"
                     />
                     <select
                       value={shareRole}
                       onChange={e => setShareRole(e.target.value as 'editor' | 'viewer')}
                       aria-label="Share role"
-                      className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                      className="px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-800 dark:text-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                     >
                       <option value="viewer">View</option>
                       <option value="editor">Edit</option>
@@ -147,7 +147,7 @@ export function TeamFeatures({
                 <button
                   onClick={handleShare}
                   disabled={!emails.trim() || isLoading}
-                  className="w-full px-4 py-2 bg-indigo-500/30 text-indigo-300 rounded-lg text-sm hover:bg-indigo-500/50 transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                  className="w-full px-4 py-2 bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm hover:bg-indigo-200 dark:hover:bg-indigo-500/50 transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 >
                   {isLoading ? 'Sharing...' : 'Share Project'}
                 </button>
@@ -268,4 +268,4 @@ export function TeamFeatures({
       </GlassCard>
     </Accordion>
   );
-}
+});

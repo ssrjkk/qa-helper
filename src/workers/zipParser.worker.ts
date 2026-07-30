@@ -88,7 +88,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           size: content.length,
           lastModified: zipEntry.date,
         });
-      });
+      }).catch(() => {});
       filePromises.push(promise);
     });
 

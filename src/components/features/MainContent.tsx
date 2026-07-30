@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, RefObject } from 'react';
+import { memo, useState, RefObject } from 'react';
 import { TaskSelector } from '../selectors/TaskSelector';
 import { LazyChatArea, LazyCodebasePanel, LazySessionHistory, LazyScreenshotUploader, LazySuspense } from './LazyComponents';
 import { Tabs } from '../ui';
@@ -41,7 +41,7 @@ interface MainContentProps {
   onCodebaseDisconnect?: () => void;
 }
 
-export function MainContent({
+export const MainContent = memo(function MainContent({
   selectedTask,
   onSelectTask,
   context,
@@ -183,4 +183,4 @@ export function MainContent({
       )}
     </div>
   );
-}
+});

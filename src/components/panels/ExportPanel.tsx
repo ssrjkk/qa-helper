@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { memo, useState, useRef, useEffect } from 'react';
 import { GlassCard, RippleButton } from '../ui';
 import { copyToClipboard } from '../../lib';
 import { ErrorService } from '../../lib/errorService';
@@ -20,7 +20,7 @@ interface ExportPanelProps {
 
 type ExportFormat = 'markdown' | 'pdf' | 'json';
 
-export function ExportPanel({ output, context, taskType, projectName, onClose }: ExportPanelProps) {
+export const ExportPanel = memo(function ExportPanel({ output, context, taskType, projectName, onClose }: ExportPanelProps) {
   const [exporting, setExporting] = useState(false);
   const [copied, setCopied] = useState(false);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,11 +82,11 @@ export function ExportPanel({ output, context, taskType, projectName, onClose }:
     <div className="overflow-hidden animate-fadeIn">
       <GlassCard className="p-4">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm font-medium text-gray-300">Export Options</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Export Options</h4>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
               Close
             </button>
@@ -99,10 +99,10 @@ export function ExportPanel({ output, context, taskType, projectName, onClose }:
               key={format.id}
               onClick={() => handleExport(format.id)}
               disabled={exporting}
-              className="flex flex-col items-center gap-2 p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all disabled:opacity-50"
+              className="flex flex-col items-center gap-2 p-3 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl transition-all disabled:opacity-50"
             >
               <span className="text-2xl">{format.icon}</span>
-              <span className="text-xs font-medium text-white">{format.label}</span>
+              <span className="text-xs font-medium text-gray-800 dark:text-white">{format.label}</span>
               <span className="text-[10px] text-gray-500">{format.desc}</span>
             </button>
           ))}
@@ -118,4 +118,4 @@ export function ExportPanel({ output, context, taskType, projectName, onClose }:
       </GlassCard>
     </div>
   );
-}
+});

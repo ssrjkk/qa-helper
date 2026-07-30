@@ -54,7 +54,7 @@ export const ErrorService = {
     if (errorLog.length > MAX_LOG_SIZE) errorLog.shift();
     notify(error);
     reportExternal(error);
-    if (import.meta.env.DEV) console.warn(`[ErrorService] ${code}: ${message}`, context);
+    if (import.meta.env.DEV) console.warn(`[ErrorService] ${code}: ${message}`);
     return error;
   },
 

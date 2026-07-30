@@ -4,7 +4,7 @@
  * @author ssrjkk
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { memo, useState, useEffect, useMemo } from 'react';
 import { GlassCard } from '../ui/GlassCard';
 import { metricsCollector } from '../../lib/metrics';
 import { LIMITS } from '../../lib/constants';
@@ -13,7 +13,7 @@ interface MetricsDashboardProps {
   onClose?: () => void;
 }
 
-export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
+export const MetricsDashboard = memo(function MetricsDashboard({ onClose }: MetricsDashboardProps) {
   const [metricsData, setMetricsData] = useState(() => ({
     metrics: metricsCollector.getMetrics(),
     successRate: metricsCollector.getSuccessRate(),
@@ -22,16 +22,19 @@ export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
   }));
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'hidden') return;
+    let active = true;
+    const tick = () => {
+      if (!active) return;
       setMetricsData({
         metrics: metricsCollector.getMetrics(),
         successRate: metricsCollector.getSuccessRate(),
         topTasks: metricsCollector.getTopTaskTypes(5),
         last7Days: metricsCollector.getLast7DaysRequests(),
       });
-    }, LIMITS.pollIntervalMs);
-    return () => clearInterval(interval);
+    };
+    const interval = setInterval(tick, LIMITS.pollIntervalMs);
+    tick();
+    return () => { active = false; clearInterval(interval); };
   }, []);
 
   const { metrics, successRate, topTasks, last7Days } = metricsData;
@@ -42,18 +45,18 @@ export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
       className="space-y-6 animate-fadeIn"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Usage Metrics</h2>
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Usage Metrics</h2>
         <div className="flex gap-2">
           <button
             onClick={() => metricsCollector.reset()}
-            className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
           >
             Reset Stats
           </button>
           {onClose && (
             <button
               onClick={onClose}
-              className="px-3 py-1.5 text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
             >
               Close
             </button>
@@ -63,40 +66,40 @@ export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <GlassCard className="p-4">
-          <div className="text-2xl font-bold text-white">{metrics.totalRequests}</div>
-          <div className="text-xs text-gray-400">Total Requests</div>
+          <div className="text-2xl font-bold text-gray-800 dark:text-white">{metrics.totalRequests}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Total Requests</div>
         </GlassCard>
         
         <GlassCard className="p-4">
-          <div className="text-2xl font-bold text-emerald-400">{metrics.successfulRequests}</div>
-          <div className="text-xs text-gray-400">Successful</div>
+          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{metrics.successfulRequests}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Successful</div>
         </GlassCard>
         
         <GlassCard className="p-4">
-          <div className="text-2xl font-bold text-rose-400">{metrics.failedRequests}</div>
-          <div className="text-xs text-gray-400">Failed</div>
+          <div className="text-2xl font-bold text-red-600 dark:text-rose-400">{metrics.failedRequests}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Failed</div>
         </GlassCard>
         
         <GlassCard className="p-4">
-          <div className="text-2xl font-bold text-purple-400">{successRate}%</div>
-          <div className="text-xs text-gray-400">Success Rate</div>
+          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{successRate}%</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Success Rate</div>
         </GlassCard>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <GlassCard className="p-4">
-          <div className="text-2xl font-bold text-amber-400">{metrics.totalTokens.toLocaleString()}</div>
-          <div className="text-xs text-gray-400">Total Tokens Used</div>
+          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{metrics.totalTokens.toLocaleString()}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Total Tokens Used</div>
         </GlassCard>
         
         <GlassCard className="p-4">
-          <div className="text-2xl font-bold text-cyan-400">{metrics.averageResponseTime}ms</div>
-          <div className="text-xs text-gray-400">Avg Response Time</div>
+          <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{metrics.averageResponseTime}ms</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Avg Response Time</div>
         </GlassCard>
       </div>
 
       <GlassCard className="p-4">
-        <h3 className="text-sm font-medium text-gray-300 mb-3">Requests (Last 7 Days)</h3>
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Requests (Last 7 Days)</h3>
         <div className="flex items-end gap-1 h-24">
           {last7Days.map((day, i) => (
             <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
@@ -109,7 +112,7 @@ export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
               <span className="text-[10px] text-gray-500">
                 {new Date(day.date).toLocaleDateString('en', { weekday: 'short' })}
               </span>
-              <span className="text-[10px] text-gray-400">{day.count}</span>
+              <span className="text-[10px] text-gray-500 dark:text-gray-400">{day.count}</span>
             </div>
           ))}
         </div>
@@ -117,18 +120,18 @@ export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
 
       {topTasks.length > 0 && (
         <GlassCard className="p-4">
-          <h3 className="text-sm font-medium text-gray-300 mb-3">Top Task Types</h3>
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Task Types</h3>
           <div className="space-y-2">
             {topTasks.map((task, i) => (
               <div key={task.type} className="flex items-center gap-3">
                 <span className="text-xs text-gray-500 w-4">{i + 1}</span>
-                <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
+                <div className="flex-1 bg-gray-200 dark:bg-white/5 rounded-full h-2 overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-purple-500 to-pink-500 animate-fadeIn"
                     style={{ width: `${topTasks[0] ? (task.count / topTasks[0].count) * 100 : 0}%`, transition: `width 0.3s ease ${i * 0.1}s` }}
                   />
                 </div>
-                <span className="text-xs text-gray-300 w-32 truncate">{task.type}</span>
+                <span className="text-xs text-gray-600 dark:text-gray-300 w-32 truncate">{task.type}</span>
                 <span className="text-xs text-gray-500 w-8 text-right">{task.count}</span>
               </div>
             ))}
@@ -137,4 +140,4 @@ export function MetricsDashboard({ onClose }: MetricsDashboardProps) {
       )}
     </div>
   );
-}
+});

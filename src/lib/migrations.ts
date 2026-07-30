@@ -101,7 +101,7 @@ function getAppliedVersions(db: Database): Set<number> {
   const versions = new Set<number>();
   if (result[0]) {
     for (const row of result[0].values) {
-      const v = row[0];
+      const v = row?.[0];
       if (typeof v === 'number') versions.add(v);
     }
   }

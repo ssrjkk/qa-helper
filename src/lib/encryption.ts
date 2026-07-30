@@ -16,22 +16,34 @@ const IV_LENGTH = 12;
 const SALT_LENGTH = 16;
 const LEGACY_KEY_LENGTH = 32;
 
+function lsGetItem(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function lsSetItem(key: string, value: string): void {
+  try { localStorage.setItem(key, value); } catch { /* storage unavailable */ }
+}
+
+function lsRemoveItem(key: string): void {
+  try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
+}
+
 async function getOrCreateSalt(): Promise<Uint8Array> {
-  const storedSalt = localStorage.getItem(STORAGE_KEYS.salt);
+  const storedSalt = lsGetItem(STORAGE_KEYS.salt);
   if (storedSalt) {
     return base64ToArrayBuffer(storedSalt);
   }
   const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-  localStorage.setItem(STORAGE_KEYS.salt, arrayBufferToBase64(salt.buffer));
+  lsSetItem(STORAGE_KEYS.salt, arrayBufferToBase64(salt.buffer));
   return salt;
 }
 
 async function getOrCreateLegacyKey(): Promise<string> {
-  const stored = localStorage.getItem(STORAGE_KEYS.legacyKey);
+  const stored = lsGetItem(STORAGE_KEYS.legacyKey);
   if (stored) return stored;
   const randomBytes = crypto.getRandomValues(new Uint8Array(LEGACY_KEY_LENGTH));
   const key = arrayBufferToBase64(randomBytes.buffer);
-  localStorage.setItem(STORAGE_KEYS.legacyKey, key);
+  lsSetItem(STORAGE_KEYS.legacyKey, key);
   return key;
 }
 
@@ -120,17 +132,17 @@ export async function decryptApiKey(encryptedData: string): Promise<string | nul
 
 export async function saveApiKey(apiKey: string): Promise<void> {
   const encrypted = await encryptApiKey(apiKey);
-  localStorage.setItem(STORAGE_KEYS.apiKey, encrypted);
+  lsSetItem(STORAGE_KEYS.apiKey, encrypted);
 }
 
 export async function loadApiKey(): Promise<string | null> {
-  const encrypted = localStorage.getItem(STORAGE_KEYS.apiKey);
+  const encrypted = lsGetItem(STORAGE_KEYS.apiKey);
   if (!encrypted) return null;
   return decryptApiKey(encrypted);
 }
 
 export function clearApiKey(): void {
-  localStorage.removeItem(STORAGE_KEYS.apiKey);
-  localStorage.removeItem(STORAGE_KEYS.salt);
-  localStorage.removeItem(STORAGE_KEYS.legacyKey);
+  lsRemoveItem(STORAGE_KEYS.apiKey);
+  lsRemoveItem(STORAGE_KEYS.salt);
+  lsRemoveItem(STORAGE_KEYS.legacyKey);
 }
