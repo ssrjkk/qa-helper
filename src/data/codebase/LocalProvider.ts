@@ -187,6 +187,7 @@ export class LocalProvider implements CodebaseProvider {
       if (/(\(.+?\)[+*]|\[.+?\]\*|\w+[+*]\w+)/.test(pattern)) {
         return [{ path: '', line: 0, content: 'Error: unsafe regex pattern rejected' }];
       }
+      // eslint-disable-next-line security/detect-non-literal-regexp
       regex = new RegExp(pattern, 'gi');
     } catch {
       return [{ path: '', line: 0, content: `Error: invalid regex pattern "${pattern}"` }];

@@ -403,6 +403,7 @@ describe('Property-Based: slugify', () => {
 describe('Property-Based: escapeRegex', () => {
   it('output always compiles as a valid RegExp', () => {
     fc.assert(
+      // eslint-disable-next-line security/detect-non-literal-regexp
       fc.property(fc.string(), (s) => { expect(() => new RegExp(escapeRegex(s))).not.toThrow(); }),
       { numRuns: 2_000 },
     );
@@ -410,6 +411,7 @@ describe('Property-Based: escapeRegex', () => {
 
   it('escaped pattern always matches the original string', () => {
     fc.assert(
+      // eslint-disable-next-line security/detect-non-literal-regexp
       fc.property(fc.string(), (s) => { expect(new RegExp(escapeRegex(s)).test(s)).toBe(true); }),
       { numRuns: 2_000 },
     );
