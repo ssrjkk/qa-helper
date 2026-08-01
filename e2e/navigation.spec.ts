@@ -8,13 +8,13 @@ test.describe('Tab navigation', () => {
   });
 
   test('switch between New and History tabs', async ({ page }) => {
-    const historyTab = page.locator('button', { hasText: /history/i }).first();
+    const historyTab = page.locator('[role="tab"]', { hasText: /history/i }).first();
     await expect(historyTab).toBeVisible({ timeout: 5000 });
 
     await historyTab.click();
     await page.waitForTimeout(300);
 
-    const newTab = page.locator('button', { hasText: /^new$/i }).first();
+    const newTab = page.locator('[role="tab"]', { hasText: /new/i }).first();
     await expect(newTab).toBeVisible({ timeout: 5000 });
 
     await newTab.click();

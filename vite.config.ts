@@ -12,6 +12,17 @@ export default defineConfig(({ mode }) => ({
       gzipSize: true,
       brotliSize: true,
     })] : []),
+    {
+      name: 'dev-telemetry-mock',
+      apply: 'serve',
+      configureServer(server) {
+        server.middlewares.use('/api/telemetry', (_req, res) => {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end('{}');
+        });
+      },
+    },
   ],
   resolve: {
     alias: {

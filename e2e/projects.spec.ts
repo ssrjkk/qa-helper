@@ -16,14 +16,25 @@ test.describe('Project management', () => {
     await nameInput.fill('E2E Test Project');
     await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
-    await expect(page.locator('text=E2E Test Project')).toBeVisible();
+    const projectCard = page.locator('[role="button"][aria-label^="Select project"]', { hasText: 'E2E Test Project' });
+    await expect(projectCard).toBeVisible();
   });
 
   test('select an existing project', async ({ page }) => {
     await page.goto('/');
     await unlockApp(page);
 
-    const projectCard = page.locator('[role="button"][aria-label*="Select project"], [role="button"][aria-label*="select project"]').first();
+    const newBtn = page.locator('button', { hasText: /new/i }).first();
+    await expect(newBtn).toBeVisible({ timeout: 5000 });
+    await newBtn.click();
+
+    const nameInput = page.locator('input[placeholder*="project" i], input[placeholder*="name" i]').first();
+    await expect(nameInput).toBeVisible({ timeout: 3000 });
+    await nameInput.fill('Existing Project');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
+
+    const projectCard = page.locator('[role="button"][aria-label^="Select project"]').first();
     await expect(projectCard).toBeVisible({ timeout: 5000 });
 
     await projectCard.click();

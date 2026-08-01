@@ -15,7 +15,11 @@ test.describe('Memory management', () => {
     await unlockApp(page);
     await page.waitForTimeout(1000);
 
-    const categorySelect = page.locator('select[aria-label*="category" i], select[aria-label*="memory" i]').first();
+    const memoryAccordion = page.locator('button', { hasText: 'Structured Memory' }).first();
+    await expect(memoryAccordion).toBeVisible({ timeout: 5000 });
+    await memoryAccordion.click();
+
+    const categorySelect = page.locator('select[aria-label="Memory category"]');
     await expect(categorySelect).toBeVisible({ timeout: 5000 });
   });
 });
@@ -26,8 +30,16 @@ test.describe('Export functionality', () => {
     await unlockApp(page);
     await page.waitForTimeout(1000);
 
-    const exportBtn = page.locator('button', { hasText: /export/i }).first();
-    await expect(exportBtn).toBeVisible({ timeout: 5000 });
+    const teamAccordion = page.locator('button', { hasText: 'Team Features' }).first();
+    await expect(teamAccordion).toBeVisible({ timeout: 5000 });
+    await teamAccordion.click();
+
+    const exportTab = page.locator('[role="tab"]', { hasText: /export/i }).first();
+    await expect(exportTab).toBeVisible({ timeout: 5000 });
+    await exportTab.click();
+
+    const exportLabel = page.locator('text=Export Project').first();
+    await expect(exportLabel).toBeVisible({ timeout: 5000 });
   });
 });
 

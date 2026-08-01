@@ -15,13 +15,13 @@ export function useProjectData(db: UseDatabaseReturn) {
   const setCurrentMemory = useAppStore((s) => s.setCurrentMemory);
   const setSessions = useAppStore((s) => s.setSessions);
   const setMemoryEntries = useAppStore((s) => s.setMemoryEntries);
+  const selectedProject = useAppStore((s) => s.selectedProject);
   const setSelectedProject = useAppStore((s) => s.setSelectedProject);
   const setSelectedTask = useAppStore((s) => s.setSelectedTask);
   const setContext = useAppStore((s) => s.setContext);
   const setOutput = useAppStore((s) => s.setOutput);
   const {
     projects,
-    selectedProject,
     createProject,
     deleteProject,
     updateProjectMemory,

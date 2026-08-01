@@ -16,11 +16,12 @@ test.describe('Full QA workflow', () => {
     await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
 
-    await expect(page.locator('text=E2E Workflow Project')).toBeVisible({ timeout: 5000 });
+    const projectCard = page.locator('[role="button"][aria-label^="Select project"]', { hasText: 'E2E Workflow Project' });
+    await expect(projectCard).toBeVisible({ timeout: 5000 });
 
-    const bugTab = page.locator('button', { hasText: /bug/i }).first();
-    await expect(bugTab).toBeVisible({ timeout: 3000 });
-    await bugTab.click();
+    const reviewTab = page.locator('button', { hasText: /review/i }).first();
+    await expect(reviewTab).toBeVisible({ timeout: 3000 });
+    await reviewTab.click();
     await page.waitForTimeout(300);
 
     const taskCard = page.locator('text=/bug report|test plan|test case/i').first();

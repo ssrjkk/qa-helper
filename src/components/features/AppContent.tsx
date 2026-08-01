@@ -130,6 +130,20 @@ export const AppContent = memo(function AppContent({ db }: AppContentProps) {
     handleExecuteRef.current = handleExecute;
   }, [handleExecute]);
 
+  useEffect(() => {
+    const handleResetTask = () => handleReset();
+    const handleExecuteTask = () => { void handleExecute(); };
+    const handleCopyOutput = () => handleCopy();
+    window.addEventListener('reset-task', handleResetTask);
+    window.addEventListener('execute-task', handleExecuteTask);
+    window.addEventListener('copy-output', handleCopyOutput);
+    return () => {
+      window.removeEventListener('reset-task', handleResetTask);
+      window.removeEventListener('execute-task', handleExecuteTask);
+      window.removeEventListener('copy-output', handleCopyOutput);
+    };
+  }, [handleReset, handleExecute, handleCopy]);
+
   const sidebar = (
     <Sidebar
       projects={projects}

@@ -104,7 +104,6 @@ export function ProjectSelector({
         <div 
           ref={parentRef}
           className="max-h-64 overflow-y-auto"
-          style={{ contain: 'strict' }}
         >
           {projects.length === 0 ? (
             <p className="text-xs text-gray-500 text-center py-4">{t('project.none')}</p>
