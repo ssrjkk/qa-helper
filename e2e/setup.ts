@@ -6,6 +6,25 @@ export async function unlockApp(page: Page) {
   try {
     await page.waitForLoadState('domcontentloaded', { timeout: 15000 });
 
+    // First-run onboarding must never race test clicks. Seed its storage flag
+    // on the page (applies to any future navigation/reload) and write it
+    // directly to the current document (covers a mount that predates an init
+    // script or a flaky network drop mid-load).
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem('qa-copilot-onboarding-seen', 'true');
+      } catch {
+        // Storage unavailable — the dismiss loop below still skips the wizard
+      }
+    }).catch(() => {});
+    await page.evaluate(() => {
+      try {
+        localStorage.setItem('qa-copilot-onboarding-seen', 'true');
+      } catch {
+        // Storage unavailable — the dismiss loop below still skips the wizard
+      }
+    }).catch(() => {});
+
     const passwordInput = page.locator('input[type="password"]').first();
     if (await passwordInput.isVisible({ timeout: 10000 }).catch(() => false)) {
       await passwordInput.fill(MASTER_PASSWORD);
@@ -23,11 +42,16 @@ export async function unlockApp(page: Page) {
     // role="button" (a task card) guarantees the Skip control is present too.
     await page.locator('[role="button"]').first().waitFor({ state: 'visible', timeout: 30000 });
 
+    // If the wizard is still shown (late-mounted or remounted app), dismiss it
+    // repeatedly until it is gone — never leave it overlaying test clicks.
     const skipBtn = page.locator('button[aria-label="Skip onboarding"]');
-    if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await skipBtn.click();
-      await skipBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+    const deadline = Date.now() + 10000;
+    while (Date.now() < deadline) {
+      if (!(await skipBtn.isVisible().catch(() => false))) break;
+      await skipBtn.click().catch(() => {});
+      await page.waitForTimeout(200);
     }
+    await skipBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   } catch {
     // App may show DB error or page may close — that's fine for E2E
   }
